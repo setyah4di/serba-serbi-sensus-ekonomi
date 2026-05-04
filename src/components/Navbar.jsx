@@ -4,7 +4,7 @@ import heroPng from "../assets/logo_bps.png";
 
 const navLinks = [
   { label: "Beranda", path: "/" },
-  { label: "Registrasi", path: "/registrasi" },
+  { label: "Rekrutmen", path: "/registrasi" },
   { label: "KKD", path: "/kkd" },
   { label: "Ngibar", path: "/ngibar" },
   { label: "Reporta-SE", path: "/reporta-se" },

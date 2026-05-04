@@ -1,9 +1,11 @@
+// src/App.jsx
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SplashScreen from "./components/SplashScreen";
+import ScrollToTop from "./components/ScrollTop"; // Import ScrollToTop
 
 import Beranda from "./pages/Beranda";
 import Registrasi from "./pages/Registrasi";
@@ -23,6 +25,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop /> {/* Tambahkan ScrollToTop di sini */}
       <div className="font-sans antialiased flex flex-col min-h-screen">
         <Navbar />
         <main className="pt-16 flex-grow">

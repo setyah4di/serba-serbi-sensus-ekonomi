@@ -136,7 +136,7 @@ export default function Beranda() {
           <div className="h-1 w-16 bg-orange-500 mx-auto mb-12 rounded-full" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: "📋", label: "Registrasi", desc: "Daftar sebagai Mitra Statistik SE 2026", path: "/registrasi", color: "bg-blue-600" },
+              { icon: "📋", label: "Rekrutmen", desc: "Daftar sebagai Mitra Statistik SE 2026", path: "/registrasi", color: "bg-blue-600" },
               { icon: "📑", label: "KKD", desc: "Kelengkapan & Kesiapan Dokumen petugas", path: "/kkd", color: "bg-emerald-600" },
               { icon: "📊", label: "Ngibar", desc: "Ngisi Bareng Data Usaha", path: "/ngibar", color: "bg-purple-600" },
               { icon: "📈", label: "Reporta-SE", desc: "Pelaporan & rekapitulasi Sensus Ekonomi", path: "/reporta-se", color: "bg-orange-500" },

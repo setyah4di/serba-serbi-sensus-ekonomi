@@ -4,3 +4,21 @@
 html {
   scroll-behavior: smooth;
 }
+/* src/index.css */
+
+/* Untuk menghindari scroll behavior yang tidak diinginkan pada pengguna yang memiliki preferensi mengurangi animasi */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Pastikan konten tidak tertutup navbar fixed */
+main.pt-16 {
+  padding-top: 4rem; /* 64px, sesuaikan dengan tinggi navbar Anda */
+}
+
+/* Atau jika navbar memiliki tinggi berbeda, sesuaikan */
+.navbar-fixed-offset {
+  scroll-margin-top: 80px;
+}
