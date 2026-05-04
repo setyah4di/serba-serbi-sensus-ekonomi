@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Beranda() {
   const [visible, setVisible] = useState(false);
@@ -103,17 +104,17 @@ export default function Beranda() {
               { icon: "📊", label: "Ngibar", desc: "Monitoring progres lapangan harian", path: "/ngibar", color: "bg-purple-600" },
               { icon: "📈", label: "Reporta-SE", desc: "Pelaporan & rekapitulasi Sensus Ekonomi", path: "/reporta-se", color: "bg-orange-500" },
             ].map((item) => (
-              <a
+            <Link
                 key={item.label}
-                href={item.path}
+                to={item.path}
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center hover:shadow-lg hover:-translate-y-1 transition-all group"
-              >
+                >
                 <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform shadow-md`}>
                   {item.icon}
                 </div>
                 <h3 className="font-extrabold text-gray-800 text-base mb-1">{item.label}</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
