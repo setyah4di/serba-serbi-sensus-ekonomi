@@ -1,5 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import { Link } from "react-router-dom";
+
+function useScrollZoom() {
+  const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.2 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  return [ref, isVisible];
+}
 
 export default function Beranda() {
   const [visible, setVisible] = useState(false);
@@ -8,17 +28,23 @@ export default function Beranda() {
     const t = setTimeout(() => setVisible(true), 80);
     return () => clearTimeout(t);
   }, []);
+  
+  const [heroRef, heroVisible] = useScrollZoom();
+  const [introRef, introVisible] = useScrollZoom();
+  const [cardRef, cardVisible] = useScrollZoom();
+
 
   return (
     <>
       {/* ── HERO ── */}
-      <section className="relative h-screen min-h-[520px] flex items-center justify-center overflow-hidden">
+      
+      <section  ref={heroRef} className="relative h-screen min-h-[520px] flex items-center justify-center overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center scale-105"
           style={{
             backgroundImage:
               "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1600&q=80')",
-            transform: visible ? "scale(1)" : "scale(1.08)",
+      transform: heroVisible ? "scale(1)" : "scale(1.1)",
             transition: "transform 1.2s ease",
           }}
         />
@@ -60,8 +86,13 @@ export default function Beranda() {
       </section>
 
       {/* ── INTRO ── */}
-      <section className="bg-orange-400 py-16 px-4">
-        <div className="max-w-4xl mx-auto text-gray-900">
+      
+      <section  className="bg-orange-400 py-16 px-4">
+        <div ref={introRef} className="max-w-4xl mx-auto text-gray-900"  style={{
+      transform: introVisible ? "scale(1)" : "scale(0.9)",
+      opacity: introVisible ? 1 : 0,
+      transition: "all 0.8s ease",
+    }}>
         <p className="text-base md:text-lg leading-relaxed text-justify">
         <span className="font-extrabold">Sensus Ekonomi 2026 (SE2026)</span> merupakan
         kegiatan statistik nasional yang diselenggarakan oleh Badan Pusat Statistik
@@ -92,7 +123,13 @@ export default function Beranda() {
 
       {/* ── CARDS ── */}
       <section className="bg-gray-50 py-20 px-4">
-        <div className="max-w-5xl mx-auto">
+        <div   ref={cardRef}
+    className="max-w-5xl mx-auto"
+    style={{
+      transform: cardVisible ? "scale(1)" : "scale(0.95)",
+      opacity: cardVisible ? 1 : 0,
+      transition: "all 0.8s ease",
+    }}>
           <h2 className="text-3xl font-extrabold text-center text-gray-800 mb-2 uppercase tracking-wide">
             Menu Utama
           </h2>
@@ -101,14 +138,19 @@ export default function Beranda() {
             {[
               { icon: "📋", label: "Registrasi", desc: "Daftar sebagai Mitra Statistik SE 2026", path: "/registrasi", color: "bg-blue-600" },
               { icon: "📑", label: "KKD", desc: "Kelengkapan & Kesiapan Dokumen petugas", path: "/kkd", color: "bg-emerald-600" },
-              { icon: "📊", label: "Ngibar", desc: "Monitoring progres lapangan harian", path: "/ngibar", color: "bg-purple-600" },
+              { icon: "📊", label: "Ngibar", desc: "Ngisi Bareng Data Usaha", path: "/ngibar", color: "bg-purple-600" },
               { icon: "📈", label: "Reporta-SE", desc: "Pelaporan & rekapitulasi Sensus Ekonomi", path: "/reporta-se", color: "bg-orange-500" },
-            ].map((item) => (
-            <Link
+            ].map((item,i) => (
+              <Link
                 key={item.label}
                 to={item.path}
                 className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center hover:shadow-lg hover:-translate-y-1 transition-all group"
-                >
+                style={{
+                transform: cardVisible ? "scale(1)" : "scale(0.8)",
+                opacity: cardVisible ? 1 : 0,
+                transition: `all 0.6s ease ${i * 0.15}s`,
+                }}
+            >
                 <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform shadow-md`}>
                   {item.icon}
                 </div>
