@@ -59,9 +59,11 @@ export default function Beranda() {
           }}
         >
          
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4 drop-shadow-lg leading-tight">
-            SERBA-SERBI<br />
-            <span className="text-orange-400">SENSUS EKONOMI 2026</span>
+              <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4 drop-shadow-lg leading-tight">
+        <span className="text-orange-400">SE</span>RBA-
+        <span className="text-orange-400">SE</span>RBI
+        <br />
+        <span className="text-orange-400">SENSUS EKONOMI 2026</span>
           </h1>
            <p className="text-white text-sm uppercase tracking-[0.3em] mb-3 font-semibold">
             Badan Pusat Statistik

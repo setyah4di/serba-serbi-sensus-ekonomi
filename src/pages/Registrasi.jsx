@@ -2,6 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 
+// Import gambar dari folder assets
+import rekrut1 from "../assets/rekrut_1.png";
+import rekrut2 from "../assets/rekrut_2.png";
+import rekrut3 from "../assets/rekrut_3.png";
+import rekrut4 from "../assets/rekrut_4.png";
+
 // ---- komponen utama ----
 export default function Registrasi() {
   function useScrollZoom() {
@@ -159,25 +165,25 @@ function AlurPendaftaran() {
               ✕
             </button>
             <h3 className="text-lg font-bold mb-2">Daftar Rekrutmen Mitra BPS</h3>
-            <p className="text-sm text-gray-500 mb-5">Pilih metode pendaftaran yang ingin Anda gunakan:</p>
+            <p className="text-sm text-gray-500 mb-5">Wajib Melakukan Pendaftaran pada 2 Link Berikut: </p>
 
             <div className="flex flex-col gap-3 mb-5">
-              <a
-                href="https://sites.google.com/view/rekrutmenmitra3403/registrasi?authuser=0"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[#F28C28] hover:bg-[#d9770d] text-white font-bold py-3 px-5 rounded-lg text-sm transition-colors"
-              >
-                📱 Daftar via Sobat BPS
-              </a>
-              
-              <a
+                <a
                 href="https://sites.google.com/view/rekrutmenmitra3403/registrasi?authuser=0"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#4285F4] hover:bg-[#2a6dd4] text-white font-bold py-3 px-5 rounded-lg text-sm transition-colors"
               >
-                📋 Daftar via Google Form
+                📋 Daftar Dulu di Google Form
+              </a>
+              {/* <span>&</span> */}
+               <a
+                href="https://sites.google.com/view/rekrutmenmitra3403/registrasi?authuser=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#F28C28] hover:bg-[#d9770d] text-white font-bold py-3 px-5 rounded-lg text-sm transition-colors"
+              >
+                📱 Lanjut Daftar di Sobat BPS
               </a>
             </div>
 
@@ -197,166 +203,90 @@ function AlurPendaftaran() {
   );
 }
 
+// ---- data langkah tutorial ----
+const TUTORIAL_STEPS = [
+  {
+    img: rekrut1,
+    alt: "Langkah 1 - Daftar Survei",
+    poin: [
+      <>Calon melakukan pendaftaran dengan cara klik <b>"Daftar Survei"</b>.</>,
+      <>Pada menu pencarian ketik <b>"rekrutmen"</b> lalu klik tombol <b>cari</b>.</>,
+    ],
+  },
+  {
+    img: rekrut2,
+    alt: "Langkah 2 - Pilih Rekrutmen",
+    poin: [
+      <>Lalu akan muncul <b>"Rekrutmen Mitra BPS 2025"</b>.</>,
+      <>Klik <b>"Daftar"</b>.</>,
+    ],
+  },
+  {
+    img: rekrut3,
+    alt: "Langkah 3 - Isi Data",
+    poin: [
+      <>Pilih Wilayah <b>"Gunungkidul"</b> dan Jabatan <b>"Mitra 2025"</b>.</>,
+      <>Klik <b>"Daftar"</b>.</>,
+    ],
+  },
+  {
+    img: rekrut4,
+    alt: "Langkah 4 - Tunggu Konfirmasi",
+    poin: [
+      <>Calon mitra menunggu untuk dikonfirmasi oleh Panitia Rekrutmen pada saat <b>Seleksi Administrasi</b>.</>,
+    ],
+  },
+];
+
 // ---- Tutorial Pendaftaran ----
 function TutorialPendaftaran() {
   return (
-    <section id="tutorial-pendaftaran" className="py-12 px-8 bg-white max-w-4xl mx-auto">
-      <h2 className="text-xl font-bold text-center tracking-widest mb-2">PENDAFTARAN REKRUTMEN</h2>
-      <hr className="border-gray-200 my-4 mx-auto w-11/12" />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-
-        {/* Langkah 1 */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gray-100 p-4">
-            <BrowserMock>
-              <p className="text-[9px] font-bold text-gray-800 mb-2">DAFTAR KEGIATAN SURVEI/SENSUS</p>
-              <div className="flex items-center justify-between border-2 border-red-500 rounded px-2 py-1 text-[9px] text-gray-500 mb-1">
-                <span>rekrutmen</span>
-                <span className="bg-[#F28C28] text-white text-[8px] px-1 rounded">cari</span>
-              </div>
-              <p className="text-[8px] text-gray-500 text-right mt-1">
-                <RedDot>1</RedDot> Klik Daftar Survei &nbsp;
-                <RedDot>2</RedDot> Cari rekrutmen
-              </p>
-            </BrowserMock>
-          </div>
-          <div className="p-4">
-            <ul className="space-y-2">
-              <TutLi>Calon melakukan pendaftaran dengan cara klik <b>"Daftar Survei"</b>.</TutLi>
-              <TutLi>Pada menu pencarian ketik <b>"rekrutmen"</b> lalu klik tombol <b>cari</b>.</TutLi>
-            </ul>
-          </div>
+    <section id="tutorial-pendaftaran" className="py-12 px-6 bg-[#F28C28]">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl overflow-hidden">
+        {/* Judul */}
+        <div className="px-8 pt-8 pb-4 text-center">
+          <h2 className="text-base font-bold tracking-widest text-gray-800 uppercase">
+            Pendaftaran Rekrutmen
+          </h2>
+          <hr className="border-gray-200 mt-4" />
         </div>
 
-        {/* Langkah 2 */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gray-100 p-4">
-            <BrowserMock>
-              <p className="text-[9px] font-bold text-gray-800 mb-2">DAFTAR KEGIATAN SURVEI/SENSUS</p>
-              <div className="border border-gray-200 rounded-lg p-2">
-                <p className="text-[10px] font-bold text-gray-900 mb-2">Rekrutmen Mitra BPS 2025</p>
-                <div className="flex items-center gap-1 mb-1">
-                  <span className="text-[8px] text-gray-500">● Jenis</span>
-                  <span className="bg-green-600 text-white text-[8px] px-1 rounded font-bold">Pendaftaran</span>
-                </div>
-                <div className="flex items-center gap-1 mb-1">
-                  <span className="text-[8px] text-gray-500">● Level</span>
-                  <span className="bg-[#F28C28] text-white text-[8px] px-1 rounded font-bold">KABUPATEN/KOTA</span>
-                </div>
-                <p className="text-[8px] text-gray-500 mb-2">● Tanggal : 14 s.d. 20 Oktober 2024</p>
-                <button className="block mx-auto bg-green-600 text-white text-[9px] px-4 py-1 rounded">Daftar</button>
+        {/* Grid 2x2 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+          {TUTORIAL_STEPS.map((step, i) => (
+            <div
+              key={i}
+              className={`flex flex-col border-gray-100
+                ${i % 2 === 0 ? "md:border-r" : ""}
+                ${i < 2 ? "border-b" : ""}
+              `}
+            >
+              {/* Gambar */}
+              <div className="bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-center">
+                <img
+                  src={step.img}
+                  alt={step.alt}
+                  className="w-full max-h-56 object-contain rounded"
+                />
               </div>
-            </BrowserMock>
-          </div>
-          <div className="p-4">
-            <ul className="space-y-2">
-              <TutLi>Lalu akan muncul <b>"Rekrutmen Mitra BPS 2025"</b>.</TutLi>
-              <TutLi>Klik <b>"Daftar"</b>.</TutLi>
-            </ul>
-          </div>
-        </div>
 
-        {/* Langkah 3 */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gray-100 p-4">
-            <div className="bg-white border border-gray-200 rounded-lg p-3 text-[9px]">
-              <p className="font-bold text-[10px] text-gray-900 mb-3">Daftar Sensus/Survei</p>
-              {[
-                ["Nama Survei", "Rekrutmen Mitra BPS 2025"],
-                ["Kegiatan", "Pendaftaran"],
-              ].map(([label, val]) => (
-                <div key={label} className="flex gap-2 mb-1">
-                  <span className="text-gray-500 min-w-[80px]">{label}</span>
-                  <span className="text-gray-700">: {val}</span>
-                </div>
-              ))}
-              {[["Provinsi", "34 (D.I. YOGYAKARTA)"], ["Kabupaten", "03 (KAB. GUNUNGKIDUL)"], ["Jabatan Petugas", "Mitra 2025"]].map(([label, val]) => (
-                <div key={label} className="flex gap-2 mb-1 items-center">
-                  <span className="text-gray-500 min-w-[80px]">{label}</span>
-                  <span className="flex-1 bg-gray-100 border border-gray-200 rounded px-2 py-0.5 text-gray-700">: {val} ▾</span>
-                </div>
-              ))}
-              <div className="flex justify-between mt-3">
-                <button className="bg-gray-100 border border-gray-200 text-gray-600 rounded px-3 py-1 text-[9px]">Kembali</button>
-                <button className="bg-blue-500 text-white rounded px-3 py-1 text-[9px]">Daftar</button>
+              {/* Poin penjelasan */}
+              <div className="p-5">
+                <ul className="space-y-2">
+                  {step.poin.map((p, j) => (
+                    <li key={j} className="flex gap-2 text-xs text-gray-700 leading-relaxed">
+                      <span className="text-[#F28C28] mt-0.5 flex-shrink-0">▪</span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
-          </div>
-          <div className="p-4">
-            <ul className="space-y-2">
-              <TutLi>Pilih Wilayah <b>"Gunungkidul"</b> dan Jabatan <b>"Mitra 2025"</b>.</TutLi>
-              <TutLi>Klik <b>"Daftar"</b>.</TutLi>
-            </ul>
-          </div>
+          ))}
         </div>
 
-        {/* Langkah 4 */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden">
-          <div className="bg-gray-100 p-4">
-            <div className="bg-white border border-gray-200 rounded-lg p-3">
-              <p className="text-[11px] font-bold text-gray-900 mb-3">Rekrutmen Mitra BPS 2025</p>
-              {[
-                { label: "Jenis", badge: "Pendaftaran", badgeColor: "bg-green-600" },
-                { label: "Level", badge: "KABUPATEN/KOTA", badgeColor: "bg-[#F28C28]" },
-              ].map((r) => (
-                <div key={r.label} className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-[#F28C28] flex-shrink-0" />
-                  <span className="text-[9px] text-gray-600">{r.label} :</span>
-                  <span className={`${r.badgeColor} text-white text-[8px] px-1.5 py-0.5 rounded font-bold`}>{r.badge}</span>
-                </div>
-              ))}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="w-2 h-2 rounded-full bg-[#F28C28] flex-shrink-0" />
-                <span className="text-[9px] text-gray-600">Tanggal : 14 s.d. 20 Oktober 2024</span>
-              </div>
-              <div className="flex gap-2">
-                <button className="flex-1 bg-blue-500 text-white text-[9px] py-1.5 rounded">Ubah</button>
-                <button className="flex-1 bg-red-500 text-white text-[9px] py-1.5 rounded">Mundur</button>
-              </div>
-            </div>
-          </div>
-          <div className="p-4">
-            <ul className="space-y-2">
-              <TutLi>
-                Calon mitra menunggu untuk dikonfirmasi oleh Panitia Rekrutmen pada saat <b>Seleksi Administrasi</b>.
-              </TutLi>
-            </ul>
-          </div>
-        </div>
-
+        <div className="h-4" /> {/* bottom padding */}
       </div>
     </section>
-  );
-}
-
-// ---- helper kecil ----
-function BrowserMock({ children }) {
-  return (
-    <div className="bg-white border border-gray-300 rounded-lg overflow-hidden">
-      <div className="bg-gray-100 border-b border-gray-200 px-2 py-1 flex items-center gap-1">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="w-2 h-2 rounded-full bg-gray-300" />
-        ))}
-      </div>
-      <div className="p-2">{children}</div>
-    </div>
-  );
-}
-
-function TutLi({ children }) {
-  return (
-    <li className="flex gap-2 text-xs text-gray-700">
-      <span className="text-[#F28C28] mt-0.5">▪</span>
-      <span>{children}</span>
-    </li>
-  );
-}
-
-function RedDot({ children }) {
-  return (
-    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-red-500 text-white text-[7px] font-bold mr-0.5">
-      {children}
-    </span>
   );
 }
