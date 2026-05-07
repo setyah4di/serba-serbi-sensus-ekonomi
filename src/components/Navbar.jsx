@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import heroPng from "../assets/logo_bps.png";
+import heroPng from "../assets/image/logo_bps.png";
 
 const navLinks = [
   { label: "Beranda", path: "/" },

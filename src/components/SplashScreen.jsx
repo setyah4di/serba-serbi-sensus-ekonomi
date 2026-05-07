@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import heroPng from "../assets/logo_bps.png";
+import heroPng from "../assets/image/logo_bps.png";
 
 export default function SplashScreen() {
   const [phase, setPhase] = useState("enter"); // enter → stay → exit

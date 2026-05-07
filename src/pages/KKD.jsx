@@ -1,246 +1,79 @@
-import { useState, useEffect } from "react";
-
-const MENUS = [
-  {
-    id: "daftar-hadir",
-    label: "DAFTAR\nHADIR",
-    emoji: "⏱️",
-    highlight: true,
-    bg: "from-yellow-50 to-white",
-    border: "border-yellow-300",
-    textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/daftar-hadir-dummy",
-  },
-  {
-    id: "link-zoom",
-    label: "LINK\nZOOM",
-    emoji: "🎥",
-    highlight: false,
-    bg: "from-blue-50 to-white",
-    border: "border-blue-100",
-    textColor: "text-blue-700",
-    url: "https://zoom.us/j/dummy-link-zoom",
-  },
-  {
-    id: "kuesioner",
-    label: "KUESIONER",
-    emoji: "📋",
-    highlight: false,
-    bg: "from-orange-50 to-white",
-    border: "border-orange-100",
-    textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/kuesioner-dummy",
-  },
-  {
-    id: "materi",
-    label: "MATERI",
-    emoji: "📁",
-    highlight: false,
-    bg: "from-yellow-50 to-white",
-    border: "border-yellow-100",
-    textColor: "text-blue-700",
-    url: "https://drive.google.com/drive/folders/materi-dummy",
-  },
-  {
-    id: "tugas",
-    label: "TUGAS",
-    emoji: "🎯",
-    highlight: false,
-    bg: "from-red-50 to-white",
-    border: "border-red-100",
-    textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/tugas-dummy",
-  },
-  {
-    id: "qa",
-    label: "Q & A",
-    emoji: "💬",
-    highlight: false,
-    bg: "from-purple-50 to-white",
-    border: "border-purple-100",
-    textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/qa-dummy",
-  },
-];
+import videoBupati from "../assets/video/KKD_Bupati.mp4";
+import videoPajak from "../assets/video/KKD_Pajak.mp4";
 
 export default function KKD() {
-  const [pressed, setPressed] = useState(null);
- const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(true);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleClick = (id) => {
-    setPressed(id);
-    const menu = MENUS.find((m) => m.id === id);
-    setTimeout(() => {
-      window.open(menu.url, "_blank", "noopener noreferrer");
-      setPressed(null);
-    }, 180);
-  };
-
   return (
-    <div
-      className="min-h-screen py-16 px-4 relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg, #F5A623 0%, #F28C28 60%, #e8820a 100%)" }}
-    >
-      {/* Dekoratif gelombang bawah */}
-      <WaveDecor />
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-2xl mx-auto relative z-10"
-       style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1)" : "scale(0.85)",
-          transition: "all 0.8s ease",
-        }}>
-        {/* Header */}
-        <div className="mb-10 text-center"
-         style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1)" : "scale(0.85)",
-          transition: "all 0.8s ease",
-        }}>
-          <span className="inline-block bg-white/20 text-white text-xs font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest mb-3 backdrop-blur-sm">
-            KKD · Pelatihan SE 2026
-          </span>
-          <h1 className="text-3xl font-extrabold text-white drop-shadow">
-            Kelengkapan Kegiatan
-          </h1>
-          <p className="text-white/80 text-sm mt-1">Pilih menu di bawah ini untuk mengaksesnya</p>
+        {/* ── Header ── */}
+        <div className="mb-10">
+          <h1 className="text-3xl font-extrabold text-gray-800">Komunikasi, Koordinasi, dan Diplomasi</h1>
+          <p className="text-gray-500 text-sm mt-1">video sambutan kegiatan Sensus Ekonomi 2026</p>
+          <div className="h-1 w-16 bg-orange-400 mt-4 rounded-full" />
         </div>
 
-        {/* Grid kartu — baris 1: 3 kolom, baris 2: 2 kolom tapi tengah */}
-        <div className="flex flex-col gap-4">
+        {/* ── Layout video ── */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-          {/* Baris 1 */}
-          <div className="grid grid-cols-3 gap-4">
-            {MENUS.slice(0, 3).map((m,i) => (
-              <MenuCard key={m.id} menu={m} pressed={pressed} onClick={handleClick} visible={visible} delay={i*0.15}  />
-            ))}
+          {/* Video Bupati — Horizontal 16:9, mengisi sisa ruang */}
+          <div className="flex-1 min-w-0">
+            <VideoCard
+              src={videoPajak}
+              title="Sambutan Dari KPPN Pajak "
+              subtitle="Tanjung Jabung Barat"
+              badge="Horizontal"
+              badgeColor="bg-blue-100 text-blue-700"
+              aspect="aspect-video"
+            />
           </div>
 
-          {/* Baris 2 */}
-          <div className="grid grid-cols-3 gap-4">
-            {MENUS.slice(3).map((m,i) => (
-              <MenuCard key={m.id} menu={m} pressed={pressed} onClick={handleClick} visible={visible} delay={i*0.15}  />
-            ))}
+          {/* Video Pajak — Vertikal 9:16, lebar tetap */}
+          <div className="w-full lg:w-60 flex-shrink-0">
+            <VideoCard
+              src={videoBupati}
+              title="Sambutan Dari Bupati "
+              subtitle="Kabupaten Tanjung Jabung Barat"
+              badge="Vertikal"
+              badgeColor="bg-purple-100 text-purple-700"
+              aspect="aspect-[9/16]"
+            />
           </div>
 
         </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ── VideoCard ─────────────────────────────────────────────────────────────────
+function VideoCard({ src, title, subtitle, badge, badgeColor, aspect }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+
+      {/* Wrapper rasio — aspect-video = 16:9 | aspect-[9/16] = 9:16 */}
+      <div className={`relative w-full ${aspect} bg-black`}>
+        <video
+          className="absolute inset-0 w-full h-full object-contain"
+          controls
+          preload="metadata"
+          playsInline
+        >
+          <source src={src} type="video/mp4" />
+          Browser Anda tidak mendukung pemutar video.
+        </video>
       </div>
 
-      <style>{`
-        @keyframes highlight-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(250,204,21,0.7), 0 8px 24px rgba(0,0,0,0.10); }
-          50% { box-shadow: 0 0 0 8px rgba(250,204,21,0), 0 8px 32px rgba(0,0,0,0.15); }
-        }
-        @keyframes spike {
-          0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
-          50% { opacity: 0.7; transform: scale(1.15) rotate(5deg); }
-        }
-        .highlight-card {
-          animation: highlight-pulse 1.4s ease-in-out infinite;
-        }
-        .spike {
-          animation: spike 1.2s ease-in-out infinite;
-        }
-      `}</style>
-    </div>
-  );
-}
+      {/* Info */}
+      <div className="p-4">
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest ${badgeColor}`}>
+          {badge}
+        </span>
+        <h3 className="font-extrabold text-gray-800 text-base leading-tight mt-2">{title}</h3>
+        <p className="text-gray-400 text-xs mt-0.5">{subtitle}</p>
+      </div>
 
-function MenuCard({ menu, pressed, onClick,visible,delay }) {
-  const isPressed = pressed === menu.id;
-  const label = menu.label.split("\n");
-
-  return (
-    <div className="relative" 
-        style={{
-        opacity: visible ? 1 : 0,
-        transform: visible
-          ? "scale(1) translateY(0)"
-          : "scale(0.7) translateY(30px)",
-        transition: `all 0.7s ease ${delay}s`,
-      }}>
-      {/* Spike dekoratif untuk highlight card */}
-      {menu.highlight && (
-        <>
-          <Spike top="-14px" left="-10px" rotate="-20deg" />
-          <Spike top="-14px" left="50%" rotate="0deg" style={{ transform: "translateX(-50%) rotate(0deg)" }} />
-          <Spike top="-14px" right="-10px" rotate="20deg" />
-        </>
-      )}
-
-      <button
-        onClick={() => onClick(menu.id)}
-        className={`
-          w-full aspect-[3/3.5] rounded-2xl border-2 ${menu.border}
-          bg-gradient-to-b ${menu.bg}
-          flex flex-col items-center justify-between
-          py-5 px-3
-          shadow-md active:shadow-inner
-          transition-all duration-150 select-none
-          ${menu.highlight ? "highlight-card" : "hover:shadow-lg hover:-translate-y-0.5"}
-          ${isPressed ? "scale-95 brightness-95" : ""}
-        `}
-      >
-        {/* Emoji icon */}
-        <div className="text-4xl drop-shadow-md leading-none mt-1">
-          {menu.emoji}
-        </div>
-
-        {/* Label */}
-        <div className={`font-extrabold text-sm tracking-wide text-center leading-tight ${menu.textColor}`}>
-          {label.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </div>
-
-        {/* Tombol panah */}
-        <div className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-500 text-sm font-bold mb-1 bg-white/60">
-          →
-        </div>
-      </button>
-    </div>
-  );
-}
-
-function Spike({ top, left, right, rotate, style }) {
-  return (
-    <div
-      className="spike absolute z-20 pointer-events-none"
-      style={{
-        top, left, right,
-        transform: `rotate(${rotate})`,
-        ...style,
-      }}
-    >
-      {/* Segitiga kuning ala referensi */}
-      <svg width="22" height="22" viewBox="0 0 22 22">
-        <polygon points="11,1 21,21 1,21" fill="#FACC15" stroke="#F59E0B" strokeWidth="1.5" />
-      </svg>
-    </div>
-  );
-}
-
-function WaveDecor() {
-  return (
-    <div className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-hidden">
-      <svg viewBox="0 0 1440 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full">
-        <path
-          d="M0,80 C240,160 480,0 720,80 C960,160 1200,0 1440,80 L1440,180 L0,180 Z"
-          fill="rgba(255,255,255,0.10)"
-        />
-        <path
-          d="M0,120 C360,60 720,160 1080,100 C1260,70 1380,120 1440,140 L1440,180 L0,180 Z"
-          fill="rgba(255,255,255,0.07)"
-        />
-      </svg>
     </div>
   );
 }

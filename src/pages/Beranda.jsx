@@ -1,6 +1,6 @@
 import { useEffect, useState,useRef } from "react";
 import { Link } from "react-router-dom";
-import berandaBg from "../assets/beranda.JPG"
+import berandaBg from "../assets/image/beranda.JPG"
 
 function useScrollZoom() {
   const ref = useRef(null);
@@ -139,7 +139,7 @@ export default function Beranda() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { icon: "📋", label: "Rekrutmen", desc: "Daftar sebagai Mitra Statistik SE 2026", path: "/registrasi", color: "bg-blue-600" },
-              { icon: "📑", label: "KKD", desc: "Kelengkapan & Kesiapan Dokumen petugas", path: "/kkd", color: "bg-emerald-600" },
+              { icon: "📑", label: "KKD", desc: "Komunikasi, Koordinasi, dan Diplomasi", path: "/kkd", color: "bg-emerald-600" },
               { icon: "📊", label: "Ngibar", desc: "Ngisi Bareng Data Usaha", path: "/ngibar", color: "bg-purple-600" },
               { icon: "📈", label: "Reporta-SE", desc: "Pelaporan & rekapitulasi Sensus Ekonomi", path: "/reporta-se", color: "bg-orange-500" },
             ].map((item,i) => (
