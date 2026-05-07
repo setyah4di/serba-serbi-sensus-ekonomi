@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SplashScreen from "./components/SplashScreen";
 import ScrollToTop from "./components/ScrollTop"; // Import ScrollToTop
+import ScrollTopButton from "./components/ScrollTopButton"; // Import ScrollToTop
 
 import Beranda from "./pages/Beranda";
 import Registrasi from "./pages/Registrasi";
@@ -24,21 +25,26 @@ export default function App() {
   if (showSplash) return <SplashScreen />;
 
   return (
-    <BrowserRouter>
-      <ScrollToTop /> {/* Tambahkan ScrollToTop di sini */}
-      <div className="font-sans antialiased flex flex-col min-h-screen">
-        <Navbar />
-        <main className="pt-16 flex-grow">
-          <Routes>
-            <Route path="/" element={<Beranda />} />
-            <Route path="/registrasi" element={<Registrasi />} />
-            <Route path="/kkd" element={<KKD />} />
-            <Route path="/ngibar" element={<Ngibar />} />
-            <Route path="/reporta-se" element={<ReportaSE />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </BrowserRouter>
+<BrowserRouter>
+  <ScrollToTop />
+
+  <div className="font-sans antialiased flex flex-col min-h-screen">
+    <Navbar />
+
+    <main className="pt-16 flex-grow">
+      <Routes>
+        <Route path="/" element={<Beranda />} />
+        <Route path="/registrasi" element={<Registrasi />} />
+        <Route path="/kkd" element={<KKD />} />
+        <Route path="/ngibar" element={<Ngibar />} />
+        <Route path="/reporta-se" element={<ReportaSE />} />
+      </Routes>
+    </main>
+
+    <Footer />
+
+    <ScrollTopButton />
+  </div>
+</BrowserRouter>
   );
 }

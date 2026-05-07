@@ -1,5 +1,6 @@
 import { useEffect, useState,useRef } from "react";
 import { Link } from "react-router-dom";
+import berandaBg from "../assets/beranda.JPG"
 
 function useScrollZoom() {
   const ref = useRef(null);
@@ -42,8 +43,7 @@ export default function Beranda() {
         <div
           className="absolute inset-0 bg-cover bg-center scale-105"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1600&q=80')",
+            backgroundImage: `url(${berandaBg})`,
       transform: heroVisible ? "scale(1)" : "scale(1.1)",
             transition: "transform 1.2s ease",
           }}

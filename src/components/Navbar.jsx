@@ -37,10 +37,10 @@ export default function Navbar() {
             />
           </div>
           <div className="leading-tight">
-            <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">
+            <p className="text-xs font-bold text-black uppercase tracking-wide">
               Badan Pusat Statistik
             </p>
-            <p className="text-xs text-blue-600 uppercase tracking-wide">
+            <p className="text-xs text-black uppercase tracking-wide">
               Kabupaten Tanjung Jabung Barat
             </p>
           </div>

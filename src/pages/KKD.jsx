@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const MENUS = [
   {
@@ -65,6 +65,15 @@ const MENUS = [
 
 export default function KKD() {
   const [pressed, setPressed] = useState(null);
+ const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisible(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleClick = (id) => {
     setPressed(id);
@@ -83,9 +92,19 @@ export default function KKD() {
       {/* Dekoratif gelombang bawah */}
       <WaveDecor />
 
-      <div className="max-w-2xl mx-auto relative z-10">
+      <div className="max-w-2xl mx-auto relative z-10"
+       style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1)" : "scale(0.85)",
+          transition: "all 0.8s ease",
+        }}>
         {/* Header */}
-        <div className="mb-10 text-center">
+        <div className="mb-10 text-center"
+         style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1)" : "scale(0.85)",
+          transition: "all 0.8s ease",
+        }}>
           <span className="inline-block bg-white/20 text-white text-xs font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest mb-3 backdrop-blur-sm">
             KKD · Pelatihan SE 2026
           </span>
@@ -100,15 +119,15 @@ export default function KKD() {
 
           {/* Baris 1 */}
           <div className="grid grid-cols-3 gap-4">
-            {MENUS.slice(0, 3).map((m) => (
-              <MenuCard key={m.id} menu={m} pressed={pressed} onClick={handleClick} />
+            {MENUS.slice(0, 3).map((m,i) => (
+              <MenuCard key={m.id} menu={m} pressed={pressed} onClick={handleClick} visible={visible} delay={i*0.15}  />
             ))}
           </div>
 
           {/* Baris 2 */}
           <div className="grid grid-cols-3 gap-4">
-            {MENUS.slice(3).map((m) => (
-              <MenuCard key={m.id} menu={m} pressed={pressed} onClick={handleClick} />
+            {MENUS.slice(3).map((m,i) => (
+              <MenuCard key={m.id} menu={m} pressed={pressed} onClick={handleClick} visible={visible} delay={i*0.15}  />
             ))}
           </div>
 
@@ -135,12 +154,19 @@ export default function KKD() {
   );
 }
 
-function MenuCard({ menu, pressed, onClick }) {
+function MenuCard({ menu, pressed, onClick,visible,delay }) {
   const isPressed = pressed === menu.id;
   const label = menu.label.split("\n");
 
   return (
-    <div className="relative">
+    <div className="relative" 
+        style={{
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? "scale(1) translateY(0)"
+          : "scale(0.7) translateY(30px)",
+        transition: `all 0.7s ease ${delay}s`,
+      }}>
       {/* Spike dekoratif untuk highlight card */}
       {menu.highlight && (
         <>
