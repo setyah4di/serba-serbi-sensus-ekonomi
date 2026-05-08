@@ -185,6 +185,7 @@ function MenuCard({ menu, pressed, onClick,visible,delay }) {
           py-5 px-3
           shadow-md active:shadow-inner
           transition-all duration-150 select-none
+          cursor-pointer
           ${menu.highlight ? "highlight-card" : "hover:shadow-lg hover:-translate-y-0.5"}
           ${isPressed ? "scale-95 brightness-95" : ""}
         `}
