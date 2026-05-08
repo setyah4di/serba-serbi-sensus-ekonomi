@@ -29,7 +29,7 @@ const MENUS = [
     bg: "from-orange-50 to-white",
     border: "border-orange-100",
     textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/kuesioner-dummy",
+    url: "https://drive.google.com/drive/folders/1smNK0ZVdJK9f62Hq47fwEAt5KQRB7LlW?usp=sharing",
   },
   {
     id: "materi",
@@ -53,7 +53,7 @@ const MENUS = [
   },
   {
     id: "qa",
-    label: "Q & A",
+    label: "Pertanyaan",
     emoji: "💬",
     highlight: false,
     bg: "from-purple-50 to-white",
