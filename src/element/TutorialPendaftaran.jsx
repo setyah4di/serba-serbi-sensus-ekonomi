@@ -1,7 +1,7 @@
 import rekrut1 from "../assets/image/rekrut_1.png";
 import rekrut2 from "../assets/image/rekrut_2.png";
 import rekrut3 from "../assets/image/rekrut_3.png";
-import rekrut4 from "../assets/image/rekrut_4.png";
+import rekrut4 from "../assets/image/rekrut_4.jpeg";
 
 // ---- data langkah tutorial ----
 const TUTORIAL_STEPS = [

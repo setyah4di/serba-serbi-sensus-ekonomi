@@ -206,7 +206,7 @@ function AlurPendaftaran() {
 
             <div className="flex flex-col gap-3 mb-5">
               <a
-                href="https://sites.google.com/view/rekrutmenmitra3403/registrasi?authuser=0"
+                href="https://mitra.bps.go.id/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#4285F4] hover:bg-[#2a6dd4] text-white font-bold py-3 px-5 rounded-lg text-sm transition-all duration-300 hover:scale-105"
@@ -215,7 +215,7 @@ function AlurPendaftaran() {
               </a>
 
               <a
-                href="https://sites.google.com/view/rekrutmenmitra3403/registrasi?authuser=0"
+                href="https://forms.gle/LQhgkECUb3ChJ5YF8"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#F28C28] hover:bg-[#d9770d] text-white font-bold py-3 px-5 rounded-lg text-sm transition-all duration-300 hover:scale-105"
