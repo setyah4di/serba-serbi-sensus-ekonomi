@@ -147,11 +147,11 @@ export default function TabelKebutuhan() {
 
         {/* ── Judul ── */}
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-extrabold text-gray-800 uppercase tracking-wide">
-            Kebutuhan Penambahan Mitra SE 2026
+        <h2 className="text-2xl font-extrabold text-gray-800 uppercase tracking-wide">
+            Kebutuhan Penambahan Mitra 2026
           </h2>
           <p className="text-gray-500 text-sm mt-1">
-            Kabupaten Tanjung Jabung Barat — Data per Kecamatan &amp; Desa
+            Kebutuhan Mitra SE - Mitra Cadangan Setiap Kecamatan
           </p>
           <div className="h-1 w-16 bg-orange-500 mx-auto mt-4 rounded-full" />
         </div>
@@ -213,7 +213,7 @@ export default function TabelKebutuhan() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-orange-500 text-white">
-                {["No", "Nama Kecamatan", "No", "Nama Desa", "Kebutuhan Mitra", "Cadangan"].map((h) => (
+                {["No", "Nama Kecamatan", "No", "Nama Desa", "Kebutuhan Mitra SE", " Mitra Cadangan Setiap Kecamatan"].map((h) => (
                   <th key={h} className="border border-orange-400 px-4 py-3 text-center font-extrabold uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
