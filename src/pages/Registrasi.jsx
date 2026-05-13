@@ -280,9 +280,9 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
               >
                 <span style={{ fontSize: "28px" }}>📝</span>
                 <div>
-                  <p style={{ fontWeight: "900", margin: 0 }}>Tes Kompetensi Tertulis</p>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)", margin: 0, fontWeight: "400" }}>
-                    30 soal · 60 menit · Online
+                  <p style={{ fontWeight: "900", fontSize: "15px", margin: 0 }}>Tes Kompetensi Tertulis</p>
+                  <p style={{ fontSize: "14px", margin: 0, fontWeight: "400" }}>
+                    🗓️ 13 - 15 Mei 2026
                   </p>
                 </div>
               </button>
@@ -299,11 +299,11 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
                 onMouseOver={e => { e.currentTarget.style.background="#1976d2"; e.currentTarget.style.transform="scale(1.02)"; }}
                 onMouseOut={e => { e.currentTarget.style.background="#2196F3"; e.currentTarget.style.transform="scale(1)"; }}
               >
-                <span style={{ fontSize: "28px" }}>🎤</span>
-                <div>
-                  <p style={{ fontWeight: "900", margin: 0 }}>Tes Wawancara</p>
-                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)", margin: 0, fontWeight: "400" }}>
-                    Tatap muka · 21–23 Juli 2025
+                <span style={{ fontSize: "28px" }}>🔈</span>
+                 <div>
+                  <p style={{ fontWeight: "900", fontSize: "15px", margin: 0 }}>Tes Wawancara</p>
+                  <p style={{ fontSize: "14px", margin: 0, fontWeight: "400" }}>
+                    🗓️ 16 - 17 Mei 2026
                   </p>
                 </div>
               </button>

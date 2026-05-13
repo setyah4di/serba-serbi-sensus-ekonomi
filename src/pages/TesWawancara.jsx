@@ -268,7 +268,7 @@ export default function TesWawancara() {
         }}
       >
         <div className="max-w-3xl mx-auto">
-          <div className="text-4xl mb-2">🎤</div>
+          <div className="text-4xl mb-2">🔊</div>
           <h1 className="text-2xl font-black tracking-widest uppercase mb-1">
             Tes Wawancara
           </h1>
