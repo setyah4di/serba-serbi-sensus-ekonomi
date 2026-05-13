@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import reportaseImg from "../assets/image/reportase.jpeg";
-import reportasePdf from "../assets/file/REPORTASEVOL1.pdf";
+import reportasePdf from "../assets/file/REPORTASEVol1.pdf";
 
 function useScrollZoom(threshold = 0.15) {
   const ref = useRef(null);
