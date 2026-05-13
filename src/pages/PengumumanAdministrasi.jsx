@@ -92,9 +92,15 @@ export default function PengumumanAdministrasi() {
   }, []);
 
   // Reset halaman setiap kali search berubah
-  useEffect(() => {
+//   useEffect(() => {
+//     setPage(1);
+// }, [search]); // Hanya depend ke search, tidak perlu setPage
+
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
     setPage(1);
-}, [search]); // Hanya depend ke search, tidak perlu setPage
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -262,7 +268,7 @@ export default function PengumumanAdministrasi() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearch}
             placeholder="Cari nama peserta..."
             style={{
               width: "100%",
