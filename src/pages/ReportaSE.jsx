@@ -36,7 +36,7 @@ export default function ReportaSE() {
           Reporta-SE · Vol. 1
         </span>
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 leading-tight">
-          Reportase Sensus Ekonomi 2026
+          Reporta Sensus Ekonomi 2026
         </h1>
         <p className="text-gray-400 text-sm mt-2">
           Klik pada gambar untuk membaca publikasi

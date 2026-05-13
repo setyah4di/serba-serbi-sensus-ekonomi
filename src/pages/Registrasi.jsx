@@ -78,7 +78,8 @@ const KARTU = [
   {
     id: "pengumuman-admin",
     label: "Pengumuman Seleksi Administrasi",
-    clickable: false,
+    clickable: true,
+    modalType: "pengumuman-admin",
     img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80",
   },
   {
@@ -260,7 +261,7 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
             <h3 style={{ fontSize: "18px", fontWeight: "900", color: "#1f2937", marginBottom: "4px" }}>
               Seleksi Kompetensi
             </h3>
-            <p style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "24px" }}>
+            <p style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "24px" }}>
               Pilih jenis tes yang ingin Anda akses:
             </p>
 
@@ -279,9 +280,9 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
               >
                 <span style={{ fontSize: "28px" }}>📝</span>
                 <div>
-                  <p style={{ fontWeight: "900", fontSize:"15px", margin: 0 }}>Tes Kompetensi Tertulis</p>
-                  <p style={{ fontSize: "13px", color: "white", margin: 0, fontWeight: "400" }}>
-                    🗓️ 13 - 15 Maret 2026
+                  <p style={{ fontWeight: "900", margin: 0 }}>Tes Kompetensi Tertulis</p>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)", margin: 0, fontWeight: "400" }}>
+                    30 soal · 60 menit · Online
                   </p>
                 </div>
               </button>
@@ -300,15 +301,15 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
               >
                 <span style={{ fontSize: "28px" }}>🎤</span>
                 <div>
-                  <p style={{ fontWeight: "900",fontSize:"15px", margin: 0 }}>Tes Wawancara</p>
-                  <p style={{ fontSize: "13px", color: "white", margin: 0, fontWeight: "400" }}>
-                     🗓️ 16 - 17 Maret 2026
+                  <p style={{ fontWeight: "900", margin: 0 }}>Tes Wawancara</p>
+                  <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)", margin: 0, fontWeight: "400" }}>
+                    Tatap muka · 21–23 Juli 2025
                   </p>
                 </div>
               </button>
             </div>
 
-            <p style={{ marginTop: "20px", fontSize: "14px", color: "#9ca3af" }}>
+            <p style={{ marginTop: "20px", fontSize: "11px", color: "#9ca3af" }}>
               Pastikan Anda sudah lulus seleksi administrasi sebelum mengikuti tes ini.
             </p>
           </div>
@@ -343,6 +344,10 @@ function AlurPendaftaran() {
 
   const handleKartuClick = (k) => {
     if (!k.clickable) return;
+    if (k.modalType === "pengumuman-admin") {
+      navigate("/pengumuman-administrasi");
+      return;
+    }
     setModalType(k.modalType);
     setModalOpen(true);
   };

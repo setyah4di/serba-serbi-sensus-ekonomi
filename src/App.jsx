@@ -15,6 +15,7 @@ import Ngibar from "./pages/Ngibar";
 import ReportaSE from "./pages/ReportaSE";
 import TesKompetensi from "./pages/TesKompetensi";
 import TesWawancara from "./pages/TesWawancara";
+import PengumumanAdministrasi from "./pages/PengumumanAdministrasi";
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/registrasi" element={<Registrasi />} />
         <Route path="/tes-kompetensi" element={<TesKompetensi />} />
         <Route path="/tes-wawancara" element={<TesWawancara />} />
+        <Route path="/pengumuman-administrasi" element={<PengumumanAdministrasi />} />
         <Route path="/kkd" element={<KKD />} />
         <Route path="/ngibar" element={<Ngibar />} />
         <Route path="/reporta-se" element={<ReportaSE />} />
