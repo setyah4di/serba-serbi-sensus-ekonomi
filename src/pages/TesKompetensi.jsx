@@ -17,7 +17,7 @@ export default function TesKompetensi() {
 
   const handleKonfirmasi = () => {
     window.open(
-      "https://forms.gle/8ybHzgGN5BqzDWJr7",
+      "https://quiz.everestwebdeals.co/?form=8b951853aac2af8cc5d9cd8655471180",
       "_blank"
     );
     setShowConfirm(false);
