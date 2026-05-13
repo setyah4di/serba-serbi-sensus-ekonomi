@@ -1,329 +1,129 @@
-const NEWS_DATA = [
-  {
-    id: 1,
-    tanggal: "27 Februari 2026",
-    judul: "Ekonomi Kabupaten Tanjung Jabung Barat Tahun 2025 Tumbuh 5,28 Persen",
-    url: "https://tanjabbarkab.bps.go.id",
-    image: "https://picsum.photos/300/200?random=1",
-  },
-  {
-    id: 2,
-    tanggal: "28 Februari 2025",
-    judul: "Pertumbuhan Ekonomi Kabupaten Tanjung Jabung Barat Tahun 2024",
-    url: "https://tanjabbarkab.bps.go.id",
-    image: "https://picsum.photos/300/200?random=2",
-  },
-  {
-    id: 3,
-    tanggal: "13 Desember 2024",
-    judul: "Indeks Pembangunan Manusia (IPM) Kabupaten Tanjung Jabung Barat tahun 2024 mencapai 72,01",
-    url: "https://tanjabbarkab.bps.go.id",
-    image: "https://picsum.photos/300/200?random=3",
-  },
-  {
-    id: 4,
-    tanggal: "13 Desember 2024",
-    judul: "Tingkat Pengangguran Terbuka (TPT) Agustus 2024 sebesar 3,20 persen",
-    url: "https://tanjabbarkab.bps.go.id",
-    image: "https://picsum.photos/300/200?random=4",
-  },
-  {
-    id: 5,
-    tanggal: "7 Agustus 2024",
-    judul: "Persentase penduduk miskin di Kabupaten Tanjung Jabung Barat pada Maret 2024 sebesar 9,54 persen",
-    url: "https://tanjabbarkab.bps.go.id",
-    image: "https://picsum.photos/300/200?random=5",
-  },
-  {
-    id: 6,
-    tanggal: "1 April 2024",
-    judul: "Ekonomi Kabupaten Tanjung Jabung Barat Tahun 2023 Tumbuh 3,51 Persen",
-    url: "https://tanjabbarkab.bps.go.id",
-    image: "https://picsum.photos/300/200?random=6",
-  },
-];
+import { useEffect, useRef, useState } from "react";
+import reportaseImg from "../assets/image/reportase.jpeg";
+import reportasePdf from "../assets/file/REPORTASEVOL1.pdf";
 
-const BRS_DATA = [
-  {
-    id: 1,
-    tanggal: "27 Februari 2026",
-    judul: "Ekonomi Kabupaten Tanjung Jabung Barat Tahun 2025 Tumbuh 5,28 Persen",
-    image: "https://picsum.photos/300/200?random=11",
-    url: "#",
-  },
-  {
-    id: 2,
-    tanggal: "28 Februari 2025",
-    judul: "Pertumbuhan Ekonomi Kabupaten Tanjung Jabung Barat Tahun 2024",
-    image: "https://picsum.photos/300/200?random=12",
-    url: "#",
-  },
-  {
-    id: 3,
-    tanggal: "13 Desember 2024",
-    judul: "Indeks Pembangunan Manusia (IPM) Kabupaten Tanjung Jabung Barat tahun 2024 mencapai 72,01",
-    image: "https://picsum.photos/300/200?random=13",
-    url: "#",
-  },
-  {
-    id: 4,
-    tanggal: "13 Desember 2024",
-    judul: "Tingkat Pengangguran Terbuka (TPT) Agustus 2024 sebesar 3,20 persen",
-    image: "https://picsum.photos/300/200?random=14",
-    url: "#",
-  },
-  {
-    id: 5,
-    tanggal: "7 Agustus 2024",
-    judul: "Persentase penduduk miskin di Kabupaten Tanjung Jabung Barat pada Maret 2024 sebesar 9,54 persen",
-    image: "https://picsum.photos/300/200?random=15",
-    url: "#",
-  },
-  {
-    id: 6,
-    tanggal: "1 April 2024",
-    judul: "Ekonomi Kabupaten Tanjung Jabung Barat Tahun 2023 Tumbuh 3,51 Persen",
-    image: "https://picsum.photos/300/200?random=16",
-    url: "#",
-  },
-];
-
-const styles = `
-  @keyframes zoomInFade {
-    0%   { opacity: 0; transform: scale(0.85); }
-    60%  { opacity: 1; transform: scale(1.03); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-
-  @keyframes zoomInFadeItem {
-    0%   { opacity: 0; transform: scale(0.92) translateY(12px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .page-wrapper {
-    animation: zoomInFade 0.6s ease-out forwards;
-  }
-
-  .news-card {
-    animation: zoomInFadeItem 0.5s ease-out forwards;
-    opacity: 0;
-  }
-
-  /* Thumbnail responsif: ukuran berubah sesuai layar */
-  .thumb-brs {
-    width: 7rem;
-    height: 6rem;
-    flex-shrink: 0;
-    border-radius: 0.75rem;
-    overflow: hidden;
-    background: #f3f4f6;
-  }
-
-  .thumb-news {
-    width: 6rem;
-    height: 6rem;
-    flex-shrink: 0;
-    border-radius: 0.5rem;
-    overflow: hidden;
-    background: #f3f4f6;
-  }
-
-  /* Di layar sangat kecil (<360px): thumbnail lebih kecil */
-  @media (max-width: 360px) {
-    .thumb-brs { width: 5rem; height: 5rem; }
-    .thumb-news { width: 4.5rem; height: 4.5rem; }
-    .title-brs { font-size: 0.95rem !important; }
-    .title-news { font-size: 0.875rem !important; }
-  }
-
-  /* Di layar tablet (768px–1023px): 2 kolom dengan gap lebih lega */
-  @media (min-width: 768px) {
-    .thumb-brs { width: 8rem; height: 7rem; }
-    .thumb-news { width: 7rem; height: 7rem; }
-  }
-
-  /* Di layar besar (>=1024px): thumbnail lebih besar */
-  @media (min-width: 1024px) {
-    .thumb-brs { width: 9rem; height: 7.5rem; }
-    .thumb-news { width: 7.5rem; height: 7.5rem; }
-  }
-
-  /* Hover effect kartu */
-  .card-link {
-    text-decoration: none;
-    display: flex;
-    gap: 1rem;
-    background: white;
-    border-radius: 1rem;
-    padding: 1rem;
-    border: 1px solid #f3f4f6;
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-  .card-link:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-    transform: translateY(-2px);
-  }
-  .card-link:active {
-    transform: scale(0.98);
-  }
-
-  img { display: block; width: 100%; height: 100%; object-fit: cover; }
-`;
+function useScrollZoom(threshold = 0.15) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return [ref, visible];
+}
 
 export default function ReportaSE() {
+  const [cardRef, cardVisible] = useScrollZoom(0.1);
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <>
-      <style>{styles}</style>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 flex flex-col items-center justify-center py-20 px-4">
 
-      <div className="page-wrapper min-h-screen bg-gray-100">
-
-        {/* Container utama — padding responsif */}
-        <div
-          style={{
-            maxWidth: "1280px",
-            margin: "0 auto",
-            padding: "clamp(1rem, 4vw, 2.5rem) clamp(0.75rem, 4vw, 1.5rem)",
-          }}
-        >
-
-          {/* ── SEKSI BERITA RESMI STATISTIK ── */}
-          <section style={{ marginBottom: "clamp(1.5rem, 4vw, 3rem)" }}>
-
-            {/* Header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                gap: "1rem",
-                marginBottom: "clamp(1rem, 3vw, 1.5rem)",
-                flexWrap: "wrap",
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    fontSize: "clamp(1.25rem, 3.5vw, 1.875rem)",
-                    fontWeight: 700,
-                    color: "#111827",
-                    margin: 0,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Berita Resmi Statistik
-                </h2>
-                <p style={{ color: "#6b7280", marginTop: "0.25rem", fontSize: "clamp(0.8rem, 2vw, 0.95rem)" }}>
-                  BPS Kabupaten Tanjung Jabung Barat
-                </p>
-              </div>
-              <animateTransform
-                href="https://tanjabbarkab.bps.go.id/id/pressrelease"
-                style={{
-                  color: "#1d4ed8",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  fontSize: "clamp(0.8rem, 2vw, 0.95rem)",
-                  whiteSpace: "nowrap",
-                  alignSelf: "center",
-                }}
-              >
-                Lihat Semua →
-              </animateTransform>
-            </div>
-
-            {/* Grid BRS — 1 kolom di HP, 2 kolom di tablet+ */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 420px), 1fr))",
-                gap: "clamp(0.75rem, 2vw, 1.25rem)",
-              }}
-            >
-              {BRS_DATA.map((item, index) => (
-                <a
-                  key={item.id}
-                  href={item.url}
-                  className="card-link news-card"
-                  style={{ animationDelay: `${index * 80}ms` }}
-                >
-                  <div className="thumb-brs">
-                    <img src={item.image} alt={item.judul} />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                    <p style={{ fontSize: "0.8rem", color: "#9ca3af", marginBottom: "0.4rem" }}>
-                      {item.tanggal}
-                    </p>
-                    <h3
-                      className="title-brs"
-                      style={{
-                        fontSize: "clamp(0.9rem, 2.2vw, 1.1rem)",
-                        fontWeight: 600,
-                        color: "#111827",
-                        lineHeight: 1.45,
-                        margin: 0,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {item.judul}
-                    </h3>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-
-          {/* ── SEKSI NEWS (bagian bawah) ── */}
-          <section>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 420px), 1fr))",
-                gap: "clamp(0.75rem, 2vw, 1rem)",
-              }}
-            >
-              {NEWS_DATA.map((item, index) => (
-                <a
-                  key={item.id}
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="card-link news-card"
-                  style={{ animationDelay: `${(BRS_DATA.length + index) * 80}ms` }}
-                >
-                  <div className="thumb-news">
-                    <img src={item.image} alt={item.judul} />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                    <p style={{ fontSize: "0.8rem", color: "#9ca3af", marginBottom: "0.4rem" }}>
-                      {item.tanggal}
-                    </p>
-                    <h3
-                      className="title-news"
-                      style={{
-                        fontSize: "clamp(0.875rem, 2vw, 1.0625rem)",
-                        fontWeight: 600,
-                        color: "#111827",
-                        lineHeight: 1.5,
-                        margin: 0,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {item.judul}
-                    </h3>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-
+      {/* ── Header ── */}
+      <div
+        className="text-center mb-12"
+        style={{
+          opacity: cardVisible ? 1 : 0,
+          transform: cardVisible ? "translateY(0)" : "translateY(24px)",
+          transition: "opacity 0.7s ease, transform 0.7s ease",
+        }}
+      >
+        <span className="inline-block bg-orange-100 text-orange-600 text-xs font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">
+          Reporta-SE · Vol. 1
+        </span>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 leading-tight">
+          Reportase Sensus Ekonomi 2026
+        </h1>
+        <p className="text-gray-400 text-sm mt-2">
+          Klik pada gambar untuk membaca publikasi
+        </p>
+        <div className="flex items-center justify-center gap-2 mt-4">
+          <div className="h-px w-10 bg-orange-300 rounded-full" />
+          <div className="w-2 h-2 rounded-full bg-orange-400" />
+          <div className="h-px w-10 bg-orange-300 rounded-full" />
         </div>
       </div>
-    </>
+
+      {/* ── Image Card ── */}
+      <div
+        ref={cardRef}
+        style={{
+          opacity: cardVisible ? 1 : 0,
+          transform: cardVisible ? "scale(1) translateY(0)" : "scale(0.88) translateY(40px)",
+          transition: "opacity 0.7s ease 0.15s, transform 0.7s ease 0.15s",
+        }}
+      >
+        <a
+          href={reportasePdf}
+          target="_blank"
+          rel="noopener noreferrer"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          className="block relative group"
+          title="Buka Reportase SE Vol. 1 (PDF)"
+        >
+          {/* Card wrapper */}
+          <div
+            className="relative rounded-3xl overflow-hidden shadow-xl border border-gray-100"
+            style={{
+              transform: hovered ? "scale(1.03) translateY(-6px)" : "scale(1) translateY(0)",
+              boxShadow: hovered
+                ? "0 32px 64px rgba(249,115,22,0.25), 0 8px 24px rgba(0,0,0,0.12)"
+                : "0 8px 32px rgba(0,0,0,0.10)",
+              transition: "transform 0.4s ease, box-shadow 0.4s ease",
+            }}
+          >
+            {/* Cover image */}
+            <img
+              src={reportaseImg}
+              alt="Cover Reportase SE 2026 Vol. 1"
+              className="block w-full object-cover"
+              style={{ maxWidth: 420, maxHeight: 600 }}
+            />
+
+            {/* Hover overlay */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/50 backdrop-blur-[2px]"
+              style={{
+                opacity: hovered ? 1 : 0,
+                transition: "opacity 0.3s ease",
+              }}
+            >
+              {/* PDF icon */}
+              <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/60 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-white font-extrabold text-base drop-shadow">Buka PDF</p>
+              <p className="text-white/70 text-xs">REPORTASE SE Vol. 1</p>
+            </div>
+          </div>
+
+          {/* Badge bawah card */}
+          <div
+            className="mt-5 flex items-center justify-center gap-2"
+            style={{
+              transform: hovered ? "translateY(4px)" : "translateY(0)",
+              transition: "transform 0.3s ease",
+            }}
+          >
+            <span className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-5 py-2 rounded-full shadow-md transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9v10a2 2 0 01-2 2z" />
+              </svg>
+              Unduh / Baca PDF
+            </span>
+          </div>
+        </a>
+      </div>
+
+    </div>
   );
 }
