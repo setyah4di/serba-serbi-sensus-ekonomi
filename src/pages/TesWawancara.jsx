@@ -424,6 +424,10 @@ export default function TesWawancara() {
             <span className="text-[#2196F3] text-lg">🎦</span>
             <span className="font-bold text-gray-800">Zoom Meeting</span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[#2196F3] text-lg">🕒</span>
+            <span className="font-bold text-gray-800"> 09.00 - 14.00 WIB</span>
+          </div>
         </div>
       </div>
 
