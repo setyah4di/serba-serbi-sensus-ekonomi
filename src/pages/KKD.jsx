@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import videoBupati from "../assets/video/KKD_Bupati.mp4";
-import videoPajak  from "../assets/video/KKD_KPPN.mp4";
+import videoPajak  from "../assets/video/KKD_Pajak.mp4";
 import videoTNI    from "../assets/video/KKD_TNI.mp4";
 import videoKadis    from "../assets/video/KKD_Kadis.mp4";
 
