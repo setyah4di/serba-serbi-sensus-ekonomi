@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import videoBupati from "../assets/video/KKD_Bupati.mp4";
-import videoPajak  from "../assets/video/KKD_Pajak.mp4";
+import videoPajak  from "../assets/video/KKD_KPPN.mp4";
 import videoTNI    from "../assets/video/KKD_TNI.mp4";
+import videoKadis    from "../assets/video/KKD_Kadis.mp4";
 
 // ── Hook: zoom in saat masuk viewport, zoom out saat keluar ──────────────────
 function useZoomOnScroll(threshold = 0.15) {
@@ -50,6 +51,15 @@ const VIDEOS = [
     accent: "from-emerald-400 to-teal-600",
     tag: "Instansi Vertikal",
     tagColor: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    src: videoKadis,
+    title: "Video Dukungan Dari Kepala Dinas",
+    subtitle: "Tanjung Jabung Barat",
+    icon: "📊",
+    accent: "from-emerald-400 to-teal-600",
+    tag: "Instansi Dinas",
+    tagColor: "bg-red-100 text-gray-700",
   },
 ];
 
@@ -139,7 +149,7 @@ function VideoCard({ video, index }) {
             <h3 className="font-extrabold text-gray-800 text-base md:text-lg leading-tight truncate">
               {video.icon} {video.title}
             </h3>
-            <p className="text-gray-400 text-xs mt-0.5 truncate">{video.subtitle}</p>
+            <p className="text-gray-600 text-xs mt-0.5 truncate">{video.subtitle}</p>
           </div>
         </div>
 

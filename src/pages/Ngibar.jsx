@@ -49,7 +49,7 @@ const MENUS = [
     bg: "from-red-50 to-white",
     border: "border-red-100",
     textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/tugas-dummy",
+    url: " http://s.bps.go.id/UndanganNgibarSE1507",
   },
   {
     id: "qa",
