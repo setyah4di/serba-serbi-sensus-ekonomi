@@ -9,7 +9,7 @@ const MENUS = [
     bg: "from-yellow-50 to-white",
     border: "border-yellow-300",
     textColor: "text-blue-700",
-    url: "https://daftarhadir.web.bps.go.id/#/go/uYboM",
+    url: "http://s.bps.go.id/DaftarHadirNgibarSE1507",
   },
   {
     id: "link-zoom",
@@ -19,7 +19,7 @@ const MENUS = [
     bg: "from-blue-50 to-white",
     border: "border-blue-100",
     textColor: "text-blue-700",
-    url: "https://us06web.zoom.us/j/83032904734?pwd=pRFMhUqtayIX2TXclAQpbnXshBWkUE.1",
+    url: "https://s.bps.go.id/ZoomNgibarSE1507",
   },
   {
     id: "kuesioner",
@@ -39,7 +39,7 @@ const MENUS = [
     bg: "from-yellow-50 to-white",
     border: "border-yellow-100",
     textColor: "text-blue-700",
-    url: "https://drive.google.com/file/d/1L4BQ87ABMUvlmEhpGuMcgpFoCk-a7Odh/view?usp=sharing",
+    url: "http://s.bps.go.id/MateriNgibarSE1507",
   },
   {
     id: "surat",
@@ -59,7 +59,7 @@ const MENUS = [
     bg: "from-purple-50 to-white",
     border: "border-purple-100",
     textColor: "text-blue-700",
-    url: "https://docs.google.com/spreadsheets/d/1JsJNGpeX5zVR8xQd2GRgTzJLrilAlyRsg6_waIE2TnM/edit?usp=sharing",
+    url: "http://s.bps.go.id/QNANgibarSE1507",
   },
 ];
 
