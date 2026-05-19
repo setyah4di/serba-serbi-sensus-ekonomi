@@ -9,7 +9,7 @@ const MENUS = [
     bg: "from-yellow-50 to-white",
     border: "border-yellow-300",
     textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/daftar-hadir-dummy",
+    url: "https://daftarhadir.web.bps.go.id/#/go/uYboM",
   },
   {
     id: "link-zoom",
@@ -19,7 +19,7 @@ const MENUS = [
     bg: "from-blue-50 to-white",
     border: "border-blue-100",
     textColor: "text-blue-700",
-    url: "https://zoom.us/j/dummy-link-zoom",
+    url: "https://us06web.zoom.us/j/83032904734?pwd=pRFMhUqtayIX2TXclAQpbnXshBWkUE.1",
   },
   {
     id: "kuesioner",
@@ -29,7 +29,7 @@ const MENUS = [
     bg: "from-orange-50 to-white",
     border: "border-orange-100",
     textColor: "text-blue-700",
-    url: "https://drive.google.com/drive/folders/1smNK0ZVdJK9f62Hq47fwEAt5KQRB7LlW?usp=sharing",
+    url: "https://s.bps.go.id/KuesionerUB_1507",
   },
   {
     id: "materi",
@@ -39,7 +39,7 @@ const MENUS = [
     bg: "from-yellow-50 to-white",
     border: "border-yellow-100",
     textColor: "text-blue-700",
-    url: "https://drive.google.com/drive/folders/materi-dummy",
+    url: "https://drive.google.com/file/d/1L4BQ87ABMUvlmEhpGuMcgpFoCk-a7Odh/view?usp=sharing",
   },
   {
     id: "surat",
@@ -59,7 +59,7 @@ const MENUS = [
     bg: "from-purple-50 to-white",
     border: "border-purple-100",
     textColor: "text-blue-700",
-    url: "https://docs.google.com/forms/d/e/qa-dummy",
+    url: "https://docs.google.com/spreadsheets/d/1JsJNGpeX5zVR8xQd2GRgTzJLrilAlyRsg6_waIE2TnM/edit?usp=sharing",
   },
 ];
 
