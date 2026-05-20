@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import videoBupati from "../assets/video/KKD_Bupati.mp4";
-import videoPajak  from "../assets/video/KKD_Pajak.mp4";
+import videoPajak  from "../assets/video/Pajak.mp4";
 import videoTNI    from "../assets/video/KKD_TNI.mp4";
 import videoKadis    from "../assets/video/KKD_Kadis.mp4";
 
@@ -68,7 +68,7 @@ export default function KKD() {
   const [titleRef, titleVisible] = useZoomOnScroll(0.3);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 py-16 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
 
         {/* ── Header ── */}
