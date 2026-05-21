@@ -29,7 +29,7 @@ const MENUS = [
     bg: "from-blue-50 to-white",
     border: "border-blue-100",
     textColor: "text-blue-700",
-    url: "https://s.bps.go.id/ZoomNgibarSE1507",
+    url: "https://drive.google.com/file/d/109QG-1yxBGHxMAPce1VwsanOG7VSk6Gx/view",
   },
   {
     id: "kuesioner",
