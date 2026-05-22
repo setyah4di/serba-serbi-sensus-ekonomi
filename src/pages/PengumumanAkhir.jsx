@@ -109,9 +109,9 @@ const PESERTA_LULUS = [
   {  nama: "Muhayidin" },
   {  nama: "Noer Hidayat MJ" },   // fix: Utama→Cadangan
   {  nama: "Mona Br Siahaan" },      // tambah baru
-  {  nama: "Novita Seni Wahyuni" }, // tambah baru
+  {  nama: "Nurul Fadila" }, // tambah baru
   {  nama: "Nurhani" },
-  {  nama: "Siti Patimah" },         // fix: Cadangan→Utama
+  {  nama: "Mutiara Anesa Putri" },         // fix: Cadangan→Utama
   {  nama: "Yuni Arnita" },
   {  nama: "Agung Rizki Dwi Putra" },
   {  nama: "Ana Fitriana" },
