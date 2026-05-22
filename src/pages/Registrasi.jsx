@@ -92,7 +92,8 @@ const KARTU = [
   {
     id: "pengumuman-akhir",
     label: "Pengumuman Seleksi Akhir",
-    clickable: false,
+    clickable: true,
+    modalType: "pengumuman-akhir",
     img: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&q=80",
   },
 ];
@@ -346,6 +347,10 @@ function AlurPendaftaran() {
     if (!k.clickable) return;
     if (k.modalType === "pengumuman-admin") {
       navigate("/pengumuman-administrasi");
+      return;
+    }
+    else if (k.modalType === "pengumuman-akhir") {
+      navigate("/pengumuman-akhir");
       return;
     }
     setModalType(k.modalType);
