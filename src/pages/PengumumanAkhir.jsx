@@ -238,39 +238,48 @@ export default function PengumumanAkhir() {
   {/* <span style={{ fontSize: "20px", flexShrink: 0 }}>⚠️</span> */}
 
   <div style={{ flex: 1 }}>
-    <p
+  <p
+    style={{
+      margin: 0,
+      fontSize: "15px",
+      color: "#92400e",
+      lineHeight: "1.6",
+      textAlign: "center",
+    }}
+  >
+    <strong style={{ color: "#000" }}>
+      Peserta yang lolos seleksi tahap akhir
+    </strong>{" "}
+    
+    wajib melakukan{" "}
+
+    <strong style={{ color: "#000" }}>
+      submit pakta integritas
+    </strong>{" "}
+    
+    di aplikasi sobat BPS.
+    untuk tutorialnya dapat klik tulisan dibawah ini
+  </p>
+
+  <div style={{ textAlign: "center", marginTop: "3px" }}>
+    <button
+      onClick={() => {
+        scrollToTutorial();
+      }}
       style={{
-        margin: 0,
-        fontSize: "13px",
-        color: "#92400e",
-        lineHeight: "1.6",
-        textAlign: "center",
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        color: "#F28C28",
+        fontWeight: "700",
+        textDecoration: "underline",
+        fontSize: "20px",
       }}
     >
-      Peserta yang lolos seleksi tahap akhir wajib
-      melakukan submit pakta integritas di aplikasi sobat BPS.
-      untuk tutorialnya dapat klik tulisan dibawah ini
-    </p>
-
-    <div style={{ textAlign: "center", marginTop: "3px" }}>
-      <button
-        onClick={() => {
-          scrollToTutorial();
-        }}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#F28C28",
-          fontWeight: "700",
-          textDecoration: "underline",
-          fontSize: "20px",
-        }}
-      >
-        tutorial submit pakta integritas ↓
-      </button>
-    </div>
+      tutorial submit pakta integritas ↓
+    </button>
   </div>
+</div>
 </div>
         {/* Search + Filter */}
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
