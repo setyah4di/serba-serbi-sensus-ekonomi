@@ -2,53 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom"; // Sesuaikan dengan router yang dipakai
+import { useNavigate } from "react-router-dom";
 import TutorialPendaftaran from "../element/TutorialPendaftaran";
 import TabelKebutuhan from "../element/TabelKebutuhan";
+import HasilRekrutmen from "../assets/file/HasilRekrutmen.pdf";
 
 export default function Registrasi() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(true);
-    }, 100);
-
+    const timer = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <>
-      {/* ===== ALUR PENDAFTARAN ===== */}
-      <div
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1)" : "scale(0.85)",
-          transition: "all 0.8s ease",
-        }}
-      >
+      <div style={{ opacity: visible ? 1 : 0, transform: visible ? "scale(1)" : "scale(0.85)", transition: "all 0.8s ease" }}>
         <AlurPendaftaran />
       </div>
-
-      {/* ===== TABEL KEBUTUHAN PETUGAS ===== */}
-      <div
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1)" : "scale(0.9)",
-          transition: "all 1s ease 0.2s",
-        }}
-      >
+      <div style={{ opacity: visible ? 1 : 0, transform: visible ? "scale(1)" : "scale(0.9)", transition: "all 1s ease 0.2s" }}>
         <TabelKebutuhan />
       </div>
-
-      {/* ===== TUTORIAL PENDAFTARAN ===== */}
-      <div
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1)" : "scale(0.85)",
-          transition: "all 1.1s ease 0.4s",
-        }}
-      >
+      <div style={{ opacity: visible ? 1 : 0, transform: visible ? "scale(1)" : "scale(0.85)", transition: "all 1.1s ease 0.4s" }}>
         <TutorialPendaftaran />
       </div>
     </>
@@ -75,7 +50,7 @@ const KARTU = [
     extraLabel: "SOBAT BPS",
     subLabel: "A helpful and friendly apps",
   },
-  {
+ {
     id: "pengumuman-admin",
     label: "Pengumuman Seleksi Administrasi",
     clickable: true,
@@ -96,21 +71,24 @@ const KARTU = [
     modalType: "pengumuman-akhir",
     img: "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=400&q=80",
   },
+  {
+    // Gambar: hasil rekrutmen — foto dokumen/sertifikat/hasil resmi
+    id: "hasil-rekrutmen",
+    label: "Hasil Rekrutmen",
+    clickable: true,
+    modalType: "hasil-rekrutmen",
+    img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=400&q=80",
+    pdfUrl: HasilRekrutmen, // ← PDF langsung dibuka saat diklik
+  },
 ];
 
-// =============================================
-// MODAL PORTAL — di-render langsung ke document.body
-// agar tidak terpengaruh transform/overflow ancestor
-// =============================================
 function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
-  // Lock scroll saat modal terbuka
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  // Tutup dengan tombol Escape
   useEffect(() => {
     const handleKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", handleKey);
@@ -118,25 +96,16 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
   }, [onClose]);
 
   const overlayStyle = {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
+    position: "fixed", top: 0, left: 0,
+    width: "100vw", height: "100vh",
     zIndex: 99999,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: "flex", alignItems: "center", justifyContent: "center",
     padding: "16px",
   };
 
-  // Layer 1: backdrop blur murni (tidak ada transform agar blur bekerja)
   const backdropStyle = {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
+    position: "fixed", top: 0, left: 0,
+    width: "100vw", height: "100vh",
     zIndex: 99998,
     backdropFilter: "blur(10px) brightness(0.35)",
     WebkitBackdropFilter: "blur(10px) brightness(0.35)",
@@ -145,33 +114,12 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
 
   return createPortal(
     <>
-      {/* Backdrop — layer terpisah tanpa transform */}
       <div style={backdropStyle} onClick={onClose} />
-
-      {/* Modal content */}
       <div style={overlayStyle} onClick={(e) => e.target === e.currentTarget && onClose()}>
+
         {type === "registrasi" && (
-          <div
-            style={{
-              animation: "zoomIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-              boxShadow: "0 40px 100px rgba(0,0,0,0.45)",
-              background: "white",
-              borderRadius: "16px",
-              padding: "32px",
-              width: "90%",
-              maxWidth: "420px",
-              textAlign: "center",
-              position: "relative",
-              zIndex: 100000,
-            }}
-          >
-            <button
-              onClick={onClose}
-              style={{
-                position: "absolute", top: "12px", right: "16px",
-                background: "none", border: "none", cursor: "pointer",
-                color: "#9ca3af", fontSize: "20px", lineHeight: 1,
-              }}
+          <div style={{ animation: "zoomIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", boxShadow: "0 40px 100px rgba(0,0,0,0.45)", background: "white", borderRadius: "16px", padding: "32px", width: "90%", maxWidth: "420px", textAlign: "center", position: "relative", zIndex: 100000 }}>
+            <button onClick={onClose} style={{ position: "absolute", top: "12px", right: "16px", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: "20px", lineHeight: 1 }}
               onMouseOver={e => e.target.style.color = "#374151"}
               onMouseOut={e => e.target.style.color = "#9ca3af"}
             >✕</button>
@@ -184,31 +132,15 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
-              <a
-                href="https://mitra.bps.go.id/"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: "#4285F4", color: "white", fontWeight: "700",
-                  padding: "12px 20px", borderRadius: "10px", fontSize: "14px",
-                  textDecoration: "none", transition: "background 0.2s",
-                  display: "block",
-                }}
+              <a href="https://mitra.bps.go.id/" target="_blank" rel="noopener noreferrer"
+                style={{ background: "#4285F4", color: "white", fontWeight: "700", padding: "12px 20px", borderRadius: "10px", fontSize: "14px", textDecoration: "none", transition: "background 0.2s", display: "block" }}
                 onMouseOver={e => e.currentTarget.style.background = "#2a6dd4"}
                 onMouseOut={e => e.currentTarget.style.background = "#4285F4"}
               >
                 📋 Daftar Dulu di SOBAT BPS
               </a>
-              <a
-                href="https://forms.gle/LQhgkECUb3ChJ5YF8"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: "#F28C28", color: "white", fontWeight: "700",
-                  padding: "12px 20px", borderRadius: "10px", fontSize: "14px",
-                  textDecoration: "none", transition: "background 0.2s",
-                  display: "block",
-                }}
+              <a href="https://forms.gle/LQhgkECUb3ChJ5YF8" target="_blank" rel="noopener noreferrer"
+                style={{ background: "#F28C28", color: "white", fontWeight: "700", padding: "12px 20px", borderRadius: "10px", fontSize: "14px", textDecoration: "none", transition: "background 0.2s", display: "block" }}
                 onMouseOver={e => e.currentTarget.style.background = "#d9770d"}
                 onMouseOut={e => e.currentTarget.style.background = "#F28C28"}
               >
@@ -220,11 +152,7 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
               Pastikan sebelum mendaftar, Anda sudah melihat{" "}
               <button
                 onClick={() => { onClose(); scrollToTutorial(); }}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  color: "#F28C28", fontWeight: "700", textDecoration: "underline",
-                  fontSize: "12px",
-                }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#F28C28", fontWeight: "700", textDecoration: "underline", fontSize: "12px" }}
               >
                 tutorial pendaftaran di bawah ini ↓
               </button>
@@ -233,79 +161,40 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
         )}
 
         {type === "kompetensi" && (
-          <div
-            style={{
-              animation: "zoomIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-              boxShadow: "0 40px 100px rgba(0,0,0,0.45)",
-              background: "white",
-              borderRadius: "20px",
-              padding: "32px",
-              width: "90%",
-              maxWidth: "380px",
-              textAlign: "center",
-              position: "relative",
-              zIndex: 100000,
-            }}
-          >
-            <button
-              onClick={onClose}
-              style={{
-                position: "absolute", top: "12px", right: "16px",
-                background: "none", border: "none", cursor: "pointer",
-                color: "#9ca3af", fontSize: "20px", lineHeight: 1,
-              }}
+          <div style={{ animation: "zoomIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", boxShadow: "0 40px 100px rgba(0,0,0,0.45)", background: "white", borderRadius: "20px", padding: "32px", width: "90%", maxWidth: "380px", textAlign: "center", position: "relative", zIndex: 100000 }}>
+            <button onClick={onClose} style={{ position: "absolute", top: "12px", right: "16px", background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: "20px", lineHeight: 1 }}
               onMouseOver={e => e.target.style.color = "#374151"}
               onMouseOut={e => e.target.style.color = "#9ca3af"}
             >✕</button>
 
             <div style={{ fontSize: "40px", marginBottom: "12px" }}>🏆</div>
-            <h3 style={{ fontSize: "18px", fontWeight: "900", color: "#1f2937", marginBottom: "4px" }}>
-              Seleksi Kompetensi
-            </h3>
-            <p style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "24px" }}>
-              Pilih jenis tes yang ingin Anda akses:
-            </p>
+            <h3 style={{ fontSize: "18px", fontWeight: "900", color: "#1f2937", marginBottom: "4px" }}>Seleksi Kompetensi</h3>
+            <p style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "24px" }}>Pilih jenis tes yang ingin Anda akses:</p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <button
                 onClick={() => { onClose(); navigate("/tes-kompetensi"); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: "16px",
-                  background: "#F28C28", color: "white", fontWeight: "700",
-                  padding: "16px 20px", borderRadius: "14px", fontSize: "14px",
-                  border: "none", cursor: "pointer", textAlign: "left",
-                  transition: "background 0.2s, transform 0.15s",
-                }}
-                onMouseOver={e => { e.currentTarget.style.background="#d9770d"; e.currentTarget.style.transform="scale(1.02)"; }}
-                onMouseOut={e => { e.currentTarget.style.background="#F28C28"; e.currentTarget.style.transform="scale(1)"; }}
+                style={{ display: "flex", alignItems: "center", gap: "16px", background: "#F28C28", color: "white", fontWeight: "700", padding: "16px 20px", borderRadius: "14px", fontSize: "14px", border: "none", cursor: "pointer", textAlign: "left", transition: "background 0.2s, transform 0.15s" }}
+                onMouseOver={e => { e.currentTarget.style.background = "#d9770d"; e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseOut={e => { e.currentTarget.style.background = "#F28C28"; e.currentTarget.style.transform = "scale(1)"; }}
               >
                 <span style={{ fontSize: "28px" }}>📝</span>
                 <div>
                   <p style={{ fontWeight: "900", fontSize: "15px", margin: 0 }}>Tes Kompetensi Tertulis</p>
-                  <p style={{ fontSize: "14px", margin: 0, fontWeight: "400" }}>
-                    🗓️ 13 - 15 Mei 2026
-                  </p>
+                  <p style={{ fontSize: "14px", margin: 0, fontWeight: "400" }}>🗓️ 13 - 15 Mei 2026</p>
                 </div>
               </button>
 
               <button
                 onClick={() => { onClose(); navigate("/tes-wawancara"); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: "16px",
-                  background: "#2196F3", color: "white", fontWeight: "700",
-                  padding: "16px 20px", borderRadius: "14px", fontSize: "14px",
-                  border: "none", cursor: "pointer", textAlign: "left",
-                  transition: "background 0.2s, transform 0.15s",
-                }}
-                onMouseOver={e => { e.currentTarget.style.background="#1976d2"; e.currentTarget.style.transform="scale(1.02)"; }}
-                onMouseOut={e => { e.currentTarget.style.background="#2196F3"; e.currentTarget.style.transform="scale(1)"; }}
+                style={{ display: "flex", alignItems: "center", gap: "16px", background: "#2196F3", color: "white", fontWeight: "700", padding: "16px 20px", borderRadius: "14px", fontSize: "14px", border: "none", cursor: "pointer", textAlign: "left", transition: "background 0.2s, transform 0.15s" }}
+                onMouseOver={e => { e.currentTarget.style.background = "#1976d2"; e.currentTarget.style.transform = "scale(1.02)"; }}
+                onMouseOut={e => { e.currentTarget.style.background = "#2196F3"; e.currentTarget.style.transform = "scale(1)"; }}
               >
                 <span style={{ fontSize: "28px" }}>🔈</span>
-                 <div>
+                <div>
                   <p style={{ fontWeight: "900", fontSize: "15px", margin: 0 }}>Tes Wawancara</p>
-                  <p style={{ fontSize: "14px", margin: 0, fontWeight: "400" }}>
-                    🗓️ 16 - 17 Mei 2026
-                  </p>
+                  <p style={{ fontSize: "14px", margin: 0, fontWeight: "400" }}>🗓️ 16 - 17 Mei 2026</p>
                 </div>
               </button>
             </div>
@@ -324,35 +213,39 @@ function ModalPortal({ type, onClose, navigate, scrollToTutorial }) {
 function AlurPendaftaran() {
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(null); // "registrasi" | "kompetensi"
+  const [modalType, setModalType] = useState(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(true);
-    }, 200);
-
+    const timer = setTimeout(() => setVisible(true), 200);
     return () => clearTimeout(timer);
   }, []);
 
   const scrollToTutorial = () => {
     setTimeout(() => {
-      document
-        .getElementById("tutorial-pendaftaran")
-        ?.scrollIntoView({ behavior: "smooth" });
+      document.getElementById("tutorial-pendaftaran")?.scrollIntoView({ behavior: "smooth" });
     }, 200);
   };
 
   const handleKartuClick = (k) => {
     if (!k.clickable) return;
+
+    // ── Kartu Hasil Rekrutmen: langsung buka PDF di tab baru ──
+    if (k.modalType === "hasil-rekrutmen") {
+      window.open(k.pdfUrl, "_blank", "noopener noreferrer");
+      return;
+    }
+
     if (k.modalType === "pengumuman-admin") {
       navigate("/pengumuman-administrasi");
       return;
     }
-    else if (k.modalType === "pengumuman-akhir") {
+
+    if (k.modalType === "pengumuman-akhir") {
       navigate("/pengumuman-akhir");
       return;
     }
+
     setModalType(k.modalType);
     setModalOpen(true);
   };
@@ -361,79 +254,60 @@ function AlurPendaftaran() {
     <>
       <section
         className="bg-[#F28C28] py-12 px-8 text-center"
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1)" : "scale(0.85)",
-          transition: "all 0.8s ease",
-        }}
+        style={{ opacity: visible ? 1 : 0, transform: visible ? "scale(1)" : "scale(0.85)", transition: "all 0.8s ease" }}
       >
         <h2 className="text-xl font-bold tracking-widest mb-8 text-white">
           ALUR PENDAFTARAN
         </h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-5 max-w-4xl mx-auto">
           {KARTU.map((k, index) => (
             <div
               key={k.id}
               onClick={() => handleKartuClick(k)}
-              className={
-                k.clickable
-                  ? "cursor-pointer hover:-translate-y-1 transition-transform"
-                  : ""
-              }
-              style={{
-                opacity: visible ? 1 : 0,
-                transform: visible ? "scale(1)" : "scale(0.7)",
-                transition: `all 0.6s ease ${index * 0.15}s`,
-              }}
+              className={k.clickable ? "cursor-pointer hover:-translate-y-1 transition-transform" : ""}
+              style={{ opacity: visible ? 1 : 0, transform: visible ? "scale(1)" : "scale(0.7)", transition: `all 0.6s ease ${index * 0.15}s` }}
             >
               <div className="bg-white rounded-lg aspect-[4/3] flex flex-col items-center justify-center gap-2 overflow-hidden p-4 hover:scale-105 transition-transform duration-300">
                 {k.img ? (
-                  <img
-                    src={k.img}
-                    alt={k.label}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={k.img} alt={k.label} className="w-full h-full object-cover" />
                 ) : (
                   <>
                     {k.icon}
                     {k.extraLabel && (
-                      <p className="text-xs font-black tracking-widest text-gray-800">
-                        {k.extraLabel}
-                      </p>
+                      <p className="text-xs font-black tracking-widest text-gray-800">{k.extraLabel}</p>
                     )}
                     {k.subLabel && (
-                      <p className="text-[9px] text-gray-500 italic">
-                        {k.subLabel}
-                      </p>
+                      <p className="text-[9px] text-gray-500 italic">{k.subLabel}</p>
                     )}
                   </>
                 )}
               </div>
-
-              <p className="mt-3 text-sm font-bold text-gray-900">
-                {k.label}
-              </p>
+              <p className="mt-3 text-sm font-bold text-gray-900">{k.label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ===== MODAL via PORTAL (render ke document.body agar tidak terpotong) ===== */}
-      {modalOpen && <ModalPortal type={modalType} onClose={() => setModalOpen(false)} navigate={navigate} scrollToTutorial={scrollToTutorial} />}
+      {modalOpen && (
+        <ModalPortal
+          type={modalType}
+          onClose={() => setModalOpen(false)}
+          navigate={navigate}
+          scrollToTutorial={scrollToTutorial}
+        />
+      )}
 
-      <style>
-        {`
-          @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.75); }
-            to   { opacity: 1; transform: scale(1); }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-          }
-        `}
-      </style>
+      <style>{`
+        @keyframes zoomIn {
+          from { opacity: 0; transform: scale(0.75); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+      `}</style>
     </>
   );
 }
