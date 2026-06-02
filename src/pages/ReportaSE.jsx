@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import reportaseImg from "../assets/image/reportase.jpeg";
 import reportaseImg2 from "../assets/image/reportase2.jpeg";
+import reportaseImg3 from "../assets/image/reportase3.jpeg";
 import reportasePdf from "../assets/file/REPORTASEVOL1.pdf";
 import reportasePd2 from "../assets/file/REPORTASEVOL2.pdf";
+import reportasePd3 from "../assets/file/REPORTASEVOL3.pdf";
 
 function useScrollZoom(threshold = 0.15) {
   const ref = useRef(null);
@@ -168,7 +170,7 @@ export default function ReportaSE() {
       </div>
 
       {/* ── Cards Grid ── */}
-      <div className="flex flex-col md:flex-row items-start justify-center gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:flex-row items-start justify-center gap-10">
         <PublicationCard
           vol="Vol. 1"
           title="REPORTASE SE Vol. 1"
@@ -182,6 +184,13 @@ export default function ReportaSE() {
           img={reportaseImg2}   // ← ganti dengan import gambar cover Vol. 2 jika ada
           pdf={reportasePd2}
           delay={0.3}
+        />
+        <PublicationCard
+          vol="Vol. 3"
+          title="REPORTASE SE Vol. 3"
+          img={reportaseImg3}   // ← ganti dengan import gambar cover Vol. 3 jika ada
+          pdf={reportasePd3}
+          delay={0.45}
         />
       </div>
 
