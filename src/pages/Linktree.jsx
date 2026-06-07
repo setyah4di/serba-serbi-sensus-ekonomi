@@ -53,7 +53,7 @@ const MENUS = [
     big: false,
     bg: "from-orange-50 to-white",
     border: "border-orange-100",
-    url: "https://drive.google.com/drive/folders/1MHz1FZqrlrLkz_YyMDns0wN-Ukffloh3",
+    url: "https://drive.google.com/drive/u/1/folders/1Hq-z9D3diQdZ7r2o3TJXdaaE5mZGGZOs",
   },
   {
     id: "laporan",

@@ -6,7 +6,6 @@ const navLinks = [
   { label: "Beranda", path: "/" },
   { label: "Rekrutmen", path: "/registrasi" },
   { label: "Ngibar", path: "/ngibar" },
-  { label: "Linktree", path: "/linktree" },
   { label: "KKD", path: "/kkd" },
   { label: "Reporta-SE", path: "/reporta-se" },
 ];
@@ -14,6 +13,7 @@ const navLinks = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const hideNavLinks = location.pathname === "/linktree";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
@@ -48,51 +48,55 @@ export default function Navbar() {
         </Link>
 
         {/* ── Desktop Nav ── */}
-        <ul className="hidden md:flex items-center gap-6">
-          {navLinks.map(({ label, path }) => {
-            const active = location.pathname === path;
-            return (
-              <li key={label}>
-                <Link
-                  to={path}
-                  className={`text-sm font-semibold tracking-wide transition-colors pb-0.5 ${
-                    active
-                      ? "text-orange-500 border-b-2 border-orange-500"
-                      : "text-gray-700 hover:text-orange-500"
-                  }`}
-                >
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {!hideNavLinks && (
+          <ul className="hidden md:flex items-center gap-6">
+            {navLinks.map(({ label, path }) => {
+              const active = location.pathname === path;
+              return (
+                <li key={label}>
+                  <Link
+                    to={path}
+                    className={`text-sm font-semibold tracking-wide transition-colors pb-0.5 ${
+                      active
+                        ? "text-orange-500 border-b-2 border-orange-500"
+                        : "text-gray-700 hover:text-orange-500"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
         {/* ── Mobile Hamburger ── */}
-        <button
-          className="md:hidden text-gray-700"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        {!hideNavLinks && (
+          <button
+            className="md:hidden text-gray-700"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-            />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+              />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* ── Mobile Menu ── */}
-      {menuOpen && (
+      {menuOpen && !hideNavLinks && (
         <div className="md:hidden bg-white border-t px-4 py-3 space-y-3">
           {navLinks.map(({ label, path }) => (
             <Link
