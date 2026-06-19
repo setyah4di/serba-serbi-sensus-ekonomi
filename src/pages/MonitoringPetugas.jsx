@@ -321,12 +321,13 @@ export default function MonitoringPetugas() {
             </div>
             {lastUpdated && (
               <div className="text-right">
-                {/* <p className="text-orange-100 text-sm">
+                <p className="text-orange-100 ">
                   Data diperbarui pada 
-                </p> */}
-                {/* <p className="text-orange-100 text-sm">
-                   {lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul {lastUpdated.toLocaleTimeString("id-ID")}
-                </p> */}
+                </p>
+                <p className="text-orange-100 ">
+                   {lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul 07.00 WIB
+                   {/* {lastUpdated.toLocaleTimeString("id-ID")} */}
+                </p>
               </div>
             )}
           </div>
