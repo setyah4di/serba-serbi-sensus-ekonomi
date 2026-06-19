@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const MENUS = [
   {
@@ -94,9 +95,11 @@ const MENUS = [
 ];
 
 export default function Linktree() {
+  const navigate = useNavigate();
   const [pressed, setPressed] = useState(null);
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showSubMenu, setShowSubMenu] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 100);
@@ -110,12 +113,32 @@ export default function Linktree() {
   }, []);
 
   const handleClick = (id) => {
+    // Jika Progress Petugas, tampilkan popup sub menu
+    if (id === "progress") {
+      setShowSubMenu(true);
+      return;
+    }
+
     setPressed(id);
     const menu = MENUS.find((m) => m.id === id);
     setTimeout(() => {
       window.open(menu.url.trim(), "_blank", "noopener noreferrer");
       setPressed(null);
     }, 180);
+  };
+
+  const handleSubMenuClick = (type) => {
+    if (type === "website") {
+      setShowSubMenu(false);
+      navigate("/monitoring-petugas");
+    } else if (type === "spreadsheet") {
+      window.open(
+        "https://drive.google.com/drive/folders/1qu8OTvoQcObfQuvp5YD7wXj4ov11z1lL?usp=sharing",
+        "_blank",
+        "noopener noreferrer"
+      );
+      setShowSubMenu(false);
+    }
   };
 
   return (
@@ -325,6 +348,11 @@ export default function Linktree() {
           </>
         )}
       </div>
+      
+      {/* Popup Sub Menu Progress Petugas */}
+      {showSubMenu && (
+        <PopupSubMenu onClose={() => setShowSubMenu(false)} onSelect={handleSubMenuClick} />
+      )}
     </div>
   );
 }
@@ -494,6 +522,171 @@ function MenuCard({ menu, pressed, onClick, visible, delay, big = false }) {
           ))}
         </div>
       </button>
+    </div>
+  );
+}
+
+/* Popup Sub Menu untuk Progress Petugas */
+function PopupSubMenu({ onClose, onSelect }) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        animation: "fadeIn 0.2s ease",
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          borderRadius: 16,
+          padding: 24,
+          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)",
+          maxWidth: 400,
+          width: "90%",
+          animation: "slideUp 0.3s ease",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#1e40af",
+            marginBottom: 20,
+            textAlign: "center",
+          }}
+        >
+          Progress Petugas Pencacahan
+        </h2>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+          }}
+        >
+          {/* Sub Menu Website */}
+          <button
+            onClick={() => onSelect("website")}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "2px solid #3b82f6",
+              backgroundColor: "#dbeafe",
+              cursor: "pointer",
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#1e40af",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#93c5fd";
+              e.target.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#dbeafe";
+              e.target.style.transform = "translateY(0)";
+            }}
+          >
+            <span>🌐</span>
+            Website
+          </button>
+
+          {/* Sub Menu Spreadsheet */}
+          <button
+            onClick={() => onSelect("spreadsheet")}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "2px solid #f97316",
+              backgroundColor: "#fed7aa",
+              cursor: "pointer",
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#b45309",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#fdba74";
+              e.target.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#fed7aa";
+              e.target.style.transform = "translateY(0)";
+            }}
+          >
+            <span>📊</span>
+            Spreadsheet
+          </button>
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            width: "100%",
+            marginTop: 16,
+            padding: "10px 16px",
+            borderRadius: 8,
+            border: "none",
+            backgroundColor: "#e5e7eb",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: 500,
+            color: "#4b5563",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "#d1d5db";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "#e5e7eb";
+          }}
+        >
+          Tutup
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        
+        @keyframes slideUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
