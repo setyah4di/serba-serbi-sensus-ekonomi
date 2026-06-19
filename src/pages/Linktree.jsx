@@ -82,6 +82,15 @@ const MENUS = [
     border: "border-orange-100",
     url: "https://docs.google.com/spreadsheets/d/1xxj1CHMlzvyJzrESEbpfAXq0hqGo3a8fuNW2rAbKdAo/edit?gid=1828671124#gid=1828671124",
   },
+  {
+    id: "progress",
+    label: "Progress Petugas Pencacahan",
+    emoji: "👮",
+    big: false,
+    bg: "from-orange-50 to-white",
+    border: "border-orange-100",
+    url: "https://drive.google.com/drive/folders/1qu8OTvoQcObfQuvp5YD7wXj4ov11z1lL?usp=sharing",
+  },
 ];
 
 export default function Linktree() {
@@ -113,7 +122,8 @@ export default function Linktree() {
     <div
       className="min-h-screen relative overflow-hidden"
       style={{
-        background: "linear-gradient(160deg, #F5A623 0%, #F28C28 60%, #e8820a 100%)",
+        background:
+          "linear-gradient(160deg, #F5A623 0%, #F28C28 60%, #e8820a 100%)",
         padding: isMobile ? "24px 12px" : "60px 16px",
       }}
     >
@@ -138,7 +148,13 @@ export default function Linktree() {
               delay={0}
             />
             {/* Baris 2 card kecil: 2 kolom */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
               {MENUS.slice(1, 3).map((m, i) => (
                 <MobileCardSmall
                   key={m.id}
@@ -150,7 +166,13 @@ export default function Linktree() {
                 />
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
               {MENUS.slice(3, 5).map((m, i) => (
                 <MobileCardSmall
                   key={m.id}
@@ -162,7 +184,13 @@ export default function Linktree() {
                 />
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
               {MENUS.slice(5, 7).map((m, i) => (
                 <MobileCardSmall
                   key={m.id}
@@ -174,7 +202,13 @@ export default function Linktree() {
                 />
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
               {MENUS.slice(7, 9).map((m, i) => (
                 <MobileCardSmall
                   key={m.id}
@@ -186,6 +220,19 @@ export default function Linktree() {
                 />
               ))}
             </div>
+            <div
+              style={{
+               display: "flex", flexDirection: "column", gap: 12
+              }}
+            >
+               <MobileCardBig
+              menu={MENUS[9]}
+              pressed={pressed}
+              onClick={handleClick}
+              visible={visible}
+              delay={0}
+            />
+            </div>
           </div>
         ) : (
           /* ── DESKTOP: layout 3 baris seperti sebelumnya ── */
@@ -195,26 +242,85 @@ export default function Linktree() {
               className="grid gap-4 mb-4"
               style={{ gridTemplateColumns: "2fr 1fr 1fr" }}
             >
-              <MenuCard menu={MENUS[0]} pressed={pressed} onClick={handleClick} visible={visible} delay={0} big />
-              <MenuCard menu={MENUS[1]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.1} />
-              <MenuCard menu={MENUS[2]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.15} />
+              <MenuCard
+                menu={MENUS[0]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0}
+                big
+              />
+              <MenuCard
+                menu={MENUS[1]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.1}
+              />
+              <MenuCard
+                menu={MENUS[2]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.15}
+              />
             </div>
 
             {/* Baris 2 */}
             <div className="grid grid-cols-3 gap-4 mb-4">
-              <MenuCard menu={MENUS[3]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.2} />
-              <MenuCard menu={MENUS[4]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.25} />
-              <MenuCard menu={MENUS[5]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.3} />
+              <MenuCard
+                menu={MENUS[3]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.2}
+              />
+              <MenuCard
+                menu={MENUS[4]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.25}
+              />
+              <MenuCard
+                menu={MENUS[5]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.3}
+              />
             </div>
 
             {/* Baris 3 */}
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: "2fr 1fr 1fr" }}
-            >
-              <MenuCard menu={MENUS[6]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.35} big />
-              <MenuCard menu={MENUS[7]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.4} />
-              <MenuCard menu={MENUS[8]} pressed={pressed} onClick={handleClick} visible={visible} delay={0.45} />
+            <div className="grid grid-cols-4 gap-4">
+              <MenuCard
+                menu={MENUS[6]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.35}
+              />
+              <MenuCard
+                menu={MENUS[7]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.4}
+              />
+              <MenuCard
+                menu={MENUS[8]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.45}
+              />
+              <MenuCard
+                menu={MENUS[9]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0.5}
+              />
             </div>
           </>
         )}
@@ -255,7 +361,14 @@ function MobileCardBig({ menu, pressed, onClick, visible, delay }) {
         }}
       >
         <span style={{ fontSize: 36, flexShrink: 0 }}>{menu.emoji}</span>
-        <span style={{ fontWeight: 700, fontSize: 15, color: "#1e40af", lineHeight: 1.3 }}>
+        <span
+          style={{
+            fontWeight: 700,
+            fontSize: 15,
+            color: "#1e40af",
+            lineHeight: 1.3,
+          }}
+        >
           {menu.label}
         </span>
       </button>
@@ -296,8 +409,20 @@ function MobileCardSmall({ menu, pressed, onClick, visible, delay }) {
         }}
       >
         <span style={{ fontSize: 30 }}>{menu.emoji}</span>
-        <span style={{ fontWeight: 600, fontSize: 12, color: "#1e40af", textAlign: "center", lineHeight: 1.3 }}>
-          {lines.map((line, i) => <span key={i} style={{ display: "block" }}>{line}</span>)}
+        <span
+          style={{
+            fontWeight: 600,
+            fontSize: 12,
+            color: "#1e40af",
+            textAlign: "center",
+            lineHeight: 1.3,
+          }}
+        >
+          {lines.map((line, i) => (
+            <span key={i} style={{ display: "block" }}>
+              {line}
+            </span>
+          ))}
         </span>
       </button>
     </div>
@@ -331,8 +456,12 @@ function MenuCard({ menu, pressed, onClick, visible, delay, big = false }) {
         >
           <div className="text-6xl drop-shadow flex-shrink-0">{menu.emoji}</div>
           <div>
-            <p className="font-bold text-lg text-blue-800 leading-tight mb-1">{menu.label}</p>
-            {menu.sub && <p className="text-sm text-gray-500 leading-snug">{menu.sub}</p>}
+            <p className="font-bold text-lg text-blue-800 leading-tight mb-1">
+              {menu.label}
+            </p>
+            {menu.sub && (
+              <p className="text-sm text-gray-500 leading-snug">{menu.sub}</p>
+            )}
           </div>
         </button>
       </div>
@@ -360,7 +489,9 @@ function MenuCard({ menu, pressed, onClick, visible, delay, big = false }) {
       >
         <div className="text-4xl drop-shadow">{menu.emoji}</div>
         <div className="font-semibold text-sm text-blue-800 text-center leading-tight">
-          {lines.map((line, i) => <div key={i}>{line}</div>)}
+          {lines.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
         </div>
       </button>
     </div>
