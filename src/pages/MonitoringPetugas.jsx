@@ -324,9 +324,9 @@ export default function MonitoringPetugas() {
                 {/* <p className="text-orange-100 text-sm">
                   Data diperbarui pada 
                 </p> */}
-                <p className="text-orange-100 text-sm">
+                {/* <p className="text-orange-100 text-sm">
                    {lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul {lastUpdated.toLocaleTimeString("id-ID")}
-                </p>
+                </p> */}
               </div>
             )}
           </div>

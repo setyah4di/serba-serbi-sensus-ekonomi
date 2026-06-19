@@ -13,7 +13,7 @@ const navLinks = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const hideNavLinks = location.pathname === "/linktree";
+  const hideNavLinks = ["/linktree", "/monitoring-petugas"].includes(location.pathname);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
