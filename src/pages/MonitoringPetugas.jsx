@@ -247,7 +247,7 @@ function DetailModal({ pcl, detailRows, onClose }) {
               {detailRows.length > 1 && (
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-                    Rincian per Kode ID ({detailRows.length} entri)
+                    Rincian per SLS (Total : {detailRows.length} SLS)
                   </p>
                   <div className="rounded-xl border border-gray-100 overflow-hidden">
                     <div className="overflow-x-auto">
