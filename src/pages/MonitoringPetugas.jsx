@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 
 // ── Konfigurasi Spreadsheet ──
-// Sheet: "rekap progress pendataan" (tab baru dengan kolom PML)
 const SPREADSHEET_ID = "15LFgyVGKJ4Dd5-HBFk6HPrMn5j4vE43k";
 const GID = "476651225";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}`;
@@ -90,7 +89,7 @@ function badgeLabel(val) {
   if (val >= 75)  return "Sangat Baik";
   if (val >= 50)  return "Baik";
   if (val >= 25)  return "Sedang";
-  // return "Perlu Perhatian";
+  return "Perlu Perhatian";
 }
 
 // ── Komponen UI ──
@@ -169,11 +168,13 @@ function PCLRow({ emailPML, emailPCL, progress, rank }) {
           {/* Email PCL */}
           <p className="text-sm font-semibold text-gray-800 truncate">{emailPCL}</p>
           {/* Email PML */}
-          {emailPML && (
+          {emailPML ? (
             <p className="text-xs text-gray-400 truncate mt-0.5">
               <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
               {emailPML}
             </p>
+          ) : (
+            <p className="text-xs text-rose-300 mt-0.5 italic">PML tidak terdeteksi</p>
           )}
           <div className="mt-1.5">
             <ProgressBar value={progress} color={color} />
@@ -189,25 +190,25 @@ function PCLRow({ emailPML, emailPCL, progress, rank }) {
 
 // ── Komponen Utama ──
 export default function MonitoringPetugas() {
-  const [rows, setRows] = useState([]);       // { kecamatan, emailPML, emailPCL, progress }
+  const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedKec, setSelectedKec] = useState(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("urut");
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null); // untuk debug
   const detailRef = useRef(null);
   const tableRef = useRef(null);
 
-  // Reset scroll tabel ke atas setiap kali kecamatan berganti
   useEffect(() => {
     if (tableRef.current) tableRef.current.scrollTop = 0;
   }, [selectedKec]);
+
   const handleSelectKec = (kec) => {
     const next = selectedKec === kec ? null : kec;
     setSelectedKec(next);
     if (next && window.innerWidth < 1024) {
-      // Tunggu render selesai baru scroll
       setTimeout(() => {
         detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
@@ -222,27 +223,53 @@ export default function MonitoringPetugas() {
       })
       .then((text) => {
         const parsed = parseCSV(text);
-        // Kolom: A=kecamatan, B=emailPML, C=emailPCL, D=progress
-        // Carry-forward: kecamatan & PML hanya terisi di baris pertama tiap grup
+
+        // ── PERBAIKAN UTAMA: carry-forward kecamatan & PML sepenuhnya independen ──
+        // PML TIDAK direset saat kecamatan baru — hanya diperbarui jika kolom B berisi nilai baru.
+        // Ini sesuai struktur sheet di mana kolom B (PML) hanya diisi di baris pertama
+        // setiap grup PML, bukan di setiap baris PCL.
+
         let lastKec = null;
         let lastPML = "";
+
         const data = parsed
           .slice(1) // skip header
-          .map((cols) => {
-            // Resolve kecamatan (carry-forward jika kosong)
-            const resolved = resolveKecamatan(cols[0] || "");
-            if (resolved) { lastKec = resolved; lastPML = ""; } // reset PML saat kec baru
+          .map((cols, idx) => {
+            // Kolom A: Kecamatan (carry-forward jika kosong)
+            const resolvedKec = resolveKecamatan(cols[0] || "");
+            if (resolvedKec) {
+              lastKec = resolvedKec;
+              // TIDAK reset lastPML di sini — PML carry-forward lintas kecamatan
+              // sesuai struktur sheet yang hanya mengisi PML di baris pertama grupnya
+            }
 
-            // PML carry-forward dalam satu kecamatan
+            // Kolom B: PML (carry-forward jika kosong)
             const pmlRaw = (cols[1] || "").trim();
-            if (pmlRaw) lastPML = pmlRaw;
+            if (pmlRaw) {
+              lastPML = pmlRaw; // update jika ada nilai baru
+            }
+            // Jika kosong, lastPML tetap dipertahankan (carry-forward)
 
             const emailPCL = (cols[2] || "").trim();
             const progress = parseProgress(cols[3] || "0");
 
-            return { kecamatan: lastKec, emailPML: lastPML, emailPCL, progress };
+            return {
+              kecamatan: lastKec,
+              emailPML: lastPML,
+              emailPCL,
+              progress,
+              _row: idx + 2, // untuk debug (nomor baris di sheet, 1-indexed + header)
+            };
           })
           .filter((r) => r.kecamatan && r.emailPCL);
+
+        // Debug: cek berapa PCL yang tidak punya PML
+        const noPML = data.filter((r) => !r.emailPML);
+        if (noPML.length > 0) {
+          setDebugInfo(`⚠️ ${noPML.length} PCL tidak memiliki PML terdeteksi. Periksa apakah ada baris kosong di antara kolom B.`);
+        } else {
+          setDebugInfo(null);
+        }
 
         setRows(data);
         setLastUpdated(new Date());
@@ -270,7 +297,6 @@ export default function MonitoringPetugas() {
       .map((nama) => {
         const pcls = kecamatanMap[nama] || [];
         const avg = pcls.length ? pcls.reduce((s, p) => s + p.progress, 0) / pcls.length : 0;
-        // Hitung jumlah PML unik
         const pmlSet = new Set(pcls.map((p) => p.emailPML).filter(Boolean));
         return { kecamatan: nama, avg, countPCL: pcls.length, countPML: pmlSet.size };
       })
@@ -290,15 +316,14 @@ export default function MonitoringPetugas() {
   // Statistik global
   const globalStats = useMemo(() => {
     if (!rows.length) return null;
-    const allPCL = rows;
     const allPML = new Set(rows.map((r) => r.emailPML).filter(Boolean));
-    const avg = allPCL.reduce((s, r) => s + r.progress, 0) / allPCL.length;
+    const avg = rows.reduce((s, r) => s + r.progress, 0) / rows.length;
     return {
-      totalPCL: allPCL.length,
+      totalPCL: rows.length,
       totalPML: allPML.size,
       avg,
-      done100: allPCL.filter((r) => r.progress >= 100).length,
-      zero: allPCL.filter((r) => r.progress === 0).length,
+      done100: rows.filter((r) => r.progress >= 100).length,
+      zero: rows.filter((r) => r.progress === 0).length,
     };
   }, [rows]);
 
@@ -321,12 +346,9 @@ export default function MonitoringPetugas() {
             </div>
             {lastUpdated && (
               <div className="text-right">
-                <p className="text-orange-100 ">
-                  Data diperbarui pada 
-                </p>
-                <p className="text-orange-100 ">
-                   {lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul 07.00 WIB
-                   {/* {lastUpdated.toLocaleTimeString("id-ID")} */}
+                <p className="text-orange-100">Data diperbarui pada</p>
+                <p className="text-orange-100">
+                  {lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul 07.00 WIB
                 </p>
               </div>
             )}
@@ -357,10 +379,17 @@ export default function MonitoringPetugas() {
           </div>
         )}
 
+        {/* Debug warning */}
+        {debugInfo && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-amber-700 text-sm">
+            {debugInfo}
+          </div>
+        )}
+
         {/* Dashboard */}
         {!loading && !error && globalStats && (
           <>
-            {/* Stat Cards — 5 kartu */}
+            {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
               <StatCard
                 label="Total Petugas PML"
