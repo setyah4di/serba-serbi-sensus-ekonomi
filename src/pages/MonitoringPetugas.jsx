@@ -180,9 +180,6 @@ function DetailModal({ pcl, detailRows, onClose }) {
               {/* Nama PPL */}
               <p className="text-white font-black text-xl leading-tight">{pcl.namaPCL || pcl.emailPCL}</p>
               {/* Email PCL */}
-              {pcl.emailPCL && pcl.namaPCL && (
-                <p className="text-orange-100 text-xs mt-0.5 break-all">{pcl.emailPCL}</p>
-              )}
             </div>
             <button onClick={onClose} className="text-orange-200 hover:text-white transition-colors mt-1 p-1 flex-shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
