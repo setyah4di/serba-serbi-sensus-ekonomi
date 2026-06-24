@@ -145,7 +145,7 @@ function TrendChart({ chartData, loading }) {
 
   return (
     <div className="mb-4">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 text-center">Tren Progress Harian Petugas</p>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tren Harian</p>
       <div className="bg-gray-50 rounded-2xl p-3">
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
@@ -223,7 +223,9 @@ function DetailModal({ pcl, detailRows, chartData, loadingChart, onClose }) {
             <div className="flex-1 min-w-0 pr-3">
               <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-1">Detail PCL</p>
               <p className="text-white font-black text-xl leading-tight">{pcl.namaPCL || pcl.emailPCL}</p>
-            
+              {/* {pcl.emailPCL && pcl.namaPCL && (
+                <p className="text-orange-100 text-xs mt-0.5 break-all">{pcl.emailPCL}</p>
+              )} */}
             </div>
             <button onClick={onClose} className="text-orange-200 hover:text-white transition-colors mt-1 p-1 flex-shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -415,31 +417,22 @@ export default function MonitoringPetugas() {
   },[]);
 
   // ── Load rekap progres per hari ──
-  // Struktur (dari gambar):
-  // Baris 1: judul (abaikan)
-  // Baris 2: header → A=kecamatan, B=Nama PML, C=Nama PPL, D=Status Assignment, E=Tanggal (kolom kosong?), F..N=tanggal-tanggal
-  // Baris 3: baris filter (abaikan: berisi "-")
-  // Baris 4+: data — kolom A/B/C diisi hanya di baris pertama tiap grup (carry-forward)
-  //           kolom D = status (Approved/Draft/Rejected/Submitted), kolom E dst = angka per tanggal
+  // Key komposit: "kec||pml||pcl" (lowercase) agar nama PCL yang sama di kecamatan/PML berbeda tidak tabrakan
   useEffect(()=>{
     fetch(CSV_PERHARI).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
       const parsed=parseCSV(text);
       if(parsed.length<3){setLoadingChart(false);return;}
 
-      // Baris 2 (index 1) = header dengan tanggal mulai kolom E (index 4)
       const headerRow = parsed[1];
-      // Cari indeks kolom tanggal: cari kolom yang isinya bisa di-parse sebagai tanggal
-      const dateStartIdx = 4; // kolom E (0-indexed = 4)
+      const dateStartIdx = 4;
       const dates = [];
       for(let i = dateStartIdx; i < headerRow.length; i++){
         const d = parseDate(headerRow[i]);
         if(d) dates.push({ idx: i, iso: d, label: fmtDate(d) });
       }
 
-      // Data dimulai baris index 3 (baris ke-4, skip baris filter "-")
-      // Carry-forward: kecamatan (A), PML (B), PCL/PPL (C) — hanya diisi di baris pertama grup
       let lastKec="", lastPML="", lastPCL="";
-      // Map: namaPCL → { status → { isoDate → nilai } }
+      // Map: "kec||pml||pcl" → { status → { isoDate → nilai } }
       const dataMap = {};
 
       for(let r=3; r<parsed.length; r++){
@@ -447,7 +440,7 @@ export default function MonitoringPetugas() {
         const kecRaw = (cols[0]||"").trim();
         const pmlRaw = (cols[1]||"").trim();
         const pclRaw = (cols[2]||"").trim();
-        const status = (cols[3]||"").trim();
+        const status  = (cols[3]||"").trim();
 
         if(kecRaw && kecRaw!=="-") lastKec=kecRaw;
         if(pmlRaw && pmlRaw!=="-") lastPML=pmlRaw;
@@ -457,12 +450,13 @@ export default function MonitoringPetugas() {
         const statusNorm = status.charAt(0).toUpperCase()+status.slice(1).toLowerCase();
         if(!["Approved","Draft","Rejected","Submitted"].includes(statusNorm)) continue;
 
-        if(!dataMap[lastPCL]) dataMap[lastPCL]={};
-        if(!dataMap[lastPCL][statusNorm]) dataMap[lastPCL][statusNorm]={};
+        // Key komposit — unik per kombinasi kec+pml+pcl
+        const compKey = `${lastKec.toLowerCase()}||${lastPML.toLowerCase()}||${lastPCL.toLowerCase()}`;
+        if(!dataMap[compKey]) dataMap[compKey]={};
+        if(!dataMap[compKey][statusNorm]) dataMap[compKey][statusNorm]={};
 
         dates.forEach(({idx,iso})=>{
-          const val = parseNum(cols[idx]);
-          dataMap[lastPCL][statusNorm][iso] = val;
+          dataMap[compKey][statusNorm][iso] = parseNum(cols[idx]);
         });
       }
 
@@ -471,14 +465,49 @@ export default function MonitoringPetugas() {
     }).catch(()=>setLoadingChart(false));
   },[]);
 
-  // Bangun chartData untuk satu PCL (berdasarkan namaPCL)
-  const buildChartData = (namaPCL) => {
-    if(!perHariRaw || !namaPCL) return [];
+  // ── Helper: buat key komposit (normalize) ──
+  const makeCompKey = (kec="", pml="", pcl="") =>
+    `${kec.toLowerCase().trim()}||${pml.toLowerCase().trim()}||${pcl.toLowerCase().trim()}`;
+
+  // Bangun chartData — pakai key komposit kec+namaPML+namaPCL
+  // namaPML didapat dari: namaPML (sudah dienrich) atau lookup emailPML rekap → namaPML gabungan
+  const buildChartData = (pcl) => {
+    if(!perHariRaw || !pcl) return [];
     const { dates, dataMap } = perHariRaw;
-    // Cari key yang cocok (case-insensitive, trim)
-    const key = Object.keys(dataMap).find(k => k.toLowerCase().trim() === namaPCL.toLowerCase().trim());
-    if(!key) return [];
-    const pclData = dataMap[key];
+
+    const kec     = (pcl.kecamatan||"").trim();
+    const namaPML = (pcl.namaPML  ||"").trim();  // sudah dienrich dari enrichedRows
+    const namaPCL = (pcl.namaPCL  ||pcl.emailPCL||"").trim();
+    const emailPML= (pcl.emailPML ||"").toLowerCase().trim(); // emailPML dari rekap (kolom B)
+
+    // Jika namaPML belum terisi, coba cari dari emailPML rekap → namaPML gabungan
+    const resolvedNamaPML = namaPML || namaPMLFromEmail[emailPML] || "";
+
+    // Coba beberapa kombinasi key secara berurutan
+    const candidates = [
+      makeCompKey(kec, resolvedNamaPML, namaPCL),
+      // Tanpa kecamatan (sheet perhari mungkin pakai kode bukan nama)
+      ...Object.keys(dataMap).filter(k => {
+        const parts = k.split("||");
+        if(parts.length!==3) return false;
+        const kPML = parts[1], kPCL = parts[2];
+        const pclMatch = kPCL === namaPCL.toLowerCase().trim();
+        if(!pclMatch) return false;
+        // Cocokkan PML: namaPML atau emailPML (sebagian cocok)
+        const pmlLow = resolvedNamaPML.toLowerCase().trim();
+        return kPML === pmlLow || (pmlLow && kPML.includes(pmlLow.split(" ")[0].toLowerCase()));
+      }),
+      // Fallback terakhir: semua yang namaPCL-nya cocok
+      ...Object.keys(dataMap).filter(k=>k.endsWith(`||${namaPCL.toLowerCase().trim()}`)),
+    ];
+
+    let matchKey = null;
+    for(const k of candidates){
+      if(k && dataMap[k]){ matchKey=k; break; }
+    }
+    if(!matchKey) return [];
+
+    const pclData = dataMap[matchKey];
     return dates.map(({iso,label})=>({
       label,
       Approved:  pclData["Approved"]?.[iso]  ?? 0,
@@ -488,29 +517,172 @@ export default function MonitoringPetugas() {
     }));
   };
 
-  // Map pencarian gabungan
+  // ── Maps dari hasil_gabungan ──
+
+  // Map 1: emailPCL (kolom D gabungan) → rows
   const gabunganByEmailPCL = useMemo(()=>{
     const map={};
-    gabunganRows.forEach(r=>{if(r.emailPCL){const k=r.emailPCL.toLowerCase().trim();if(!map[k])map[k]=[];map[k].push(r);}});
+    gabunganRows.forEach(r=>{
+      if(r.emailPCL){
+        const k=r.emailPCL.toLowerCase().trim();
+        if(!map[k])map[k]=[];
+        map[k].push(r);
+      }
+    });
     return map;
   },[gabunganRows]);
+
+  // Map 2: namaPCL (kolom C gabungan) → rows  (kolom C rekap = nama, bukan email)
   const gabunganByNamaPCL = useMemo(()=>{
     const map={};
-    gabunganRows.forEach(r=>{if(r.namaPCL){const k=r.namaPCL.toLowerCase().trim();if(!map[k])map[k]=[];map[k].push(r);}});
+    gabunganRows.forEach(r=>{
+      if(r.namaPCL){
+        const k=r.namaPCL.toLowerCase().trim();
+        if(!map[k])map[k]=[];
+        map[k].push(r);
+      }
+    });
     return map;
   },[gabunganRows]);
 
-  const findDetailRows=(emailPCL)=>{
-    const ke=(emailPCL||"").toLowerCase().trim();
-    if(gabunganByEmailPCL[ke]?.length)return gabunganByEmailPCL[ke];
-    if(gabunganByNamaPCL[ke]?.length)return gabunganByNamaPCL[ke];
-    return[];
+  // Map 3: "namaPML_gabungan||namaPCL" → rows  (kunci terkuat untuk nama duplikat)
+  const gabunganByNamaPmlNamaPCL = useMemo(()=>{
+    const map={};
+    gabunganRows.forEach(r=>{
+      if(r.namaPML && r.namaPCL){
+        const k=`${r.namaPML.toLowerCase().trim()}||${r.namaPCL.toLowerCase().trim()}`;
+        if(!map[k])map[k]=[];
+        map[k].push(r);
+      }
+    });
+    return map;
+  },[gabunganRows]);
+
+  // Map 4: emailPML_gabungan → namaPML (untuk resolve email→nama)
+  const namaPMLFromEmailGab = useMemo(()=>{
+    const map={};
+    gabunganRows.forEach(r=>{
+      if(r.emailPML && r.namaPML)
+        map[r.emailPML.toLowerCase().trim()] = r.namaPML;
+    });
+    return map;
+  },[gabunganRows]);
+
+  // Map 5: namaPML_gabungan → emailPML (kebalikannya, untuk resolve nama→email)
+  const emailPMLFromNamaGab = useMemo(()=>{
+    const map={};
+    gabunganRows.forEach(r=>{
+      if(r.emailPML && r.namaPML)
+        map[r.namaPML.toLowerCase().trim()] = r.emailPML;
+    });
+    return map;
+  },[gabunganRows]);
+
+  // ── Resolve namaPML dari emailPML rekap ──
+  // emailPML rekap (kolom B) → namaPML gabungan
+  // Strategi: coba exact match dulu, lalu partial match
+  const resolveNamaPML = (emailPMLRekap) => {
+    if(!emailPMLRekap) return "";
+    const key = emailPMLRekap.toLowerCase().trim();
+    // Exact match
+    if(namaPMLFromEmailGab[key]) return namaPMLFromEmailGab[key];
+    // Mungkin emailPML rekap = nama PML langsung (bukan email)
+    const byNama = gabunganRows.find(r=>r.namaPML.toLowerCase().trim()===key);
+    if(byNama) return byNama.namaPML;
+    return emailPMLRekap; // kembalikan apa adanya
   };
 
-  const enrichedRows=useMemo(()=>rows.map(r=>{
-    const d=findDetailRows(r.emailPCL);const f=d[0];
-    return{...r,namaPML:f?.namaPML||"",namaPCL:f?.namaPCL||""};
-  }),[rows,gabunganByEmailPCL,gabunganByNamaPCL]);
+  // ── findDetailRows: gunakan namaPML (hasil resolve) + namaPCL sebagai kunci utama ──
+  const findDetailRows = (pcl) => {
+    if(!pcl) return [];
+    const emailPCLKey  = (pcl.emailPCL||"").toLowerCase().trim();
+    const namaPCLKey   = (pcl.namaPCL ||emailPCLKey).toLowerCase().trim();
+    // namaPML sudah dienrich dari enrichedRows via resolveNamaPML
+    const namaPMLKey   = (pcl.namaPML ||"").toLowerCase().trim();
+
+    // 1. Kunci terkuat: namaPML + namaPCL (disambiguasi untuk nama duplikat)
+    if(namaPMLKey && namaPCLKey){
+      const k = `${namaPMLKey}||${namaPCLKey}`;
+      if(gabunganByNamaPmlNamaPCL[k]?.length) return gabunganByNamaPmlNamaPCL[k];
+    }
+
+    // 2. Email PCL langsung (jika kolom C rekap berisi email)
+    if(gabunganByEmailPCL[emailPCLKey]?.length){
+      const results = gabunganByEmailPCL[emailPCLKey];
+      if(results.length===1) return results;
+      // Duplikat: filter berdasarkan namaPML
+      if(namaPMLKey){
+        const f=results.filter(r=>r.namaPML.toLowerCase().trim()===namaPMLKey);
+        if(f.length) return f;
+      }
+      return results;
+    }
+
+    // 3. Fallback: namaPCL saja
+    if(namaPCLKey && gabunganByNamaPCL[namaPCLKey]?.length){
+      const results = gabunganByNamaPCL[namaPCLKey];
+      if(results.length===1) return results;
+      if(namaPMLKey){
+        const f=results.filter(r=>r.namaPML.toLowerCase().trim()===namaPMLKey);
+        if(f.length) return f;
+      }
+      return [results[0]]; // ambil satu saja jika tidak bisa bedakan
+    }
+
+    return [];
+  };
+
+  // ── enrichedRows: resolve namaPML dari emailPML rekap (kolom B) ──
+  // Ini kunci utama: emailPML rekap → namaPML gabungan → pakai sebagai disambiguator
+  const enrichedRows = useMemo(()=>rows.map(r=>{
+    const emailPMLRekap = (r.emailPML||"").trim(); // kolom B sheet rekap
+    const namaPCLRekap  = (r.emailPCL||"").trim(); // kolom C sheet rekap (bisa nama atau email)
+
+    // Step 1: resolve namaPML dari emailPML rekap
+    const namaPML = resolveNamaPML(emailPMLRekap);
+    const namaPMLLow = namaPML.toLowerCase().trim();
+    const namaPCLLow = namaPCLRekap.toLowerCase().trim();
+
+    // Step 2: cari namaPCL dari gabungan
+    // Strategi: cari baris gabungan yang namaPML-nya cocok DAN (emailPCL atau namaPCL) cocok dengan kolom C rekap
+    let namaPCL = "";
+
+    // Coba: namaPML + namaPCL (kolom C rekap sebagai nama)
+    const byPmlPcl = gabunganByNamaPmlNamaPCL[`${namaPMLLow}||${namaPCLLow}`];
+    if(byPmlPcl?.length){
+      namaPCL = byPmlPcl[0].namaPCL;
+    } else {
+      // Coba: emailPCL = kolom C rekap
+      const byEmail = gabunganByEmailPCL[namaPCLLow];
+      if(byEmail?.length){
+        // Ada duplikat? Filter dengan namaPML
+        const match = byEmail.find(b=>b.namaPML.toLowerCase().trim()===namaPMLLow)||byEmail[0];
+        namaPCL = match.namaPCL;
+      } else {
+        // Coba: kolom C rekap langsung sebagai namaPCL di gabungan
+        const byNama = gabunganByNamaPCL[namaPCLLow];
+        if(byNama?.length){
+          // Filter dengan namaPML untuk disambiguasi
+          const match = byNama.find(b=>b.namaPML.toLowerCase().trim()===namaPMLLow)||byNama[0];
+          namaPCL = match.namaPCL;
+        }
+      }
+    }
+
+    return {...r, namaPML, namaPCL};
+  }),[rows, gabunganRows, gabunganByNamaPmlNamaPCL, gabunganByEmailPCL, gabunganByNamaPCL]);
+
+  // ── Helper build chart dari key ──
+  const buildFromKey = (pclData, dates) =>
+    dates.map(({iso,label})=>({
+      label,
+      Approved:  pclData["Approved"]?.[iso]  ?? 0,
+      Draft:     pclData["Draft"]?.[iso]     ?? 0,
+      Rejected:  pclData["Rejected"]?.[iso]  ?? 0,
+      Submitted: pclData["Submitted"]?.[iso] ?? 0,
+    }));
+
+  // ── buildChartData: pakai namaPML yang sudah benar dari enrichedRows ──
 
   const kecamatanMap=useMemo(()=>{
     const m={};enrichedRows.forEach(r=>{if(!m[r.kecamatan])m[r.kecamatan]=[];m[r.kecamatan].push(r);});return m;
@@ -550,8 +722,8 @@ export default function MonitoringPetugas() {
       {modalPCL&&(
         <DetailModal
           pcl={modalPCL}
-          detailRows={findDetailRows(modalPCL.emailPCL)}
-          chartData={buildChartData(modalPCL.namaPCL || modalPCL.emailPCL)}
+          detailRows={findDetailRows(modalPCL)}
+          chartData={buildChartData(modalPCL)}
           loadingChart={loadingChart}
           onClose={()=>setModalPCL(null)}
         />
