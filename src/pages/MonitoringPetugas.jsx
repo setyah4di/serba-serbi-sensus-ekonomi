@@ -97,7 +97,7 @@ function StatCard({label,value,sub,accent,icon,onClick,clickable}){
         <p className="text-3xl font-black">{value}</p>
         {sub&&<p className="text-xs opacity-60 mt-1">{sub}</p>}
       </div>
-      {clickable&&<p className="text-[10px] opacity-50 mt-2 font-medium">Klik untuk detail →</p>}
+      {clickable&&<p className="text-[10px] text-white opacity-50 mt-2 font-medium">Klik untuk detail →</p>}
     </div>
   );
 }
@@ -316,7 +316,6 @@ function LowProgressModal({ rows, onDetail, onClose }) {
         <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{background:"linear-gradient(135deg,#f43f5e 0%,#e11d48 100%)"}}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-rose-100 text-xs font-semibold uppercase tracking-widest mb-1">Perhatian Khusus</p>
               <h2 className="text-white font-black text-xl leading-tight">PCL Progress &lt; 10%</h2>
               <p className="text-rose-100 text-sm mt-1">{rows.length} petugas membutuhkan perhatian</p>
             </div>
@@ -772,7 +771,7 @@ export default function MonitoringPetugas() {
               <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
               <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
               <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="Progress < 10%" value={globalStats.lowProgress.length} sub="perlu perhatian khusus" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
+              <StatCard label="PCL Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
               <StatCard label="PCL Belum Mulai" value={globalStats.zero} sub="progress 0%" accent="bg-rose-50 text-rose-700" icon="⏳"/>
               <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
             </div>
