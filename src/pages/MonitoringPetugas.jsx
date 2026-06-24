@@ -52,17 +52,13 @@ function parseNum(raw){
   return isNaN(v)?0:v;
 }
 
-// Parse tanggal dari berbagai format: "20/06/2026", "20-06-2026", serial excel, dll
 function parseDate(raw) {
   if (!raw) return null;
   const s = String(raw).trim();
-  // Format DD/MM/YYYY atau DD-MM-YYYY
   const m1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (m1) return `${m1[3]}-${m1[2].padStart(2,"0")}-${m1[1].padStart(2,"0")}`;
-  // Format YYYY-MM-DD
   const m2 = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})$/);
   if (m2) return s;
-  // Excel serial number
   const n = parseInt(s, 10);
   if (!isNaN(n) && n > 40000) {
     const d = new Date((n - 25569) * 86400 * 1000);
@@ -87,15 +83,31 @@ function badgeLabel(v){if(v>=100)return"Selesai";if(v>=75)return"Sangat Baik";if
 function ProgressBar({value,color}){
   return(<div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden"><div className={`h-2 rounded-full transition-all duration-700 ${color}`} style={{width:`${Math.min(Math.max(value,0),100)}%`}}/></div>);
 }
-function StatCard({label,value,sub,accent,icon}){
-  return(<div className={`rounded-2xl p-5 ${accent} flex flex-col justify-between`}><div className="flex items-start justify-between mb-3"><p className="text-xs font-semibold uppercase tracking-widest opacity-70 leading-tight">{label}</p>{icon&&<span className="text-lg opacity-60">{icon}</span>}</div><div><p className="text-3xl font-black">{value}</p>{sub&&<p className="text-xs opacity-60 mt-1">{sub}</p>}</div></div>);
+
+function StatCard({label,value,sub,accent,icon,onClick,clickable}){
+  const base=`rounded-2xl p-5 ${accent} flex flex-col justify-between`;
+  const cls=clickable?`${base} cursor-pointer hover:brightness-95 active:scale-95 transition-all duration-150 ring-0 hover:ring-2 hover:ring-white/40`:base;
+  return(
+    <div className={cls} onClick={onClick}>
+      <div className="flex items-start justify-between mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widest opacity-70 leading-tight">{label}</p>
+        {icon&&<span className="text-lg opacity-60">{icon}</span>}
+      </div>
+      <div>
+        <p className="text-3xl font-black">{value}</p>
+        {sub&&<p className="text-xs opacity-60 mt-1">{sub}</p>}
+      </div>
+      {clickable&&<p className="text-[10px] opacity-50 mt-2 font-medium">Klik untuk detail →</p>}
+    </div>
+  );
 }
+
 function KecamatanCard({kecamatan,avg,countPCL,countPML,onClick,isSelected}){
   const color=progressColor(avg),textColor=progressTextColor(avg);
   return(<button onClick={onClick} className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200 ${isSelected?"border-orange-400 bg-orange-50 shadow-md shadow-orange-100":"border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}><div className="flex items-start justify-between mb-2"><div className="flex-1 min-w-0 pr-2"><p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">Kecamatan</p><p className="text-base font-bold text-gray-800 leading-tight">{kecamatan}</p></div><span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{avg.toFixed(1)}%</span></div><ProgressBar value={avg} color={color}/><div className="flex items-center justify-between mt-2.5 gap-2 flex-wrap"><div className="flex gap-3"><span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countPML}</span> PML</span><span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countPCL}</span> PCL</span></div><span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${badgeStyle(avg)}`}>{badgeLabel(avg)}</span></div></button>);
 }
 
-// ── Custom Tooltip untuk chart ──
+// ── Custom Tooltip ──
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
@@ -112,13 +124,11 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-// Dot kustom: selalu tampil di setiap titik
 function CustomDot({ cx, cy, stroke }) {
   if (cx == null || cy == null) return null;
   return <circle cx={cx} cy={cy} r={3.5} fill="#fff" stroke={stroke} strokeWidth={2} />;
 }
 
-// ── Grafik Tren Harian ──
 function TrendChart({ chartData, loading }) {
   if (loading) {
     return (
@@ -135,14 +145,12 @@ function TrendChart({ chartData, loading }) {
       </div>
     );
   }
-
   const LINES = [
     { key: "Approved",  color: "#10b981" },
     { key: "Submitted", color: "#3b82f6" },
     { key: "Draft",     color: "#f59e0b" },
     { key: "Rejected",  color: "#f43f5e" },
   ];
-
   return (
     <div className="mb-4">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tren Harian</p>
@@ -150,39 +158,12 @@ function TrendChart({ chartData, loading }) {
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
-              axisLine={{ stroke: "#e5e7eb" }}
-              tickLine={false}
-              interval={0}
-              angle={chartData.length > 6 ? -35 : 0}
-              textAnchor={chartData.length > 6 ? "end" : "middle"}
-              height={chartData.length > 6 ? 40 : 20}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
-              axisLine={false}
-              tickLine={false}
-              allowDecimals={false}
-            />
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={{ stroke: "#e5e7eb" }} tickLine={false} interval={0} angle={chartData.length > 6 ? -35 : 0} textAnchor={chartData.length > 6 ? "end" : "middle"} height={chartData.length > 6 ? 40 : 20} />
+            <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#e5e7eb", strokeWidth: 1 }} />
-            <Legend
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
-            />
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
             {LINES.map(({ key, color }) => (
-              <Line
-                key={key}
-                type="linear"
-                dataKey={key}
-                stroke={color}
-                strokeWidth={2}
-                dot={<CustomDot stroke={color} />}
-                activeDot={{ r: 5, fill: color, stroke: "#fff", strokeWidth: 2 }}
-                connectNulls
-              />
+              <Line key={key} type="linear" dataKey={key} stroke={color} strokeWidth={2} dot={<CustomDot stroke={color} />} activeDot={{ r: 5, fill: color, stroke: "#fff", strokeWidth: 2 }} connectNulls />
             ))}
           </LineChart>
         </ResponsiveContainer>
@@ -201,7 +182,6 @@ function DetailModal({ pcl, detailRows, chartData, loadingChart, onClose }) {
   const totalOpen       = detailRows.reduce((s,r)=>s+r.open,0);
   const progress = pcl.progress;
   const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
-
   const statItems = [
     {label:"Total Assignment",value:totalAssignment,icon:"📋",bg:"bg-gray-100 text-gray-700"},
     {label:"Approved",        value:totalApproved,  icon:"✅",bg:"bg-emerald-50 text-emerald-700"},
@@ -210,53 +190,31 @@ function DetailModal({ pcl, detailRows, chartData, loadingChart, onClose }) {
     {label:"Rejected",        value:totalRejected,  icon:"❌",bg:"bg-rose-50 text-rose-700"},
     {label:"Open",            value:totalOpen,      icon:"🔓",bg:"bg-purple-50 text-purple-700"},
   ];
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{backgroundColor:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}}
-      onClick={handleBackdrop}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}} onClick={handleBackdrop}>
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeIn max-h-[92vh] flex flex-col">
-
-        {/* Header */}
         <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)"}}>
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0 pr-3">
               <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-1">Detail PCL</p>
               <p className="text-white font-black text-xl leading-tight">{pcl.namaPCL || pcl.emailPCL}</p>
-              {/* {pcl.emailPCL && pcl.namaPCL && (
-                <p className="text-orange-100 text-xs mt-0.5 break-all">{pcl.emailPCL}</p>
-              )} */}
             </div>
             <button onClick={onClose} className="text-orange-200 hover:text-white transition-colors mt-1 p-1 flex-shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
           {(pcl.namaPML||pcl.emailPML)&&(
             <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
               {pcl.namaPML&&<div className="flex items-center gap-1.5"><span className="text-orange-200 text-xs">PML:</span><span className="text-white text-xs font-semibold">{pcl.namaPML}</span></div>}
-              {/* {pcl.emailPML&&<div className="flex items-center gap-1.5"><span className="text-orange-200 text-xs">Email:</span><span className="text-white text-xs">{pcl.emailPML}</span></div>} */}
             </div>
           )}
           <div className="mt-3">
-            <div className="flex justify-between text-white text-sm mb-1.5">
-              <span className="opacity-80">Progress</span>
-              <span className="font-bold">{progress.toFixed(2)}%</span>
-            </div>
-            <div className="w-full bg-white/20 rounded-full h-2.5">
-              <div className="h-2.5 rounded-full bg-white transition-all duration-700" style={{width:`${Math.min(progress,100)}%`}}/>
-            </div>
+            <div className="flex justify-between text-white text-sm mb-1.5"><span className="opacity-80">Progress</span><span className="font-bold">{progress.toFixed(2)}%</span></div>
+            <div className="w-full bg-white/20 rounded-full h-2.5"><div className="h-2.5 rounded-full bg-white transition-all duration-700" style={{width:`${Math.min(progress,100)}%`}}/></div>
           </div>
         </div>
-
-        {/* Body scrollable */}
         <div className="overflow-y-auto flex-1 px-6 py-5">
-
-          {/* ── Grafik tren harian ── */}
           <TrendChart chartData={chartData} loading={loadingChart} />
-
-          {/* ── Stat cards ── */}
           {detailRows.length === 0 ? (
             <div className="text-center py-6">
               <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3"><span className="text-2xl">🔍</span></div>
@@ -309,8 +267,180 @@ function DetailModal({ pcl, detailRows, chartData, loadingChart, onClose }) {
             </>
           )}
         </div>
+        <div className="px-6 pb-5 pt-3 flex-shrink-0 border-t border-gray-100">
+          <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-colors">Tutup</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Footer */}
+// ── Modal PCL Progress < 10% ──
+function LowProgressModal({ rows, onDetail, onClose }) {
+  const [searchLow, setSearchLow] = useState("");
+  const [expandedKec, setExpandedKec] = useState(null);
+  const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
+
+  const filtered = useMemo(()=>{
+    if(!searchLow.trim()) return [...rows].sort((a,b)=>a.progress-b.progress);
+    const q = searchLow.toLowerCase();
+    return [...rows]
+      .filter(r=>(r.namaPCL||"").toLowerCase().includes(q)||(r.emailPCL||"").toLowerCase().includes(q))
+      .sort((a,b)=>a.progress-b.progress);
+  },[rows, searchLow]);
+
+  // Ringkasan per kecamatan dari semua rows (bukan filtered)
+  const byKec = useMemo(()=>{
+    const map = {};
+    rows.forEach(r=>{
+      if(!map[r.kecamatan]) map[r.kecamatan] = [];
+      map[r.kecamatan].push(r);
+    });
+    // Sort tiap kecamatan by progress ascending
+    Object.keys(map).forEach(k => {
+      map[k].sort((a,b) => a.progress - b.progress);
+    });
+    return map;
+  },[rows]);
+
+  const isSearching = searchLow.trim().length > 0;
+
+  const toggleKec = (kec) => {
+    setExpandedKec(prev => prev === kec ? null : kec);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}} onClick={handleBackdrop}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeIn max-h-[92vh] flex flex-col">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{background:"linear-gradient(135deg,#f43f5e 0%,#e11d48 100%)"}}>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-rose-100 text-xs font-semibold uppercase tracking-widest mb-1">Perhatian Khusus</p>
+              <h2 className="text-white font-black text-xl leading-tight">PCL Progress &lt; 10%</h2>
+              <p className="text-rose-100 text-sm mt-1">{rows.length} petugas membutuhkan perhatian</p>
+            </div>
+            <button onClick={onClose} className="text-rose-200 hover:text-white transition-colors mt-1 p-1">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-6 py-4">
+          {/* Mode: Kecamatan cards (accordion) */}
+          {!isSearching && (
+            <div className="mb-1">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                Per Kecamatan — klik untuk lihat daftar PCL
+              </p>
+              <div className="space-y-2">
+                {Object.entries(byKec).map(([kec, pcls]) => {
+                  const isOpen = expandedKec === kec;
+                  return (
+                    <div key={kec} className={`rounded-2xl border-2 overflow-hidden transition-all duration-200 ${isOpen ? "border-rose-300 shadow-sm shadow-rose-100" : "border-gray-100"}`}>
+                      {/* Card header — klik untuk expand */}
+                      <button
+                        onClick={() => toggleKec(kec)}
+                        className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${isOpen ? "bg-rose-50" : "bg-white hover:bg-gray-50"}`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black ${isOpen ? "bg-rose-500 text-white" : "bg-rose-100 text-rose-600"}`}>
+                            {pcls.length}
+                          </div>
+                          <p className={`text-sm font-bold truncate ${isOpen ? "text-rose-700" : "text-gray-700"}`}>{kec}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <span className="text-xs text-gray-400 font-medium">{pcls.length} PCL</span>
+                          <svg
+                            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180 text-rose-400" : ""}`}
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                          </svg>
+                        </div>
+                      </button>
+
+                      {/* Expanded: daftar PCL */}
+                      {isOpen && (
+                        <div className="border-t border-rose-100">
+                          {pcls.map((pcl, i) => (
+                            <div
+                              key={`${pcl.emailPCL}-${i}`}
+                              className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-rose-50/40 transition-colors"
+                            >
+                              <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{i+1}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-gray-800 truncate">{pcl.namaPCL || pcl.emailPCL}</p>
+                                <p className="text-xs text-gray-400 truncate mt-0.5">
+                                  <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
+                                  {pcl.namaPML || pcl.emailPML || "—"}
+                                </p>
+                                <div className="mt-1.5">
+                                  <ProgressBar value={pcl.progress} color="bg-rose-400" />
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                                <span className="text-sm font-black text-rose-500">{pcl.progress.toFixed(2)}%</span>
+                                <button
+                                  onClick={() => onDetail(pcl)}
+                                  className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap"
+                                >
+                                  Detail
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Mode: Search results */}
+          {isSearching && (
+            <>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+                Hasil pencarian: {filtered.length} dari {rows.length}
+              </p>
+              {filtered.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 text-sm">Tidak ada PCL dengan nama "{searchLow}"</p>
+                </div>
+              ) : (
+                <div className="space-y-0 rounded-xl border border-gray-100 overflow-hidden">
+                  {filtered.map((pcl, i) => (
+                    <div key={`${pcl.emailPCL}-${i}`} className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                      <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{i+1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-800 truncate">{pcl.namaPCL || pcl.emailPCL}</p>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                          <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
+                          {pcl.namaPML || pcl.emailPML || "—"}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate mt-0.5">
+                          <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">KEC</span>
+                          {pcl.kecamatan}
+                        </p>
+                        <div className="mt-1.5">
+                          <ProgressBar value={pcl.progress} color="bg-rose-400" />
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                        <span className="text-sm font-black text-rose-500">{pcl.progress.toFixed(2)}%</span>
+                        <button onClick={()=>onDetail(pcl)} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap">Detail</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
         <div className="px-6 pb-5 pt-3 flex-shrink-0 border-t border-gray-100">
           <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-colors">Tutup</button>
         </div>
@@ -329,7 +459,6 @@ function PCLRow({pcl,rank,onDetail}){
         <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{rank}</span>
         <div className="flex-1 min-w-0">
           {namaPCL&&<p className="text-xs font-bold text-gray-700 truncate">{namaPCL}</p>}
-          {/* <p className={`truncate ${namaPCL?"text-xs text-gray-400":"text-sm font-semibold text-gray-800"}`}>{emailPCL}</p> */}
           {emailPML?(
             <p className="text-xs text-gray-400 truncate mt-0.5">
               <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
@@ -342,10 +471,7 @@ function PCLRow({pcl,rank,onDetail}){
         </div>
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
           <span className={`text-sm font-bold w-16 text-right ${textColor}`}>{progress.toFixed(2)}%</span>
-          <button onClick={()=>onDetail(pcl)}
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap">
-            Detail
-          </button>
+          <button onClick={()=>onDetail(pcl)} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap">Detail</button>
         </div>
       </div>
     </div>
@@ -356,7 +482,7 @@ function PCLRow({pcl,rank,onDetail}){
 export default function MonitoringPetugas() {
   const [rows, setRows]                 = useState([]);
   const [gabunganRows, setGabunganRows] = useState([]);
-  const [perHariRaw, setPerHariRaw]     = useState(null); // {dates[], data: {namaPCL: {status: [nilai per tanggal]}}}
+  const [perHariRaw, setPerHariRaw]     = useState(null);
   const [loading, setLoading]           = useState(true);
   const [loadingGab, setLoadingGab]     = useState(true);
   const [loadingChart, setLoadingChart] = useState(true);
@@ -366,10 +492,12 @@ export default function MonitoringPetugas() {
   const [sortBy, setSortBy]             = useState("urut");
   const [lastUpdated, setLastUpdated]   = useState(null);
   const [modalPCL, setModalPCL]         = useState(null);
+  const [showLowProgress, setShowLowProgress] = useState(false);
+  const [searchPCL, setSearchPCL]       = useState("");
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
-  useEffect(()=>{if(tableRef.current)tableRef.current.scrollTop=0;},[selectedKec]);
+  useEffect(()=>{if(tableRef.current)tableRef.current.scrollTop=0; setSearchPCL("");},[selectedKec]);
 
   const handleSelectKec=(kec)=>{
     const next=selectedKec===kec?null:kec;
@@ -377,7 +505,7 @@ export default function MonitoringPetugas() {
     if(next&&window.innerWidth<1024){setTimeout(()=>detailRef.current?.scrollIntoView({behavior:"smooth",block:"start"}),50);}
   };
 
-  // ── Load rekap progress pendataan ──
+  // ── Load rekap ──
   useEffect(()=>{
     fetch(CSV_REKAP).then(r=>{if(!r.ok)throw new Error("Gagal mengambil data.");return r.text();})
     .then(text=>{
@@ -393,7 +521,7 @@ export default function MonitoringPetugas() {
     }).catch(e=>{setError(e.message);setLoading(false);});
   },[]);
 
-  // ── Load hasil_gabungan ──
+  // ── Load gabungan ──
   useEffect(()=>{
     fetch(CSV_GABUNGAN).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
       const parsed=parseCSV(text);
@@ -416,13 +544,11 @@ export default function MonitoringPetugas() {
     }).catch(()=>setLoadingGab(false));
   },[]);
 
-  // ── Load rekap progres per hari ──
-  // Key komposit: "kec||pml||pcl" (lowercase) agar nama PCL yang sama di kecamatan/PML berbeda tidak tabrakan
+  // ── Load per hari ──
   useEffect(()=>{
     fetch(CSV_PERHARI).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
       const parsed=parseCSV(text);
       if(parsed.length<3){setLoadingChart(false);return;}
-
       const headerRow = parsed[1];
       const dateStartIdx = 4;
       const dates = [];
@@ -430,83 +556,113 @@ export default function MonitoringPetugas() {
         const d = parseDate(headerRow[i]);
         if(d) dates.push({ idx: i, iso: d, label: fmtDate(d) });
       }
-
       let lastKec="", lastPML="", lastPCL="";
-      // Map: "kec||pml||pcl" → { status → { isoDate → nilai } }
       const dataMap = {};
-
       for(let r=3; r<parsed.length; r++){
         const cols = parsed[r];
         const kecRaw = (cols[0]||"").trim();
         const pmlRaw = (cols[1]||"").trim();
         const pclRaw = (cols[2]||"").trim();
         const status  = (cols[3]||"").trim();
-
         if(kecRaw && kecRaw!=="-") lastKec=kecRaw;
         if(pmlRaw && pmlRaw!=="-") lastPML=pmlRaw;
         if(pclRaw && pclRaw!=="-") lastPCL=pclRaw;
-
         if(!lastPCL) continue;
         const statusNorm = status.charAt(0).toUpperCase()+status.slice(1).toLowerCase();
         if(!["Approved","Draft","Rejected","Submitted"].includes(statusNorm)) continue;
-
-        // Key komposit — unik per kombinasi kec+pml+pcl
         const compKey = `${lastKec.toLowerCase()}||${lastPML.toLowerCase()}||${lastPCL.toLowerCase()}`;
         if(!dataMap[compKey]) dataMap[compKey]={};
         if(!dataMap[compKey][statusNorm]) dataMap[compKey][statusNorm]={};
-
-        dates.forEach(({idx,iso})=>{
-          dataMap[compKey][statusNorm][iso] = parseNum(cols[idx]);
-        });
+        dates.forEach(({idx,iso})=>{ dataMap[compKey][statusNorm][iso] = parseNum(cols[idx]); });
       }
-
       setPerHariRaw({ dates, dataMap });
       setLoadingChart(false);
     }).catch(()=>setLoadingChart(false));
   },[]);
 
-  // ── Helper: buat key komposit (normalize) ──
   const makeCompKey = (kec="", pml="", pcl="") =>
     `${kec.toLowerCase().trim()}||${pml.toLowerCase().trim()}||${pcl.toLowerCase().trim()}`;
 
-  // Bangun chartData — pakai key komposit kec+namaPML+namaPCL
-  // namaPML didapat dari: namaPML (sudah dienrich) atau lookup emailPML rekap → namaPML gabungan
+  // ── Maps gabungan ──
+  const gabunganByEmailPCL = useMemo(()=>{const map={};gabunganRows.forEach(r=>{if(r.emailPCL){const k=r.emailPCL.toLowerCase().trim();if(!map[k])map[k]=[];map[k].push(r);}});return map;},[gabunganRows]);
+  const gabunganByNamaPCL = useMemo(()=>{const map={};gabunganRows.forEach(r=>{if(r.namaPCL){const k=r.namaPCL.toLowerCase().trim();if(!map[k])map[k]=[];map[k].push(r);}});return map;},[gabunganRows]);
+  const gabunganByNamaPmlNamaPCL = useMemo(()=>{const map={};gabunganRows.forEach(r=>{if(r.namaPML&&r.namaPCL){const k=`${r.namaPML.toLowerCase().trim()}||${r.namaPCL.toLowerCase().trim()}`;if(!map[k])map[k]=[];map[k].push(r);}});return map;},[gabunganRows]);
+  const namaPMLFromEmailGab = useMemo(()=>{const map={};gabunganRows.forEach(r=>{if(r.emailPML&&r.namaPML)map[r.emailPML.toLowerCase().trim()]=r.namaPML;});return map;},[gabunganRows]);
+
+  const resolveNamaPML = (emailPMLRekap) => {
+    if(!emailPMLRekap) return "";
+    const key = emailPMLRekap.toLowerCase().trim();
+    if(namaPMLFromEmailGab[key]) return namaPMLFromEmailGab[key];
+    const byNama = gabunganRows.find(r=>r.namaPML.toLowerCase().trim()===key);
+    if(byNama) return byNama.namaPML;
+    return emailPMLRekap;
+  };
+
+  const findDetailRows = (pcl) => {
+    if(!pcl) return [];
+    const emailPCLKey  = (pcl.emailPCL||"").toLowerCase().trim();
+    const namaPCLKey   = (pcl.namaPCL ||emailPCLKey).toLowerCase().trim();
+    const namaPMLKey   = (pcl.namaPML ||"").toLowerCase().trim();
+    if(namaPMLKey && namaPCLKey){
+      const k = `${namaPMLKey}||${namaPCLKey}`;
+      if(gabunganByNamaPmlNamaPCL[k]?.length) return gabunganByNamaPmlNamaPCL[k];
+    }
+    if(gabunganByEmailPCL[emailPCLKey]?.length){
+      const results = gabunganByEmailPCL[emailPCLKey];
+      if(results.length===1) return results;
+      if(namaPMLKey){const f=results.filter(r=>r.namaPML.toLowerCase().trim()===namaPMLKey);if(f.length) return f;}
+      return results;
+    }
+    if(namaPCLKey && gabunganByNamaPCL[namaPCLKey]?.length){
+      const results = gabunganByNamaPCL[namaPCLKey];
+      if(results.length===1) return results;
+      if(namaPMLKey){const f=results.filter(r=>r.namaPML.toLowerCase().trim()===namaPMLKey);if(f.length) return f;}
+      return [results[0]];
+    }
+    return [];
+  };
+
+  const enrichedRows = useMemo(()=>rows.map(r=>{
+    const emailPMLRekap = (r.emailPML||"").trim();
+    const namaPCLRekap  = (r.emailPCL||"").trim();
+    const namaPML = resolveNamaPML(emailPMLRekap);
+    const namaPMLLow = namaPML.toLowerCase().trim();
+    const namaPCLLow = namaPCLRekap.toLowerCase().trim();
+    let namaPCL = "";
+    const byPmlPcl = gabunganByNamaPmlNamaPCL[`${namaPMLLow}||${namaPCLLow}`];
+    if(byPmlPcl?.length){ namaPCL = byPmlPcl[0].namaPCL; }
+    else {
+      const byEmail = gabunganByEmailPCL[namaPCLLow];
+      if(byEmail?.length){ const match = byEmail.find(b=>b.namaPML.toLowerCase().trim()===namaPMLLow)||byEmail[0]; namaPCL = match.namaPCL; }
+      else {
+        const byNama = gabunganByNamaPCL[namaPCLLow];
+        if(byNama?.length){ const match = byNama.find(b=>b.namaPML.toLowerCase().trim()===namaPMLLow)||byNama[0]; namaPCL = match.namaPCL; }
+      }
+    }
+    return {...r, namaPML, namaPCL};
+  }),[rows, gabunganRows, gabunganByNamaPmlNamaPCL, gabunganByEmailPCL, gabunganByNamaPCL]);
+
   const buildChartData = (pcl) => {
     if(!perHariRaw || !pcl) return [];
     const { dates, dataMap } = perHariRaw;
-
     const kec     = (pcl.kecamatan||"").trim();
-    const namaPML = (pcl.namaPML  ||"").trim();  // sudah dienrich dari enrichedRows
+    const namaPML = (pcl.namaPML  ||"").trim();
     const namaPCL = (pcl.namaPCL  ||pcl.emailPCL||"").trim();
-    const emailPML= (pcl.emailPML ||"").toLowerCase().trim(); // emailPML dari rekap (kolom B)
-
-    // Jika namaPML belum terisi, coba cari dari emailPML rekap → namaPML gabungan
-    const resolvedNamaPML = namaPML || namaPMLFromEmail[emailPML] || "";
-
-    // Coba beberapa kombinasi key secara berurutan
     const candidates = [
-      makeCompKey(kec, resolvedNamaPML, namaPCL),
-      // Tanpa kecamatan (sheet perhari mungkin pakai kode bukan nama)
+      makeCompKey(kec, namaPML, namaPCL),
       ...Object.keys(dataMap).filter(k => {
         const parts = k.split("||");
         if(parts.length!==3) return false;
         const kPML = parts[1], kPCL = parts[2];
-        const pclMatch = kPCL === namaPCL.toLowerCase().trim();
-        if(!pclMatch) return false;
-        // Cocokkan PML: namaPML atau emailPML (sebagian cocok)
-        const pmlLow = resolvedNamaPML.toLowerCase().trim();
+        if(kPCL !== namaPCL.toLowerCase().trim()) return false;
+        const pmlLow = namaPML.toLowerCase().trim();
         return kPML === pmlLow || (pmlLow && kPML.includes(pmlLow.split(" ")[0].toLowerCase()));
       }),
-      // Fallback terakhir: semua yang namaPCL-nya cocok
       ...Object.keys(dataMap).filter(k=>k.endsWith(`||${namaPCL.toLowerCase().trim()}`)),
     ];
-
     let matchKey = null;
-    for(const k of candidates){
-      if(k && dataMap[k]){ matchKey=k; break; }
-    }
+    for(const k of candidates){ if(k && dataMap[k]){ matchKey=k; break; } }
     if(!matchKey) return [];
-
     const pclData = dataMap[matchKey];
     return dates.map(({iso,label})=>({
       label,
@@ -517,176 +673,7 @@ export default function MonitoringPetugas() {
     }));
   };
 
-  // ── Maps dari hasil_gabungan ──
-
-  // Map 1: emailPCL (kolom D gabungan) → rows
-  const gabunganByEmailPCL = useMemo(()=>{
-    const map={};
-    gabunganRows.forEach(r=>{
-      if(r.emailPCL){
-        const k=r.emailPCL.toLowerCase().trim();
-        if(!map[k])map[k]=[];
-        map[k].push(r);
-      }
-    });
-    return map;
-  },[gabunganRows]);
-
-  // Map 2: namaPCL (kolom C gabungan) → rows  (kolom C rekap = nama, bukan email)
-  const gabunganByNamaPCL = useMemo(()=>{
-    const map={};
-    gabunganRows.forEach(r=>{
-      if(r.namaPCL){
-        const k=r.namaPCL.toLowerCase().trim();
-        if(!map[k])map[k]=[];
-        map[k].push(r);
-      }
-    });
-    return map;
-  },[gabunganRows]);
-
-  // Map 3: "namaPML_gabungan||namaPCL" → rows  (kunci terkuat untuk nama duplikat)
-  const gabunganByNamaPmlNamaPCL = useMemo(()=>{
-    const map={};
-    gabunganRows.forEach(r=>{
-      if(r.namaPML && r.namaPCL){
-        const k=`${r.namaPML.toLowerCase().trim()}||${r.namaPCL.toLowerCase().trim()}`;
-        if(!map[k])map[k]=[];
-        map[k].push(r);
-      }
-    });
-    return map;
-  },[gabunganRows]);
-
-  // Map 4: emailPML_gabungan → namaPML (untuk resolve email→nama)
-  const namaPMLFromEmailGab = useMemo(()=>{
-    const map={};
-    gabunganRows.forEach(r=>{
-      if(r.emailPML && r.namaPML)
-        map[r.emailPML.toLowerCase().trim()] = r.namaPML;
-    });
-    return map;
-  },[gabunganRows]);
-
-  // Map 5: namaPML_gabungan → emailPML (kebalikannya, untuk resolve nama→email)
-  const emailPMLFromNamaGab = useMemo(()=>{
-    const map={};
-    gabunganRows.forEach(r=>{
-      if(r.emailPML && r.namaPML)
-        map[r.namaPML.toLowerCase().trim()] = r.emailPML;
-    });
-    return map;
-  },[gabunganRows]);
-
-  // ── Resolve namaPML dari emailPML rekap ──
-  // emailPML rekap (kolom B) → namaPML gabungan
-  // Strategi: coba exact match dulu, lalu partial match
-  const resolveNamaPML = (emailPMLRekap) => {
-    if(!emailPMLRekap) return "";
-    const key = emailPMLRekap.toLowerCase().trim();
-    // Exact match
-    if(namaPMLFromEmailGab[key]) return namaPMLFromEmailGab[key];
-    // Mungkin emailPML rekap = nama PML langsung (bukan email)
-    const byNama = gabunganRows.find(r=>r.namaPML.toLowerCase().trim()===key);
-    if(byNama) return byNama.namaPML;
-    return emailPMLRekap; // kembalikan apa adanya
-  };
-
-  // ── findDetailRows: gunakan namaPML (hasil resolve) + namaPCL sebagai kunci utama ──
-  const findDetailRows = (pcl) => {
-    if(!pcl) return [];
-    const emailPCLKey  = (pcl.emailPCL||"").toLowerCase().trim();
-    const namaPCLKey   = (pcl.namaPCL ||emailPCLKey).toLowerCase().trim();
-    // namaPML sudah dienrich dari enrichedRows via resolveNamaPML
-    const namaPMLKey   = (pcl.namaPML ||"").toLowerCase().trim();
-
-    // 1. Kunci terkuat: namaPML + namaPCL (disambiguasi untuk nama duplikat)
-    if(namaPMLKey && namaPCLKey){
-      const k = `${namaPMLKey}||${namaPCLKey}`;
-      if(gabunganByNamaPmlNamaPCL[k]?.length) return gabunganByNamaPmlNamaPCL[k];
-    }
-
-    // 2. Email PCL langsung (jika kolom C rekap berisi email)
-    if(gabunganByEmailPCL[emailPCLKey]?.length){
-      const results = gabunganByEmailPCL[emailPCLKey];
-      if(results.length===1) return results;
-      // Duplikat: filter berdasarkan namaPML
-      if(namaPMLKey){
-        const f=results.filter(r=>r.namaPML.toLowerCase().trim()===namaPMLKey);
-        if(f.length) return f;
-      }
-      return results;
-    }
-
-    // 3. Fallback: namaPCL saja
-    if(namaPCLKey && gabunganByNamaPCL[namaPCLKey]?.length){
-      const results = gabunganByNamaPCL[namaPCLKey];
-      if(results.length===1) return results;
-      if(namaPMLKey){
-        const f=results.filter(r=>r.namaPML.toLowerCase().trim()===namaPMLKey);
-        if(f.length) return f;
-      }
-      return [results[0]]; // ambil satu saja jika tidak bisa bedakan
-    }
-
-    return [];
-  };
-
-  // ── enrichedRows: resolve namaPML dari emailPML rekap (kolom B) ──
-  // Ini kunci utama: emailPML rekap → namaPML gabungan → pakai sebagai disambiguator
-  const enrichedRows = useMemo(()=>rows.map(r=>{
-    const emailPMLRekap = (r.emailPML||"").trim(); // kolom B sheet rekap
-    const namaPCLRekap  = (r.emailPCL||"").trim(); // kolom C sheet rekap (bisa nama atau email)
-
-    // Step 1: resolve namaPML dari emailPML rekap
-    const namaPML = resolveNamaPML(emailPMLRekap);
-    const namaPMLLow = namaPML.toLowerCase().trim();
-    const namaPCLLow = namaPCLRekap.toLowerCase().trim();
-
-    // Step 2: cari namaPCL dari gabungan
-    // Strategi: cari baris gabungan yang namaPML-nya cocok DAN (emailPCL atau namaPCL) cocok dengan kolom C rekap
-    let namaPCL = "";
-
-    // Coba: namaPML + namaPCL (kolom C rekap sebagai nama)
-    const byPmlPcl = gabunganByNamaPmlNamaPCL[`${namaPMLLow}||${namaPCLLow}`];
-    if(byPmlPcl?.length){
-      namaPCL = byPmlPcl[0].namaPCL;
-    } else {
-      // Coba: emailPCL = kolom C rekap
-      const byEmail = gabunganByEmailPCL[namaPCLLow];
-      if(byEmail?.length){
-        // Ada duplikat? Filter dengan namaPML
-        const match = byEmail.find(b=>b.namaPML.toLowerCase().trim()===namaPMLLow)||byEmail[0];
-        namaPCL = match.namaPCL;
-      } else {
-        // Coba: kolom C rekap langsung sebagai namaPCL di gabungan
-        const byNama = gabunganByNamaPCL[namaPCLLow];
-        if(byNama?.length){
-          // Filter dengan namaPML untuk disambiguasi
-          const match = byNama.find(b=>b.namaPML.toLowerCase().trim()===namaPMLLow)||byNama[0];
-          namaPCL = match.namaPCL;
-        }
-      }
-    }
-
-    return {...r, namaPML, namaPCL};
-  }),[rows, gabunganRows, gabunganByNamaPmlNamaPCL, gabunganByEmailPCL, gabunganByNamaPCL]);
-
-  // ── Helper build chart dari key ──
-  const buildFromKey = (pclData, dates) =>
-    dates.map(({iso,label})=>({
-      label,
-      Approved:  pclData["Approved"]?.[iso]  ?? 0,
-      Draft:     pclData["Draft"]?.[iso]     ?? 0,
-      Rejected:  pclData["Rejected"]?.[iso]  ?? 0,
-      Submitted: pclData["Submitted"]?.[iso] ?? 0,
-    }));
-
-  // ── buildChartData: pakai namaPML yang sudah benar dari enrichedRows ──
-
-  const kecamatanMap=useMemo(()=>{
-    const m={};enrichedRows.forEach(r=>{if(!m[r.kecamatan])m[r.kecamatan]=[];m[r.kecamatan].push(r);});return m;
-  },[enrichedRows]);
+  const kecamatanMap=useMemo(()=>{const m={};enrichedRows.forEach(r=>{if(!m[r.kecamatan])m[r.kecamatan]=[];m[r.kecamatan].push(r);});return m;},[enrichedRows]);
 
   const kecamatanList=useMemo(()=>KECAMATAN_ORDER.map(nama=>{
     const pcls=kecamatanMap[nama]||[];
@@ -697,17 +684,24 @@ export default function MonitoringPetugas() {
     .sort((a,b)=>sortBy==="progress"?b.avg-a.avg:KECAMATAN_ORDER.indexOf(a.kecamatan)-KECAMATAN_ORDER.indexOf(b.kecamatan))
   ,[kecamatanMap,search,sortBy]);
 
-  const selectedPCL=useMemo(()=>{
-    if(!selectedKec)return[];
-    return[...(kecamatanMap[selectedKec]||[])].sort((a,b)=>b.progress-a.progress);
-  },[selectedKec,kecamatanMap]);
+  const selectedPCL=useMemo(()=>{if(!selectedKec)return[];return[...(kecamatanMap[selectedKec]||[])].sort((a,b)=>b.progress-a.progress);},[selectedKec,kecamatanMap]);
+
+  const filteredPCL=useMemo(()=>{
+    if(!searchPCL.trim()) return selectedPCL;
+    const q=searchPCL.toLowerCase();
+    return selectedPCL.filter(p=>(p.namaPCL||"").toLowerCase().includes(q)||(p.emailPCL||"").toLowerCase().includes(q));
+  },[selectedPCL,searchPCL]);
 
   const globalStats=useMemo(()=>{
     if(!enrichedRows.length)return null;
     const allPML=new Set(enrichedRows.map(r=>r.emailPML).filter(Boolean));
     const avg=enrichedRows.reduce((s,r)=>s+r.progress,0)/enrichedRows.length;
-    return{totalPCL:enrichedRows.length,totalPML:allPML.size,avg,
-      done100:enrichedRows.filter(r=>r.progress>=100).length,zero:enrichedRows.filter(r=>r.progress===0).length};
+    return{
+      totalPCL:enrichedRows.length, totalPML:allPML.size, avg,
+      done100:enrichedRows.filter(r=>r.progress>=100).length,
+      zero:enrichedRows.filter(r=>r.progress===0).length,
+      lowProgress:enrichedRows.filter(r=>r.progress<10),
+    };
   },[enrichedRows]);
 
   const avgSelected=selectedPCL.length?selectedPCL.reduce((s,p)=>s+p.progress,0)/selectedPCL.length:0;
@@ -719,6 +713,7 @@ export default function MonitoringPetugas() {
   return(
     <div className="min-h-screen bg-gray-50 font-sans">
 
+      {/* Modal Detail PCL */}
       {modalPCL&&(
         <DetailModal
           pcl={modalPCL}
@@ -726,6 +721,15 @@ export default function MonitoringPetugas() {
           chartData={buildChartData(modalPCL)}
           loadingChart={loadingChart}
           onClose={()=>setModalPCL(null)}
+        />
+      )}
+
+      {/* Modal PCL Progress < 10% */}
+      {showLowProgress && globalStats?.lowProgress && (
+        <LowProgressModal
+          rows={globalStats.lowProgress}
+          onDetail={(pcl)=>{ setShowLowProgress(false); setTimeout(()=>setModalPCL(pcl),100); }}
+          onClose={()=>setShowLowProgress(false)}
         />
       )}
 
@@ -763,12 +767,14 @@ export default function MonitoringPetugas() {
         )}
         {!loading&&!error&&globalStats&&(
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
               <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
               <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
               <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
+              <StatCard label="Progress < 10%" value={globalStats.lowProgress.length} sub="perlu perhatian khusus" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
               <StatCard label="PCL Belum Mulai" value={globalStats.zero} sub="progress 0%" accent="bg-rose-50 text-rose-700" icon="⏳"/>
+              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -789,8 +795,7 @@ export default function MonitoringPetugas() {
             <div className="flex flex-col lg:flex-row gap-5">
               <div className="lg:w-[55%] grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
                 {kecamatanList.map(({kecamatan,avg,countPCL,countPML})=>(
-                  <KecamatanCard key={kecamatan} kecamatan={kecamatan} avg={avg} countPCL={countPCL} countPML={countPML}
-                    isSelected={selectedKec===kecamatan} onClick={()=>handleSelectKec(kecamatan)}/>
+                  <KecamatanCard key={kecamatan} kecamatan={kecamatan} avg={avg} countPCL={countPCL} countPML={countPML} isSelected={selectedKec===kecamatan} onClick={()=>handleSelectKec(kecamatan)}/>
                 ))}
               </div>
 
@@ -798,9 +803,7 @@ export default function MonitoringPetugas() {
                 {!selectedKec?(
                   <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-20 text-center px-8">
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
-                      <svg className="w-7 h-7 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      </svg>
+                      <svg className="w-7 h-7 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
                     <p className="font-semibold text-gray-600">Pilih Kecamatan</p>
                     <p className="text-gray-400 text-sm mt-1">Klik kartu kecamatan untuk melihat detail PML dan PCL.</p>
@@ -835,12 +838,27 @@ export default function MonitoringPetugas() {
                         </div>
                       )}
                     </div>
-
                     <div ref={tableRef} className="px-6 py-2 max-h-[500px] overflow-y-auto">
-                      <div className="flex items-center gap-3 py-3 border-b border-gray-100 mb-1 sticky top-0 bg-white z-10">
-                        <span className="text-xs text-gray-400 w-5">#</span>
-                        <span className="text-xs text-gray-400 flex-1">Nama / Email PCL · PML</span>
-                        <span className="text-xs text-gray-400 w-28 text-right">Progress</span>
+                      {/* Search PCL */}
+                      <div className="sticky top-0 bg-white pt-2 pb-1 z-10">
+                        <div className="relative mb-2">
+                          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+                          </svg>
+                          <input type="text" placeholder="Cari nama PCL…" value={searchPCL}
+                            onChange={e=>{setSearchPCL(e.target.value); if(tableRef.current) tableRef.current.scrollTop=0;}}
+                            className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300"/>
+                          {searchPCL&&(
+                            <button onClick={()=>setSearchPCL("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 py-2 border-b border-gray-100">
+                          <span className="text-xs text-gray-400 w-5">#</span>
+                          <span className="text-xs text-gray-400 flex-1">Nama / Email PCL · PML</span>
+                          <span className="text-xs text-gray-400 w-28 text-right">Progress</span>
+                        </div>
                       </div>
                       {loadingGab&&(
                         <div className="flex items-center gap-2 py-2 px-1 mb-2 bg-amber-50 rounded-lg">
@@ -848,24 +866,25 @@ export default function MonitoringPetugas() {
                           <p className="text-amber-600 text-xs">Memuat data detail…</p>
                         </div>
                       )}
-                      {selectedPCL.length===0?(
-                        <p className="text-gray-400 text-sm text-center py-8">Belum ada data petugas.</p>
+                      {filteredPCL.length===0?(
+                        <p className="text-gray-400 text-sm text-center py-8">
+                          {searchPCL ? `Tidak ada PCL dengan nama "${searchPCL}"` : "Belum ada data petugas."}
+                        </p>
                       ):(
-                        selectedPCL.map((p,i)=>(
+                        filteredPCL.map((p,i)=>(
                           <PCLRow key={`${p.emailPCL}-${i}`} pcl={p} rank={i+1} onDetail={handleDetail}/>
                         ))
                       )}
                     </div>
-
                     <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                       <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
-                        <span className="font-semibold text-gray-600">{selectedPCL.length} PCL</span>
+                        <span className="font-semibold text-gray-600">{filteredPCL.length}{searchPCL?` / ${selectedPCL.length}`:""} PCL</span>
                         <span>·</span>
-                        <span className="text-emerald-600 font-medium">{selectedPCL.filter(p=>p.progress>=100).length} selesai</span>
+                        <span className="text-emerald-600 font-medium">{filteredPCL.filter(p=>p.progress>=100).length} selesai</span>
                         <span>·</span>
-                        <span className="text-amber-500 font-medium">{selectedPCL.filter(p=>p.progress>0&&p.progress<100).length} berjalan</span>
+                        <span className="text-amber-500 font-medium">{filteredPCL.filter(p=>p.progress>0&&p.progress<100).length} berjalan</span>
                         <span>·</span>
-                        <span className="text-rose-400 font-medium">{selectedPCL.filter(p=>p.progress===0).length} belum mulai</span>
+                        <span className="text-rose-400 font-medium">{filteredPCL.filter(p=>p.progress===0).length} belum mulai</span>
                       </div>
                     </div>
                   </div>
