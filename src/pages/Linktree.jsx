@@ -100,6 +100,8 @@ export default function Linktree() {
   const [visible, setVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
+  // State baru: menampilkan sub-menu pilihan monitoring (PCL / PML)
+  const [showMonitoringMenu, setShowMonitoringMenu] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 100);
@@ -113,7 +115,6 @@ export default function Linktree() {
   }, []);
 
   const handleClick = (id) => {
-    // Jika Progress Petugas, tampilkan popup sub menu
     if (id === "progress") {
       setShowSubMenu(true);
       return;
@@ -129,8 +130,9 @@ export default function Linktree() {
 
   const handleSubMenuClick = (type) => {
     if (type === "website") {
+      // Tutup popup pertama, tampilkan popup pilihan monitoring
       setShowSubMenu(false);
-      navigate("/monitoring-petugas");
+      setShowMonitoringMenu(true);
     } else if (type === "spreadsheet") {
       window.open(
         "https://drive.google.com/drive/folders/1qu8OTvoQcObfQuvp5YD7wXj4ov11z1lL?usp=sharing",
@@ -138,6 +140,15 @@ export default function Linktree() {
         "noopener noreferrer"
       );
       setShowSubMenu(false);
+    }
+  };
+
+  const handleMonitoringClick = (type) => {
+    setShowMonitoringMenu(false);
+    if (type === "pcl") {
+      navigate("/monitoring-petugas");
+    } else if (type === "pml") {
+      navigate("/monitoring-pml");
     }
   };
 
@@ -160,9 +171,7 @@ export default function Linktree() {
         }}
       >
         {isMobile ? (
-          /* ── MOBILE: semua card full-width, stack vertikal ── */
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {/* Card Matriks — horizontal di mobile */}
             <MobileCardBig
               menu={MENUS[0]}
               pressed={pressed}
@@ -170,7 +179,6 @@ export default function Linktree() {
               visible={visible}
               delay={0}
             />
-            {/* Baris 2 card kecil: 2 kolom */}
             <div
               style={{
                 display: "grid",
@@ -243,22 +251,17 @@ export default function Linktree() {
                 />
               ))}
             </div>
-            <div
-              style={{
-               display: "flex", flexDirection: "column", gap: 12
-              }}
-            >
-               <MobileCardBig
-              menu={MENUS[9]}
-              pressed={pressed}
-              onClick={handleClick}
-              visible={visible}
-              delay={0}
-            />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <MobileCardBig
+                menu={MENUS[9]}
+                pressed={pressed}
+                onClick={handleClick}
+                visible={visible}
+                delay={0}
+              />
             </div>
           </div>
         ) : (
-          /* ── DESKTOP: layout 3 baris seperti sebelumnya ── */
           <>
             {/* Baris 1 */}
             <div
@@ -348,16 +351,28 @@ export default function Linktree() {
           </>
         )}
       </div>
-      
-      {/* Popup Sub Menu Progress Petugas */}
+
+      {/* Popup Sub Menu Progress Petugas (Website / Spreadsheet) */}
       {showSubMenu && (
-        <PopupSubMenu onClose={() => setShowSubMenu(false)} onSelect={handleSubMenuClick} />
+        <PopupSubMenu
+          onClose={() => setShowSubMenu(false)}
+          onSelect={handleSubMenuClick}
+        />
+      )}
+
+      {/* Popup Pilihan Monitoring (PCL / PML) */}
+      {showMonitoringMenu && (
+        <PopupMonitoringMenu
+          onClose={() => setShowMonitoringMenu(false)}
+          onSelect={handleMonitoringClick}
+        />
       )}
     </div>
   );
 }
 
-/* Card besar horizontal — untuk mobile */
+/* ── Mobile card components (tidak berubah) ── */
+
 function MobileCardBig({ menu, pressed, onClick, visible, delay }) {
   const isPressed = pressed === menu.id;
   return (
@@ -404,7 +419,6 @@ function MobileCardBig({ menu, pressed, onClick, visible, delay }) {
   );
 }
 
-/* Card kecil — untuk mobile, 2 kolom */
 function MobileCardSmall({ menu, pressed, onClick, visible, delay }) {
   const isPressed = pressed === menu.id;
   const lines = menu.label.split("\n");
@@ -457,7 +471,6 @@ function MobileCardSmall({ menu, pressed, onClick, visible, delay }) {
   );
 }
 
-/* Card desktop — tidak berubah */
 function MenuCard({ menu, pressed, onClick, visible, delay, big = false }) {
   const isPressed = pressed === menu.id;
   const lines = menu.label.split("\n");
@@ -526,16 +539,13 @@ function MenuCard({ menu, pressed, onClick, visible, delay, big = false }) {
   );
 }
 
-/* Popup Sub Menu untuk Progress Petugas */
+/* ── Popup 1: Website / Spreadsheet ── */
 function PopupSubMenu({ onClose, onSelect }) {
   return (
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         display: "flex",
         alignItems: "center",
@@ -569,14 +579,7 @@ function PopupSubMenu({ onClose, onSelect }) {
           Progress Petugas Pencacahan
         </h2>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          {/* Sub Menu Website */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <button
             onClick={() => onSelect("website")}
             style={{
@@ -595,19 +598,18 @@ function PopupSubMenu({ onClose, onSelect }) {
               gap: 10,
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#93c5fd";
-              e.target.style.transform = "translateY(-2px)";
+              e.currentTarget.style.backgroundColor = "#93c5fd";
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#dbeafe";
-              e.target.style.transform = "translateY(0)";
+              e.currentTarget.style.backgroundColor = "#dbeafe";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             <span>🌐</span>
             Website
           </button>
 
-          {/* Sub Menu Spreadsheet */}
           <button
             onClick={() => onSelect("spreadsheet")}
             style={{
@@ -626,12 +628,12 @@ function PopupSubMenu({ onClose, onSelect }) {
               gap: 10,
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#fdba74";
-              e.target.style.transform = "translateY(-2px)";
+              e.currentTarget.style.backgroundColor = "#fdba74";
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#fed7aa";
-              e.target.style.transform = "translateY(0)";
+              e.currentTarget.style.backgroundColor = "#fed7aa";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             <span>📊</span>
@@ -639,7 +641,6 @@ function PopupSubMenu({ onClose, onSelect }) {
           </button>
         </div>
 
-        {/* Close Button */}
         <button
           onClick={onClose}
           style={{
@@ -655,38 +656,188 @@ function PopupSubMenu({ onClose, onSelect }) {
             color: "#4b5563",
             transition: "all 0.2s ease",
           }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "#d1d5db";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = "#e5e7eb";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#d1d5db"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#e5e7eb"; }}
         >
           Tutup
         </button>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        
-        @keyframes slideUp {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
+      <PopupStyles />
     </div>
+  );
+}
+
+/* ── Popup 2: Monitoring PCL / PML ── */
+function PopupMonitoringMenu({ onClose, onSelect }) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        animation: "fadeIn 0.2s ease",
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+          borderRadius: 16,
+          padding: 24,
+          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)",
+          maxWidth: 400,
+          width: "90%",
+          animation: "slideUp 0.3s ease",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Tombol back */}
+        <button
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 14,
+            color: "#6b7280",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            marginBottom: 12,
+            padding: 0,
+          }}
+        >
+          ← Kembali
+        </button>
+
+        <h2
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#1e40af",
+            marginBottom: 6,
+            textAlign: "center",
+          }}
+        >
+          Pilih Monitoring
+        </h2>
+        <p
+          style={{
+            fontSize: 13,
+            color: "#6b7280",
+            textAlign: "center",
+            marginBottom: 20,
+          }}
+        >
+          Website — Progress Petugas Pencacahan
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Monitoring PCL */}
+          <button
+            onClick={() => onSelect("pcl")}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "2px solid #3b82f6",
+              backgroundColor: "#dbeafe",
+              cursor: "pointer",
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#1e40af",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#93c5fd";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#dbeafe";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <span>👷</span>
+            Monitoring PCL
+          </button>
+
+          {/* Monitoring PML */}
+          <button
+            onClick={() => onSelect("pml")}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              borderRadius: 12,
+              border: "2px solid #8b5cf6",
+              backgroundColor: "#ede9fe",
+              cursor: "pointer",
+              fontSize: 16,
+              fontWeight: 600,
+              color: "#5b21b6",
+              transition: "all 0.2s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#c4b5fd";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ede9fe";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <span>👨‍💼</span>
+            Monitoring PML
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            width: "100%",
+            marginTop: 16,
+            padding: "10px 16px",
+            borderRadius: 8,
+            border: "none",
+            backgroundColor: "#e5e7eb",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: 500,
+            color: "#4b5563",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#d1d5db"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#e5e7eb"; }}
+        >
+          Tutup
+        </button>
+      </div>
+      <PopupStyles />
+    </div>
+  );
+}
+
+/* Shared keyframe styles untuk semua popup */
+function PopupStyles() {
+  return (
+    <style>{`
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+      }
+    `}</style>
   );
 }
