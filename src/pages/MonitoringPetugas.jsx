@@ -97,7 +97,7 @@ function StatCard({label,value,sub,accent,icon,onClick,clickable}){
         <p className="text-3xl font-black">{value}</p>
         {sub&&<p className="text-xs opacity-60 mt-1">{sub}</p>}
       </div>
-      {clickable&&<p className="text-[10px] text-white opacity-50 mt-2 font-medium">Klik untuk detail →</p>}
+      {clickable&&<p className="text-[10px] opacity-50 mt-2 font-medium">Klik untuk detail →</p>}
     </div>
   );
 }
@@ -493,10 +493,11 @@ export default function MonitoringPetugas() {
   const [modalPCL, setModalPCL]         = useState(null);
   const [showLowProgress, setShowLowProgress] = useState(false);
   const [searchPCL, setSearchPCL]       = useState("");
+  const [filterPML, setFilterPML]       = useState(null);
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
-  useEffect(()=>{if(tableRef.current)tableRef.current.scrollTop=0; setSearchPCL("");},[selectedKec]);
+  useEffect(()=>{if(tableRef.current)tableRef.current.scrollTop=0; setSearchPCL(""); setFilterPML(null);},[selectedKec]);
 
   const handleSelectKec=(kec)=>{
     const next=selectedKec===kec?null:kec;
@@ -686,10 +687,12 @@ export default function MonitoringPetugas() {
   const selectedPCL=useMemo(()=>{if(!selectedKec)return[];return[...(kecamatanMap[selectedKec]||[])].sort((a,b)=>b.progress-a.progress);},[selectedKec,kecamatanMap]);
 
   const filteredPCL=useMemo(()=>{
-    if(!searchPCL.trim()) return selectedPCL;
+    let result = selectedPCL;
+    if(filterPML) result = result.filter(p=>p.emailPML===filterPML);
+    if(!searchPCL.trim()) return result;
     const q=searchPCL.toLowerCase();
-    return selectedPCL.filter(p=>(p.namaPCL||"").toLowerCase().includes(q)||(p.emailPCL||"").toLowerCase().includes(q));
-  },[selectedPCL,searchPCL]);
+    return result.filter(p=>(p.namaPCL||"").toLowerCase().includes(q)||(p.emailPCL||"").toLowerCase().includes(q));
+  },[selectedPCL,searchPCL,filterPML]);
 
   const globalStats=useMemo(()=>{
     if(!enrichedRows.length)return null;
@@ -771,9 +774,9 @@ export default function MonitoringPetugas() {
               <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
               <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
               <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="PCL Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
-              <StatCard label="PCL Belum Mulai" value={globalStats.zero} sub="progress 0%" accent="bg-rose-50 text-rose-700" icon="⏳"/>
+              <StatCard label="Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
               <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
+              <StatCard label="PCL Belum Mulai" value={globalStats.zero} sub="progress 0%" accent="bg-rose-50 text-rose-700" icon="⏳"/>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -853,6 +856,27 @@ export default function MonitoringPetugas() {
                             </button>
                           )}
                         </div>
+                        {/* Filter by PML chips */}
+                        {pmlSelected.length > 1 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            <button
+                              onClick={()=>{ setFilterPML(null); if(tableRef.current) tableRef.current.scrollTop=0; }}
+                              className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors ${!filterPML ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-500 border-gray-200 hover:border-orange-300"}`}
+                            >
+                              Semua PML
+                            </button>
+                            {pmlSelected.map(pml=>(
+                              <button
+                                key={pml}
+                                onClick={()=>{ setFilterPML(prev => prev===pml ? null : pml); if(tableRef.current) tableRef.current.scrollTop=0; }}
+                                className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors max-w-[140px] truncate ${filterPML===pml ? "bg-orange-500 text-white border-orange-500" : "bg-orange-50 text-orange-500 border-orange-100 hover:bg-orange-100"}`}
+                                title={namaPMLMap[pml]||pml}
+                              >
+                                {namaPMLMap[pml]||pml}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <div className="flex items-center gap-3 py-2 border-b border-gray-100">
                           <span className="text-xs text-gray-400 w-5">#</span>
                           <span className="text-xs text-gray-400 flex-1">Nama / Email PCL · PML</span>
@@ -877,7 +901,11 @@ export default function MonitoringPetugas() {
                     </div>
                     <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                       <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
-                        <span className="font-semibold text-gray-600">{filteredPCL.length}{searchPCL?` / ${selectedPCL.length}`:""} PCL</span>
+                        <span className="font-semibold text-gray-600">
+                          {filteredPCL.length}
+                          {(searchPCL||filterPML)?` / ${selectedPCL.length}`:""} PCL
+                          {filterPML ? <span className="ml-1 text-orange-500">· {namaPMLMap[filterPML]||filterPML}</span> : ""}
+                        </span>
                         <span>·</span>
                         <span className="text-emerald-600 font-medium">{filteredPCL.filter(p=>p.progress>=100).length} selesai</span>
                         <span>·</span>
