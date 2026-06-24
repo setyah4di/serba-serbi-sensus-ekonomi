@@ -774,9 +774,9 @@ export default function MonitoringPetugas() {
               <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
               <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
               <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
-              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
+              <StatCard label="PCL Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
               <StatCard label="PCL Belum Mulai" value={globalStats.zero} sub="progress 0%" accent="bg-rose-50 text-rose-700" icon="⏳"/>
+              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
