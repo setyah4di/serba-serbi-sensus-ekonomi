@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import DetailPCL from "../components/DetailPCL";
+import PclLowProgress from "../components/PclLowProgress";
 
 // ── Konfigurasi Spreadsheet ──
 const SPREADSHEET_ID = "15LFgyVGKJ4Dd5-HBFk6HPrMn5j4vE43k";
@@ -105,347 +106,6 @@ function StatCard({label,value,sub,accent,icon,onClick,clickable}){
 function KecamatanCard({kecamatan,avg,countPCL,countPML,onClick,isSelected}){
   const color=progressColor(avg),textColor=progressTextColor(avg);
   return(<button onClick={onClick} className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200 ${isSelected?"border-orange-400 bg-orange-50 shadow-md shadow-orange-100":"border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}><div className="flex items-start justify-between mb-2"><div className="flex-1 min-w-0 pr-2"><p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">Kecamatan</p><p className="text-base font-bold text-gray-800 leading-tight">{kecamatan}</p></div><span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{avg.toFixed(1)}%</span></div><ProgressBar value={avg} color={color}/><div className="flex items-center justify-between mt-2.5 gap-2 flex-wrap"><div className="flex gap-3"><span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countPML}</span> PML</span><span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countPCL}</span> PCL</span></div><span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${badgeStyle(avg)}`}>{badgeLabel(avg)}</span></div></button>);
-}
-
-// ── Custom Tooltip ──
-function ChartTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-3 text-xs">
-      <p className="font-bold text-gray-700 mb-2">{label}</p>
-      {payload.map(p => (
-        <div key={p.dataKey} className="flex items-center gap-2 mb-1">
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: p.color}} />
-          <span className="text-gray-500">{p.name}:</span>
-          <span className="font-semibold text-gray-700">{p.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CustomDot({ cx, cy, stroke }) {
-  if (cx == null || cy == null) return null;
-  return <circle cx={cx} cy={cy} r={3.5} fill="#fff" stroke={stroke} strokeWidth={2} />;
-}
-
-function TrendChart({ chartData, loading }) {
-  if (loading) {
-    return (
-      <div className="bg-gray-50 rounded-2xl p-4 mb-4 flex items-center justify-center gap-2 h-48">
-        <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin" />
-        <span className="text-gray-400 text-xs">Memuat data tren…</span>
-      </div>
-    );
-  }
-  if (!chartData || chartData.length === 0) {
-    return (
-      <div className="bg-gray-50 rounded-2xl p-4 mb-4 flex flex-col items-center justify-center h-32">
-        <p className="text-gray-400 text-xs">Data tren harian tidak tersedia</p>
-      </div>
-    );
-  }
-  const LINES = [
-    { key: "Approved",  color: "#10b981" },
-    { key: "Submitted", color: "#3b82f6" },
-    { key: "Draft",     color: "#f59e0b" },
-    { key: "Rejected",  color: "#f43f5e" },
-  ];
-  return (
-    <div className="mb-4">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tren Harian</p>
-      <div className="bg-gray-50 rounded-2xl p-3">
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={{ stroke: "#e5e7eb" }} tickLine={false} interval={0} angle={chartData.length > 6 ? -35 : 0} textAnchor={chartData.length > 6 ? "end" : "middle"} height={chartData.length > 6 ? 40 : 20} />
-            <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#e5e7eb", strokeWidth: 1 }} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
-            {LINES.map(({ key, color }) => (
-              <Line key={key} type="linear" dataKey={key} stroke={color} strokeWidth={2} dot={<CustomDot stroke={color} />} activeDot={{ r: 5, fill: color, stroke: "#fff", strokeWidth: 2 }} connectNulls />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-// ── Modal Detail PCL ──
-function DetailModal({ pcl, detailRows, chartData, loadingChart, onClose }) {
-  const totalAssignment = detailRows.reduce((s,r)=>s+r.total_assignment,0);
-  const totalApproved   = detailRows.reduce((s,r)=>s+r.approved,0);
-  const totalSubmitted  = detailRows.reduce((s,r)=>s+r.submitted,0);
-  const totalDraft      = detailRows.reduce((s,r)=>s+r.draft,0);
-  const totalRejected   = detailRows.reduce((s,r)=>s+r.rejected,0);
-  const totalOpen       = detailRows.reduce((s,r)=>s+r.open,0);
-  const progress = pcl.progress;
-  const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
-  const statItems = [
-    {label:"Total Assignment",value:totalAssignment,icon:"📋",bg:"bg-gray-100 text-gray-700"},
-    {label:"Approved",        value:totalApproved,  icon:"✅",bg:"bg-emerald-50 text-emerald-700"},
-    {label:"Submitted",       value:totalSubmitted, icon:"📤",bg:"bg-blue-50 text-blue-700"},
-    {label:"Draft",           value:totalDraft,     icon:"📝",bg:"bg-amber-50 text-amber-700"},
-    {label:"Rejected",        value:totalRejected,  icon:"❌",bg:"bg-rose-50 text-rose-700"},
-    {label:"Open",            value:totalOpen,      icon:"🔓",bg:"bg-purple-50 text-purple-700"},
-  ];
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}} onClick={handleBackdrop}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeIn max-h-[92vh] flex flex-col">
-        <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)"}}>
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0 pr-3">
-              <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-1">Detail PCL</p>
-              <p className="text-white font-black text-xl leading-tight">{pcl.namaPCL || pcl.emailPCL}</p>
-            </div>
-            <button onClick={onClose} className="text-orange-200 hover:text-white transition-colors mt-1 p-1 flex-shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-          {(pcl.namaPML||pcl.emailPML)&&(
-            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
-              {pcl.namaPML&&<div className="flex items-center gap-1.5"><span className="text-orange-200 text-xs">PML:</span><span className="text-white text-xs font-semibold">{pcl.namaPML}</span></div>}
-            </div>
-          )}
-          <div className="mt-3">
-            <div className="flex justify-between text-white text-sm mb-1.5"><span className="opacity-80">Progress</span><span className="font-bold">{progress.toFixed(2)}%</span></div>
-            <div className="w-full bg-white/20 rounded-full h-2.5"><div className="h-2.5 rounded-full bg-white transition-all duration-700" style={{width:`${Math.min(progress,100)}%`}}/></div>
-          </div>
-        </div>
-        <div className="overflow-y-auto flex-1 px-6 py-5">
-          <TrendChart chartData={chartData} loading={loadingChart} />
-          {detailRows.length === 0 ? (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3"><span className="text-2xl">🔍</span></div>
-              <p className="text-gray-500 font-medium">Data tidak ditemukan</p>
-              <p className="text-gray-400 text-xs mt-1">PCL: <span className="font-mono">{pcl.emailPCL}</span></p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-3 gap-2.5 mb-5">
-                {statItems.map(({label,value,icon,bg})=>(
-                  <div key={label} className={`rounded-xl p-3 ${bg}`}>
-                    <p className="text-[11px] opacity-60 font-medium leading-tight mb-1">{icon} {label}</p>
-                    <p className="text-2xl font-black">{value.toLocaleString("id-ID")}</p>
-                  </div>
-                ))}
-              </div>
-              {detailRows.length>1&&(
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Rincian per SLS ( Total : {detailRows.length} SLS)</p>
-                  <div className="rounded-xl border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead><tr className="bg-gray-50 text-gray-400">
-                          <th className="text-left px-3 py-2 font-semibold">Kode ID</th>
-                          <th className="text-right px-3 py-2 font-semibold">Total</th>
-                          <th className="text-right px-3 py-2 font-semibold text-emerald-500">✅</th>
-                          <th className="text-right px-3 py-2 font-semibold text-blue-500">📤</th>
-                          <th className="text-right px-3 py-2 font-semibold text-amber-500">📝</th>
-                          <th className="text-right px-3 py-2 font-semibold text-rose-500">❌</th>
-                          <th className="text-right px-3 py-2 font-semibold text-purple-500">🔓</th>
-                        </tr></thead>
-                        <tbody>
-                          {detailRows.map((r,i)=>(
-                            <tr key={i} className="border-t border-gray-50 hover:bg-gray-50/50">
-                              <td className="px-3 py-2 font-mono text-gray-600 text-[11px]">{r.kode_id}</td>
-                              <td className="px-3 py-2 text-right font-semibold text-gray-700">{r.total_assignment}</td>
-                              <td className="px-3 py-2 text-right text-emerald-600 font-medium">{r.approved}</td>
-                              <td className="px-3 py-2 text-right text-blue-600 font-medium">{r.submitted}</td>
-                              <td className="px-3 py-2 text-right text-amber-600 font-medium">{r.draft}</td>
-                              <td className="px-3 py-2 text-right text-rose-500 font-medium">{r.rejected}</td>
-                              <td className="px-3 py-2 text-right text-purple-600 font-medium">{r.open}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        <div className="px-6 pb-5 pt-3 flex-shrink-0 border-t border-gray-100">
-          <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-colors">Tutup</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Modal PCL Progress < 10% ──
-function LowProgressModal({ rows, onDetail, onClose }) {
-  const [searchLow, setSearchLow] = useState("");
-  const [expandedKec, setExpandedKec] = useState(null);
-  const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
-
-  const filtered = useMemo(()=>{
-    if(!searchLow.trim()) return [...rows].sort((a,b)=>a.progress-b.progress);
-    const q = searchLow.toLowerCase();
-    return [...rows]
-      .filter(r=>(r.namaPCL||"").toLowerCase().includes(q)||(r.emailPCL||"").toLowerCase().includes(q))
-      .sort((a,b)=>a.progress-b.progress);
-  },[rows, searchLow]);
-
-  // Ringkasan per kecamatan dari semua rows (bukan filtered)
-  const byKec = useMemo(()=>{
-    const map = {};
-    rows.forEach(r=>{
-      if(!map[r.kecamatan]) map[r.kecamatan] = [];
-      map[r.kecamatan].push(r);
-    });
-    // Sort tiap kecamatan by progress ascending
-    Object.keys(map).forEach(k => {
-      map[k].sort((a,b) => a.progress - b.progress);
-    });
-    return map;
-  },[rows]);
-
-  const isSearching = searchLow.trim().length > 0;
-
-  const toggleKec = (kec) => {
-    setExpandedKec(prev => prev === kec ? null : kec);
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}} onClick={handleBackdrop}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeIn max-h-[92vh] flex flex-col">
-        {/* Header */}
-        <div className="px-6 pt-6 pb-5 flex-shrink-0" style={{background:"linear-gradient(135deg,#f43f5e 0%,#e11d48 100%)"}}>
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-white font-black text-xl leading-tight">PCL Progress &lt; 10%</h2>
-              <p className="text-rose-100 text-sm mt-1">{rows.length} petugas membutuhkan perhatian</p>
-            </div>
-            <button onClick={onClose} className="text-rose-200 hover:text-white transition-colors mt-1 p-1">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-4">
-          {/* Mode: Kecamatan cards (accordion) */}
-          {!isSearching && (
-            <div className="mb-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                Per Kecamatan — klik untuk lihat daftar PCL
-              </p>
-              <div className="space-y-2">
-                {Object.entries(byKec).map(([kec, pcls]) => {
-                  const isOpen = expandedKec === kec;
-                  return (
-                    <div key={kec} className={`rounded-2xl border-2 overflow-hidden transition-all duration-200 ${isOpen ? "border-rose-300 shadow-sm shadow-rose-100" : "border-gray-100"}`}>
-                      {/* Card header — klik untuk expand */}
-                      <button
-                        onClick={() => toggleKec(kec)}
-                        className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${isOpen ? "bg-rose-50" : "bg-white hover:bg-gray-50"}`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-black ${isOpen ? "bg-rose-500 text-white" : "bg-rose-100 text-rose-600"}`}>
-                            {pcls.length}
-                          </div>
-                          <p className={`text-sm font-bold truncate ${isOpen ? "text-rose-700" : "text-gray-700"}`}>{kec}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                          <span className="text-xs text-gray-400 font-medium">{pcls.length} PCL</span>
-                          <svg
-                            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180 text-rose-400" : ""}`}
-                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-                          </svg>
-                        </div>
-                      </button>
-
-                      {/* Expanded: daftar PCL */}
-                      {isOpen && (
-                        <div className="border-t border-rose-100">
-                          {pcls.map((pcl, i) => (
-                            <div
-                              key={`${pcl.emailPCL}-${i}`}
-                              className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-rose-50/40 transition-colors"
-                            >
-                              <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{i+1}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-gray-800 truncate">{pcl.namaPCL || pcl.emailPCL}</p>
-                                <p className="text-xs text-gray-400 truncate mt-0.5">
-                                  <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
-                                  {pcl.namaPML || pcl.emailPML || "—"}
-                                </p>
-                                <div className="mt-1.5">
-                                  <ProgressBar value={pcl.progress} color="bg-rose-400" />
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                                <span className="text-sm font-black text-rose-500">{pcl.progress.toFixed(2)}%</span>
-                                <button
-                                  onClick={() => onDetail(pcl)}
-                                  className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap"
-                                >
-                                  Detail
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Mode: Search results */}
-          {isSearching && (
-            <>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-                Hasil pencarian: {filtered.length} dari {rows.length}
-              </p>
-              {filtered.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-400 text-sm">Tidak ada PCL dengan nama "{searchLow}"</p>
-                </div>
-              ) : (
-                <div className="space-y-0 rounded-xl border border-gray-100 overflow-hidden">
-                  {filtered.map((pcl, i) => (
-                    <div key={`${pcl.emailPCL}-${i}`} className="flex items-start gap-3 px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                      <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{i+1}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-800 truncate">{pcl.namaPCL || pcl.emailPCL}</p>
-                        <p className="text-xs text-gray-400 truncate mt-0.5">
-                          <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
-                          {pcl.namaPML || pcl.emailPML || "—"}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate mt-0.5">
-                          <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">KEC</span>
-                          {pcl.kecamatan}
-                        </p>
-                        <div className="mt-1.5">
-                          <ProgressBar value={pcl.progress} color="bg-rose-400" />
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        <span className="text-sm font-black text-rose-500">{pcl.progress.toFixed(2)}%</span>
-                        <button onClick={()=>onDetail(pcl)} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap">Detail</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="px-6 pb-5 pt-3 flex-shrink-0 border-t border-gray-100">
-          <button onClick={onClose} className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-colors">Tutup</button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ── Baris PCL ──
@@ -717,7 +377,7 @@ export default function MonitoringPetugas() {
 
       {/* Modal Detail PCL */}
       {modalPCL&&(
-        <DetailModal
+        <DetailPCL
           pcl={modalPCL}
           detailRows={findDetailRows(modalPCL)}
           chartData={buildChartData(modalPCL)}
@@ -728,7 +388,7 @@ export default function MonitoringPetugas() {
 
       {/* Modal PCL Progress < 10% */}
       {showLowProgress && globalStats?.lowProgress && (
-        <LowProgressModal
+        <PclLowProgress
           rows={globalStats.lowProgress}
           onDetail={(pcl)=>{ setShowLowProgress(false); setTimeout(()=>setModalPCL(pcl),100); }}
           onClose={()=>setShowLowProgress(false)}
@@ -770,12 +430,11 @@ export default function MonitoringPetugas() {
         {!loading&&!error&&globalStats&&(
           <>
             {/* Stat Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
               <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
               <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
               <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="PCL Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-500 text-white" icon="🚨" clickable onClick={()=>setShowLowProgress(true)}/>
-              <StatCard label="PCL Belum Mulai" value={globalStats.zero} sub="progress 0%" accent="bg-rose-50 text-rose-700" icon="⏳"/>
+              <StatCard label="PCL Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-50 text-rose-700" icon="⏳" clickable onClick={()=>setShowLowProgress(true)}/>
               <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
             </div>
 
