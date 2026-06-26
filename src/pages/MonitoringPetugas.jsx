@@ -85,24 +85,37 @@ function ProgressBar({value,color}){
   return(<div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden"><div className={`h-2 rounded-full transition-all duration-700 ${color}`} style={{width:`${Math.min(Math.max(value,0),100)}%`}}/></div>);
 }
 
-function StatCard({label,value,sub,accent,icon,onClick,clickable}){
-  const base=`rounded-2xl p-5 ${accent} flex flex-col justify-between`;
-  const cls=clickable?`${base} cursor-pointer hover:brightness-95 active:scale-95 transition-all duration-150 ring-0 hover:ring-2 hover:ring-white/40`:base;
-  return(
-    <div className={cls} onClick={onClick}>
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-widest opacity-70 leading-tight">{label}</p>
-        {icon&&<span className="text-lg opacity-60">{icon}</span>}
+function StatCard({ label, value, sub, icon, variant }) {
+  const styles = {
+    gray:   { card: "bg-[#5a6273] text-white", icon: "bg-white/20", label: "text-white/80", sub: "text-white/60" },
+    orange: { card: "bg-[#f5820a] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
+    blue:   { card: "bg-[#3a8fe8] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
+    purple: { card: "bg-[#f0eeff]", icon: "bg-purple-100", label: "text-purple-600", value: "text-purple-700", sub: "text-purple-600" },
+    sky:    { card: "bg-[#eaf4ff]", icon: "bg-blue-100",   label: "text-blue-600",   value: "text-blue-800",   sub: "text-blue-600" },
+    green:  { card: "bg-[#eafaf0]", icon: "bg-green-100",  label: "text-green-600",  value: "text-green-800",  sub: "text-green-600" },
+  };
+  const s = styles[variant];
+  const isLight = ["purple","sky","green"].includes(variant);
+
+  return (
+    <div className={`relative rounded-2xl p-5 overflow-hidden flex flex-col gap-4 ${s.card}`}>
+      {!isLight && (
+        <>
+          <div className="absolute -top-7 -right-7 w-28 h-28 rounded-full bg-white opacity-10 pointer-events-none" />
+          <div className="absolute bottom-0 right-7 w-14 h-14 rounded-full bg-white opacity-10 pointer-events-none" />
+        </>
+      )}
+      <div className="relative flex items-start justify-between">
+        <p className={`text-[11px] font-semibold uppercase tracking-widest leading-tight max-w-[110px] ${s.label}`}>{label}</p>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${s.icon}`}>{icon}</div>
       </div>
-      <div>
-        <p className="text-3xl font-black">{value}</p>
-        {sub&&<p className="text-xs opacity-60 mt-1">{sub}</p>}
+      <div className="relative">
+        <p className={`text-3xl font-black leading-none tracking-tight ${s.value || ""}`}>{value}</p>
+        {sub && <p className={`text-xs mt-1 ${s.sub}`}>{sub}</p>}
       </div>
-      {clickable&&<p className="text-[10px] opacity-50 mt-2 font-medium">Klik untuk detail →</p>}
     </div>
   );
 }
-
 function KecamatanCard({kecamatan,avg,countPCL,countPML,onClick,isSelected}){
   const color=progressColor(avg),textColor=progressTextColor(avg);
   return(<button onClick={onClick} className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200 ${isSelected?"border-orange-400 bg-orange-50 shadow-md shadow-orange-100":"border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}><div className="flex items-start justify-between mb-2"><div className="flex-1 min-w-0 pr-2"><p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">Kecamatan</p><p className="text-base font-bold text-gray-800 leading-tight">{kecamatan}</p></div><span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{avg.toFixed(1)}%</span></div><ProgressBar value={avg} color={color}/><div className="flex items-center justify-between mt-2.5 gap-2 flex-wrap"><div className="flex gap-3"><span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countPML}</span> PML</span><span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countPCL}</span> PCL</span></div><span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${badgeStyle(avg)}`}>{badgeLabel(avg)}</span></div></button>);
@@ -409,7 +422,7 @@ export default function MonitoringPetugas() {
       )}
 
       <header className="relative overflow-hidden" style={{background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)"}}>
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <h1 className="text-white text-2xl sm:text-3xl font-black leading-tight">Monitoring Petugas Pencacahan</h1>
@@ -444,12 +457,13 @@ export default function MonitoringPetugas() {
           <>
             {/* Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-              <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
-              <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
-              <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="Target Progress" value={`${TARGET_PROGRESS}%`} sub={`Hari ke-${HARI_KE-1} × 1,4`} accent="bg-violet-50 text-violet-700" icon="🎯"/>
-              <StatCard label="Hari Pelaksanaan" value={`${HARI_KE} / ${TOTAL_HARI}`} sub="15 Jun – 31 Agt 2026" accent="bg-sky-50 text-sky-700" icon="📅"/>              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
-            </div>
+  <StatCard label="Total Petugas PML"   value={globalStats.totalPML}           sub="pengawas lapangan"      icon="👨‍💼" variant="gray"   />
+  <StatCard label="Total Petugas PCL"   value={globalStats.totalPCL}           sub="pencacah lapangan"      icon="🧑‍🏭" variant="orange" />
+  <StatCard label="Rata-rata Progress"  value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL"           icon="📊" variant="blue"   />
+  <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,4`} icon="🎯" variant="purple" />
+  <StatCard label="Hari Pelaksanaan"    value={`${HARI_KE} / ${TOTAL_HARI}`}   sub="15 Jun – 31 Agt 2026"  icon="📅" variant="sky"    />
+  <StatCard label="Progress = 100%"     value={globalStats.done100}            sub="PCL sudah selesai"      icon="✅" variant="green"  />
+</div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
               <div className="relative flex-1">
