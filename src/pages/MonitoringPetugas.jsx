@@ -137,6 +137,19 @@ function PCLRow({pcl,rank,onDetail}){
   );
 }
 
+// ── Kalkulasi hari sensus & target progress ──
+function hitungHariSensus() {
+  const START = new Date("2026-06-15");
+  const END   = new Date("2026-08-31");
+  const TODAY = new Date(); // atau: new Date() untuk real-time
+  const diffMs   = TODAY - START;
+  const hariKe   = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // hari ke-1 = tgl 15
+  const totalHari = Math.floor((END - START) / (1000 * 60 * 60 * 24)) + 1;
+  const target    = parseFloat(((hariKe - 1) * 1.4).toFixed(1));
+  return { hariKe, totalHari, target };
+}
+const { hariKe: HARI_KE, totalHari: TOTAL_HARI, target: TARGET_PROGRESS } = hitungHariSensus();
+
 // ── Komponen Utama ──
 export default function MonitoringPetugas() {
   const [rows, setRows]                 = useState([]);
@@ -430,12 +443,12 @@ export default function MonitoringPetugas() {
         {!loading&&!error&&globalStats&&(
           <>
             {/* Stat Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
               <StatCard label="Total Petugas PML" value={globalStats.totalPML} sub="pengawas lapangan" accent="bg-gray-500 text-white" icon="👨‍💼"/>
               <StatCard label="Total Petugas PCL" value={globalStats.totalPCL} sub="pencacah lapangan" accent="bg-orange-500 text-white" icon="🧑‍🏭"/>
               <StatCard label="Rata-rata Progress" value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL" accent="bg-blue-500 text-white" icon="📊"/>
-              <StatCard label="PCL Progress < 10%" value={globalStats.lowProgress.length} sub="" accent="bg-rose-50 text-rose-700" icon="⏳" clickable onClick={()=>setShowLowProgress(true)}/>
-              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
+              <StatCard label="Target Progress" value={`${TARGET_PROGRESS}%`} sub={`Hari ke-${HARI_KE-1} × 1,4`} accent="bg-violet-50 text-violet-700" icon="🎯"/>
+              <StatCard label="Hari Pelaksanaan" value={`${HARI_KE} / ${TOTAL_HARI}`} sub="15 Jun – 31 Agt 2026" accent="bg-sky-50 text-sky-700" icon="📅"/>              <StatCard label="Progress = 100%" value={globalStats.done100} sub="PCL sudah selesai" accent="bg-emerald-50 text-emerald-800" icon="✅"/>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
