@@ -11,7 +11,7 @@ const navLinks = [
 ];
 
 const monitoringLinks = [
-  { label: "Monitoring PCL", path: "/monitoring-petugas" },
+  { label: "Monitoring Kecamatan", path: "/monitoring-petugas" },
   { label: "Monitoring PML", path: "/monitoring-pml" },
 ];
 
