@@ -3,11 +3,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import DetailPml from "../components/DetailPml"; // sesuaikan path sesuai struktur folder proyek
 
 const MonitoringPml = () => {
   const [loading, setLoading] = useState(true);
   const [monitoring, setMonitoring] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // ===== State untuk modal detail PML =====
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedPmlDetail, setSelectedPmlDetail] = useState(null);
+  const [hasilGabunganRaw, setHasilGabunganRaw] = useState([]);
+  const [hasilGabunganLoaded, setHasilGabunganLoaded] = useState(false);
 
   const kecamatanMap = {
     "010": "TUNGKAL ULU",
@@ -149,6 +157,159 @@ const MonitoringPml = () => {
     }
   };
 
+  // ===== Ambil data dari sheet "hasil gabungan" untuk detail per PCL =====
+  const fetchHasilGabungan = async () => {
+    const sheetId = "15LFgyVGKJ4Dd5-HBFk6HPrMn5j4vE43k";
+    // Dipanggil lewat GID (bukan nama sheet), supaya tidak gagal kalau nama
+    // tab-nya beda spasi/underscore/huruf besar-kecil dengan yang diketik di kode.
+    // GID diambil dari URL: .../edit?gid=1176424983#gid=1176424983
+    const gid = "1176424983";
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?gid=${gid}`;
+
+    const res = await axios.get(url);
+    let text = res.data;
+    text = text.substring(47, text.length - 2);
+    const json = JSON.parse(text);
+    const rows = json.table?.rows ?? [];
+
+    const toNumber = (v) => {
+      if (typeof v === "number") return v;
+      if (typeof v === "string") {
+        const cleaned = v.replace(/[^0-9.-]/g, "");
+        return parseFloat(cleaned) || 0;
+      }
+      return Number(v) || 0;
+    };
+
+    // Urutan kolom sesuai sheet "hasil_gabungan":
+    // A Nama PML | B email PML | C Nama PPL | D email PPL | E total_assignment
+    // F kode_id | G approved | H submitted | I draft | J rejected | K open
+    // L kecamatan | M progress
+    return rows
+      .map((row) => {
+        const c = row.c || [];
+        return {
+          namaPml: (c[0]?.v ?? "").toString().trim(),
+          namaPpl: (c[2]?.v ?? "").toString().trim(),
+          totalAssignment: toNumber(c[4]?.v),
+          kodeId: c[5]?.v ?? "",
+          approved: toNumber(c[6]?.v),
+          submitted: toNumber(c[7]?.v),
+          draft: toNumber(c[8]?.v),
+          rejected: toNumber(c[9]?.v),
+          open: toNumber(c[10]?.v),
+          kecamatan: (c[11]?.v ?? "").toString().trim(),
+        };
+      })
+      .filter((r) => r.namaPml && r.namaPpl);
+  };
+
+  // Normalisasi teks untuk pencocokan nama PML (biar tidak gagal cuma
+  // karena beda spasi ganda / huruf besar-kecil antar sheet)
+  const normalizeName = (str) =>
+    (str ?? "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+  // ===== Handler klik tombol "Detail" pada baris PML =====
+  const handleShowDetail = async (pmlName, kecamatanLabel) => {
+    setShowDetailModal(true);
+    setDetailLoading(true);
+    setSelectedPmlDetail(null);
+
+    try {
+      let rawData = hasilGabunganRaw;
+      if (!hasilGabunganLoaded) {
+        rawData = await fetchHasilGabungan();
+        setHasilGabunganRaw(rawData);
+        setHasilGabunganLoaded(true);
+      }
+
+      // Filter hanya baris milik PML yang diklik (pencocokan longgar:
+      // trim + tanpa spasi ganda + tanpa peduli huruf besar/kecil)
+      const targetName = normalizeName(pmlName);
+      const filtered = rawData.filter(
+        (r) => normalizeName(r.namaPml) === targetName
+      );
+
+      if (filtered.length === 0) {
+        const contoh = [...new Set(rawData.map((r) => r.namaPml))].slice(0, 10);
+        console.warn(
+          `Tidak ada baris "hasil_gabungan" yang cocok dengan PML "${pmlName}". Contoh nama PML di sheet:`,
+          contoh
+        );
+      }
+
+      // Akumulasi per Nama PPL (satu PPL bisa muncul beberapa kali / per SLS-kode_id)
+      // Kunci pakai versi ternormalisasi, tapi label yang ditampilkan tetap versi asli
+      const pclMap = {};
+      filtered.forEach((r) => {
+        const key = normalizeName(r.namaPpl);
+        if (!pclMap[key]) {
+          pclMap[key] = {
+            namaPpl: r.namaPpl,
+            totalAssignment: 0,
+            approved: 0,
+            submitted: 0,
+            draft: 0,
+            rejected: 0,
+            open: 0,
+          };
+        }
+        const p = pclMap[key];
+        p.totalAssignment += r.totalAssignment;
+        p.approved += r.approved;
+        p.submitted += r.submitted;
+        p.draft += r.draft;
+        p.rejected += r.rejected;
+        p.open += r.open;
+      });
+
+      const pclList = Object.values(pclMap).sort((a, b) =>
+        a.namaPpl.localeCompare(b.namaPpl)
+      );
+
+      // Total gabungan seluruh PCL di bawah PML ini
+      const totals = pclList.reduce(
+        (acc, p) => {
+          acc.totalAssignment += p.totalAssignment;
+          acc.approved += p.approved;
+          acc.submitted += p.submitted;
+          acc.draft += p.draft;
+          acc.rejected += p.rejected;
+          acc.open += p.open;
+          return acc;
+        },
+        {
+          totalAssignment: 0,
+          approved: 0,
+          submitted: 0,
+          draft: 0,
+          rejected: 0,
+          open: 0,
+        }
+      );
+
+      setSelectedPmlDetail({
+        pmlName,
+        kecamatan: kecamatanLabel,
+        pclList,
+        ...totals,
+      });
+    } catch (err) {
+      console.error("Gagal memuat detail PML:", err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setShowDetailModal(false);
+    setSelectedPmlDetail(null);
+  };
+
   // FILTER
   const getFilteredData = () => {
     if (!searchTerm.trim()) return monitoring;
@@ -285,29 +446,29 @@ const MonitoringPml = () => {
           </div>
         </div>
 
-        {/* TABEL */}
-        <div className="bg-white rounded-xl shadow overflow-hidden border border-orange-200">
+        {/* TABEL - TAMPILAN DESKTOP & TABLET */}
+        <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden border border-orange-200">
           <div className="overflow-x-auto">
 <table className="w-full border-collapse table-auto">
                <thead>
   <tr className="bg-orange-700 text-white">
     <th
       rowSpan={2}
-      className="w-[18%] border border-orange-500 p-3"
+      className="w-[16%] border border-orange-500 p-3"
     >
       KECAMATAN
     </th>
 
     <th
       rowSpan={2}
-      className="w-[28%] border border-orange-500 p-3"
+      className="w-[24%] border border-orange-500 p-3"
     >
       PML
     </th>
 
     <th
       rowSpan={2}
-      className="w-[12%] border border-orange-500 p-3"
+      className="w-[10%] border border-orange-500 p-3"
     >
       JUMLAH PPL
     </th>
@@ -318,18 +479,25 @@ const MonitoringPml = () => {
     >
       PROGRESS
     </th>
+
+    <th
+      rowSpan={2}
+      className="w-[10%] border border-orange-500 p-3"
+    >
+      AKSI
+    </th>
   </tr>
 
   <tr className="bg-orange-700 text-white">
-    <th className="w-[14%] border border-orange-500">
+    <th className="w-[12%] border border-orange-500">
       MAX
     </th>
 
-    <th className="w-[14%] border border-orange-500">
+    <th className="w-[12%] border border-orange-500">
       MIN
     </th>
 
-    <th className="w-[14%] border border-orange-500">
+    <th className="w-[12%] border border-orange-500">
       RATA-RATA
     </th>
   </tr>
@@ -381,6 +549,15 @@ const MonitoringPml = () => {
             <td className="border border-orange-300 text-center font-semibold text-orange-700">
               {row.avg}%
             </td>
+
+            <td className="border border-orange-300 text-center">
+              <button
+                onClick={() => handleShowDetail(row.pml, group.kecamatan)}
+                className="bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs font-semibold px-3 py-1 rounded-lg transition"
+              >
+                Detail
+              </button>
+            </td>
           </tr>
         ))}
 
@@ -403,6 +580,8 @@ const MonitoringPml = () => {
     <td className="border border-orange-300"></td>
 
     <td className="border border-orange-300"></td>
+
+    <td className="border border-orange-300"></td>
   </tr>
 )}
       </React.Fragment>
@@ -412,7 +591,7 @@ const MonitoringPml = () => {
   {filteredData.length === 0 && (
     <tr>
       <td
-        colSpan="6"
+        colSpan="7"
         className="p-4 text-center text-gray-500"
       >
         Tidak ada data yang sesuai
@@ -423,7 +602,117 @@ const MonitoringPml = () => {
             </table>
           </div>
         </div>
+
+        {/* TAMPILAN CARD - MOBILE (menggantikan tabel di layar kecil) */}
+        <div className="md:hidden space-y-4">
+          {grouped.map((group, groupIndex) => {
+            const pmlRowsCard = group.rows.filter((row) => row.type === "pml");
+            const totalRowCard = group.rows.find((row) => row.type === "total");
+
+            return (
+              <div
+                key={groupIndex}
+                className="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden"
+              >
+                {/* Header kecamatan */}
+                <div className="flex items-center justify-between bg-gradient-to-r from-orange-600 to-orange-500 px-4 py-3">
+                  <h3 className="text-white font-bold text-sm tracking-wide truncate pr-2">
+                    {group.kecamatan}
+                  </h3>
+                  <span className="shrink-0 text-[11px] font-semibold text-orange-700 bg-white px-2.5 py-1 rounded-full">
+                    {totalRowCard?.jumlahPpl ?? 0} PPL
+                  </span>
+                </div>
+
+                {/* Daftar PML dalam kecamatan ini */}
+                <div className="divide-y divide-orange-50">
+                  {pmlRowsCard.map((row, idx) => {
+                    const avgVal = parseFloat(row.avg) || 0;
+                    const barColor =
+                      avgVal >= 75
+                        ? "bg-green-500"
+                        : avgVal >= 40
+                        ? "bg-orange-500"
+                        : "bg-red-500";
+                    const textColor =
+                      avgVal >= 75
+                        ? "text-green-600"
+                        : avgVal >= 40
+                        ? "text-orange-600"
+                        : "text-red-600";
+
+                    return (
+                      <div key={idx} className="p-4 active:bg-orange-50/60 transition">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-800 text-sm leading-snug break-words">
+                              {row.pml}
+                            </p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              {row.jumlahPpl} PCL di bawah naungan
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleShowDetail(row.pml, group.kecamatan)}
+                            className="shrink-0 bg-orange-50 hover:bg-orange-100 active:scale-95 text-orange-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
+                          >
+                            Detail
+                          </button>
+                        </div>
+
+                        {/* Progress bar rata-rata */}
+                        <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
+                          <span>Rata-rata progress</span>
+                          <span className={`font-bold text-sm ${textColor}`}>
+                            {row.avg}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                          <div
+                            className={`h-full ${barColor} rounded-full transition-all`}
+                            style={{ width: `${Math.min(avgVal, 100)}%` }}
+                          />
+                        </div>
+
+                        {/* Chip Max / Min */}
+                        <div className="flex gap-2">
+                          <span className="flex-1 text-center bg-green-50 text-green-700 px-2 py-1.5 rounded-lg text-[11px] font-semibold">
+                            Max {row.max}%
+                          </span>
+                          <span className="flex-1 text-center bg-red-50 text-red-700 px-2 py-1.5 rounded-lg text-[11px] font-semibold">
+                            Min {row.min}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {filteredData.length === 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-orange-100 p-6 text-center text-gray-500 text-sm">
+              Tidak ada data yang sesuai
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* MODAL LOADING DETAIL */}
+      {showDetailModal && detailLoading && !selectedPmlDetail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 text-center">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-orange-200 border-t-orange-600 mb-2"></div>
+            <p className="text-orange-700 font-semibold">Memuat detail PML...</p>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DETAIL PML */}
+      {showDetailModal && selectedPmlDetail && (
+        <DetailPml data={selectedPmlDetail} onClose={handleCloseDetail} />
+      )}
     </div>
   );
 };

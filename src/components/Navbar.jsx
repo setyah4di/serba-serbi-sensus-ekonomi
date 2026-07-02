@@ -10,10 +10,17 @@ const navLinks = [
   { label: "Reporta-SE", path: "/reporta-se" },
 ];
 
+const monitoringLinks = [
+  { label: "Monitoring PCL", path: "/monitoring-petugas" },
+  { label: "Monitoring PML", path: "/monitoring-pml" },
+];
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const hideNavLinks = ["/linktree", "/monitoring-petugas","/monitoring-pml"].includes(location.pathname);
+  const hideNavLinks = ["/linktree", "/monitoring-petugas", "/monitoring-pml"].includes(location.pathname);
+  const showMonitoringMenu = ["/monitoring-petugas", "/monitoring-pml"].includes(location.pathname);
+  const showHamburger = !hideNavLinks || showMonitoringMenu;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
@@ -70,8 +77,29 @@ export default function Navbar() {
           </ul>
         )}
 
+        {showMonitoringMenu && (
+          <div className="hidden md:flex items-center gap-4">
+            {monitoringLinks.map(({ label, path }) => {
+              const active = location.pathname === path;
+              return (
+                <Link
+                  key={label}
+                  to={path}
+                  className={`text-sm font-semibold tracking-wide transition-colors px-3 py-2 rounded-full ${
+                    active
+                      ? "bg-orange-50 text-orange-600"
+                      : "text-gray-700 hover:bg-orange-50 hover:text-orange-500"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
         {/* ── Mobile Hamburger ── */}
-        {!hideNavLinks && (
+        {showHamburger && (
           <button
             className="md:hidden text-gray-700"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -96,9 +124,9 @@ export default function Navbar() {
       </div>
 
       {/* ── Mobile Menu ── */}
-      {menuOpen && !hideNavLinks && (
+      {menuOpen && showHamburger && (
         <div className="md:hidden bg-white border-t px-4 py-3 space-y-3">
-          {navLinks.map(({ label, path }) => (
+          {(showMonitoringMenu ? monitoringLinks : navLinks).map(({ label, path }) => (
             <Link
               key={label}
               to={path}
