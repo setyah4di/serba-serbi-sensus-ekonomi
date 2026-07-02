@@ -46,7 +46,7 @@ function TrendChart({ chartData, loading }) {
   ];
   return (
     <div className="mb-4">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tren Harian</p>
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tren 7 Hari Terakhir</p>
       <div className="bg-gray-50 rounded-2xl p-3">
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={chartData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
