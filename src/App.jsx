@@ -20,6 +20,8 @@ import PengumumanAkhir from "./pages/PengumumanAkhir";
 import Linktree from "./pages/Linktree";
 import MonitoringPetugas from "./pages/MonitoringPetugas";
 import MonitoringPml from "./pages/MonitoringPml";
+import MonitoringAnomaliKeluarga from "./pages/AnomaliKeluarga";
+import MonitoringAnomaliUsaha from "./pages/AnomaliUsaha";
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="/linktree" element={<Linktree />} />
         <Route path="/monitoring-petugas" element={<MonitoringPetugas />} />
         <Route path="/monitoring-pml" element={<MonitoringPml />} />
+        <Route path="/anomali-keluarga" element={<MonitoringAnomaliKeluarga />} />
+        <Route path="/anomali-usaha" element={<MonitoringAnomaliUsaha />} />
         <Route path="/ngibar" element={<Ngibar />} />
         <Route path="/reporta-se" element={<ReportaSE />} />
       </Routes>

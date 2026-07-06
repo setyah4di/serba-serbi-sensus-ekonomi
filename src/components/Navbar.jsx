@@ -14,13 +14,18 @@ const monitoringLinks = [
   { label: "Monitoring Kecamatan", path: "/monitoring-petugas" },
   { label: "Monitoring PML", path: "/monitoring-pml" },
 ];
+const anomaliLinks = [
+{ label: "Anomali Keluarga", path: "/anomali-keluarga" },
+  { label: "Anomali Usaha", path: "/anomali-usaha" },
+];
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const hideNavLinks = ["/linktree", "/monitoring-petugas", "/monitoring-pml"].includes(location.pathname);
+  const hideNavLinks = ["/linktree", "/monitoring-petugas", "/monitoring-pml", "/anomali-keluarga", "/anomali-usaha"].includes(location.pathname);
   const showMonitoringMenu = ["/monitoring-petugas", "/monitoring-pml"].includes(location.pathname);
-  const showHamburger = !hideNavLinks || showMonitoringMenu;
+  const showAnomaliMenu = ["/anomali-keluarga", "/anomali-usaha"].includes(location.pathname);
+  const showHamburger = !hideNavLinks || showMonitoringMenu || showAnomaliMenu;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
@@ -98,6 +103,28 @@ export default function Navbar() {
           </div>
         )}
 
+ {showAnomaliMenu && (
+          <div className="hidden md:flex items-center gap-4">
+            {anomaliLinks.map(({ label, path }) => {
+              const active = location.pathname === path;
+              return (
+                <Link
+                  key={label}
+                  to={path}
+                  className={`text-sm font-semibold tracking-wide transition-colors px-3 py-2 rounded-full ${
+                    active
+                      ? "bg-orange-50 text-orange-600"
+                      : "text-gray-700 hover:bg-orange-50 hover:text-orange-500"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+
         {/* ── Mobile Hamburger ── */}
         {showHamburger && (
           <button
@@ -127,6 +154,16 @@ export default function Navbar() {
       {menuOpen && showHamburger && (
         <div className="md:hidden bg-white border-t px-4 py-3 space-y-3">
           {(showMonitoringMenu ? monitoringLinks : navLinks).map(({ label, path }) => (
+            <Link
+              key={label}
+              to={path}
+              className="block text-sm font-semibold text-gray-700 hover:text-orange-500"
+              onClick={() => setMenuOpen(false)}
+            >
+              {label}
+            </Link>
+          ))}
+            {(showAnomaliMenu ? anomaliLinks : navLinks).map(({ label, path }) => (
             <Link
               key={label}
               to={path}
