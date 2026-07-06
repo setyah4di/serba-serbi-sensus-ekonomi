@@ -3,8 +3,8 @@ import DetailAnomaliKK from "../components/DetailAnomaliKeluarga";
 
 // ── Konfigurasi Spreadsheet ──
 // Spreadsheet: 1507_Anomali_keluarga, sheet "Daftar Anomali"
-const SPREADSHEET_ID = "1wQ6n5JkZ2dsE9B1aQzucTUgYriSxvkzN";
-const GID_ANOMALI     = "1613613674";
+const SPREADSHEET_ID = "1CvpNntuuSiDhjzexFVFbNF7z_zUQU1O5MSRowSckswI";
+const GID_ANOMALI     = "367057747";
 const CSV_ANOMALI = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_ANOMALI}`;
 
 const KECAMATAN_ORDER = [
