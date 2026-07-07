@@ -6,15 +6,15 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/PASTE_DEPLOYMENT_ID_
 const OPSI_HASIL_KONFIRMASI = [
   { value: "", label: "— Belum Dikonfirmasi —" },
   { value: "01 Sudah Sesuai", label: "01 Sudah Sesuai" },
-  { value: "02 Perlu Diperbaiki", label: "02 Perlu Diperbaiki" },
+  { value: "02 Perlu diperbaiki", label: "02 Perlu diperbaiki" },
 ];
 
 // Catatan: opsi di bawah adalah dugaan awal. Cek langsung dropdown asli di
 // kolom "Hasil Konfirmasi Korwil" pada spreadsheet dan sesuaikan kalau berbeda.
 const OPSI_KORWIL = [
-  { value: "", label: "— Belum Ditindaklanjuti —" },
-  { value: "Sudah Ditindaklanjuti", label: "Sudah Ditindaklanjuti" },
-  { value: "Belum Ditindaklanjuti", label: "Belum Ditindaklanjuti" },
+  { value: "", label: "— Belum Dikonfirmasi —" },
+  { value: "01 Sudah Sesuai", label: "01 Sudah Sesuai" },
+  { value: "02 Perlu diperbaiki", label: "02 Perlu diperbaiki" },
 ];
 
 function idSubSLS(row) {
