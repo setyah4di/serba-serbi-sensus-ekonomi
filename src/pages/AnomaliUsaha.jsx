@@ -494,12 +494,12 @@ export default function MonitoringAnomaliUsaha() {
         <div style={{ maxWidth:"1200px", margin:"0 auto", padding: isMobile ? "20px 16px 24px" : "28px 24px 32px", position:"relative", zIndex:1 }}>
           <div style={{ display:"flex", flexWrap:"wrap", alignItems:"flex-end", justifyContent:"space-between", gap:"16px" }}>
             <div>
-              <h1 style={{ color:"#fff", fontSize: isMobile ? "20px" : "26px", fontWeight:800, margin:"0 0 4px 0", lineHeight:1.2 }}>Monitoring Anomali Usaha</h1>
-              <p style={{ color:"rgba(255,255,255,0.75)", margin:0, fontSize: isMobile ? "14px" : "17px", fontWeight:500 }}>Sensus Ekonomi 2026</p>
+              <h1 style={{ color:"#fff", fontSize: isMobile ? "24px" : "28px", fontWeight:800, margin:"0 0 4px 0", lineHeight:1.2 }}>Monitoring Anomali Usaha</h1>
+              <p style={{ color:"rgba(255,255,255,0.75)", margin:0, fontSize: isMobile ? "16px" : "17px", fontWeight:500 }}>Sensus Ekonomi 2026</p>
             </div>
             {lastUpdated && (
               <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:"12px", padding: isMobile ? "8px 12px" : "10px 16px", border:"1px solid rgba(255,255,255,0.2)" }}>
-                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"13px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui</p>
+                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"14px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui</p>
                 <p style={{ color:"#fff", fontSize:"12px", margin:0, fontWeight:700 }}>
                   {lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} · 07.00 WIB
                 </p>
