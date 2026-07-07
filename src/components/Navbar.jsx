@@ -14,24 +14,49 @@ const monitoringLinks = [
   { label: "Monitoring Kecamatan", path: "/monitoring-petugas" },
   { label: "Monitoring PML", path: "/monitoring-pml" },
 ];
+
 const anomaliLinks = [
-{ label: "Anomali Keluarga", path: "/anomali-keluarga" },
+  { label: "Anomali Keluarga", path: "/anomali-keluarga" },
   { label: "Anomali Usaha", path: "/anomali-usaha" },
 ];
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
-  const hideNavLinks = ["/linktree", "/monitoring-petugas", "/monitoring-pml", "/anomali-keluarga", "/anomali-usaha"].includes(location.pathname);
-  const showMonitoringMenu = ["/monitoring-petugas", "/monitoring-pml"].includes(location.pathname);
-  const showAnomaliMenu = ["/anomali-keluarga", "/anomali-usaha"].includes(location.pathname);
-  const showHamburger = !hideNavLinks || showMonitoringMenu || showAnomaliMenu;
+
+  const monitoringPages = [
+    "/monitoring-petugas",
+    "/monitoring-pml",
+  ];
+
+  const anomaliPages = [
+    "/anomali-keluarga",
+    "/anomali-usaha",
+  ];
+
+  const hideNavLinks = [
+    "/linktree",
+    ...monitoringPages,
+    ...anomaliPages,
+  ].includes(location.pathname);
+
+  const showMonitoringMenu = monitoringPages.includes(location.pathname);
+  const showAnomaliMenu = anomaliPages.includes(location.pathname);
+
+  const showHamburger =
+    !hideNavLinks || showMonitoringMenu || showAnomaliMenu;
+
+  const mobileLinks = showMonitoringMenu
+    ? monitoringLinks
+    : showAnomaliMenu
+    ? anomaliLinks
+    : navLinks;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
       <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
 
-        {/* ── Logo (klik → Beranda) ── */}
+        {/* Logo */}
         <Link
           to="/"
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
@@ -49,6 +74,7 @@ export default function Navbar() {
               }}
             />
           </div>
+
           <div className="leading-tight">
             <p className="text-xs font-bold text-black uppercase tracking-wide">
               Badan Pusat Statistik
@@ -59,11 +85,12 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* ── Desktop Nav ── */}
+        {/* Desktop Menu Utama */}
         {!hideNavLinks && (
           <ul className="hidden md:flex items-center gap-6">
             {navLinks.map(({ label, path }) => {
               const active = location.pathname === path;
+
               return (
                 <li key={label}>
                   <Link
@@ -82,10 +109,12 @@ export default function Navbar() {
           </ul>
         )}
 
+        {/* Desktop Monitoring */}
         {showMonitoringMenu && (
           <div className="hidden md:flex items-center gap-4">
             {monitoringLinks.map(({ label, path }) => {
               const active = location.pathname === path;
+
               return (
                 <Link
                   key={label}
@@ -103,10 +132,12 @@ export default function Navbar() {
           </div>
         )}
 
- {showAnomaliMenu && (
+        {/* Desktop Anomali */}
+        {showAnomaliMenu && (
           <div className="hidden md:flex items-center gap-4">
             {anomaliLinks.map(({ label, path }) => {
               const active = location.pathname === path;
+
               return (
                 <Link
                   key={label}
@@ -124,8 +155,7 @@ export default function Navbar() {
           </div>
         )}
 
-
-        {/* ── Mobile Hamburger ── */}
+        {/* Hamburger */}
         {showHamburger && (
           <button
             className="md:hidden text-gray-700"
@@ -143,36 +173,38 @@ export default function Navbar() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                d={
+                  menuOpen
+                    ? "M6 18L18 6M6 6l12 12"
+                    : "M4 6h16M4 12h16M4 18h16"
+                }
               />
             </svg>
           </button>
         )}
       </div>
 
-      {/* ── Mobile Menu ── */}
+      {/* Mobile Menu */}
       {menuOpen && showHamburger && (
         <div className="md:hidden bg-white border-t px-4 py-3 space-y-3">
-          {(showMonitoringMenu ? monitoringLinks : navLinks).map(({ label, path }) => (
-            <Link
-              key={label}
-              to={path}
-              className="block text-sm font-semibold text-gray-700 hover:text-orange-500"
-              onClick={() => setMenuOpen(false)}
-            >
-              {label}
-            </Link>
-          ))}
-            {(showAnomaliMenu ? anomaliLinks : navLinks).map(({ label, path }) => (
-            <Link
-              key={label}
-              to={path}
-              className="block text-sm font-semibold text-gray-700 hover:text-orange-500"
-              onClick={() => setMenuOpen(false)}
-            >
-              {label}
-            </Link>
-          ))}
+          {mobileLinks.map(({ label, path }) => {
+            const active = location.pathname === path;
+
+            return (
+              <Link
+                key={label}
+                to={path}
+                onClick={() => setMenuOpen(false)}
+                className={`block text-sm font-semibold transition-colors ${
+                  active
+                    ? "text-orange-500"
+                    : "text-gray-700 hover:text-orange-500"
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
       )}
     </nav>

@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import DetailAnomaliUsaha from "../components/DetailAnomaliUsaha.jsx";
+import DetailAnomaliUsaha from "../components/DetailAnomaliUsaha";
 
-// ── Konfigurasi Spreadsheet (Anomali Usaha) ──
-// Spreadsheet: 1507_Anomali_usaha, sheet "Daftar Anomali"
-const SPREADSHEET_ID = "1v0NLE4W7cl31NyZFJug5SLHIevZYdwwq";
-const GID_ANOMALI     = "649978969";
+// ── Konfigurasi Spreadsheet ──
+const SPREADSHEET_ID = "1AyowS7Vpd34FLrdbzR31AsDeSwVG-yOt79p0NN40D4I";
+const GID_ANOMALI    = "649978969";
 const CSV_ANOMALI = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_ANOMALI}`;
 
 const KECAMATAN_ORDER = [
@@ -12,7 +11,12 @@ const KECAMATAN_ORDER = [
   "PENGABUAN","SENYERANG","TUNGKAL ILIR","BRAM ITAM","SEBERANG KOTA","BETARA","KUALA BETARA",
 ];
 
-// ── Parser CSV (mendukung koma di dalam tanda kutip) ──
+const KODE_KEC_MAP = {
+  "1507010":"TUNGKAL ULU","1507011":"MERLUNG","1507012":"BATANG ASAM","1507013":"TEBING TINGGI",
+  "1507014":"RENAH MENDALUH","1507015":"MUARA PAPALIK","1507020":"PENGABUAN","1507021":"SENYERANG",
+  "1507030":"TUNGKAL ILIR","1507031":"BRAM ITAM","1507032":"SEBERANG KOTA","1507040":"BETARA","1507041":"KUALA BETARA",
+};
+
 function parseCSV(text) {
   const lines = text.replace(/\r/g, "").split("\n");
   return lines.map(line => {
@@ -28,110 +32,264 @@ function parseCSV(text) {
   });
 }
 
-// Baris subtotal pivot biasanya berisi teks "... Total" di kolom grouping
-// (mis. "SAMSON AMBARITA Total" di kolom Nama Petugas). Fungsi ini menolak
-// nilai semacam itu supaya tidak dianggap sebagai carry-forward yang valid.
-function isTotalMarker(v) {
-  return /total\s*$/i.test((v || "").trim());
+function isSubtotalRow(cols) {
+  for (let i = 0; i <= 8; i++) {
+    if (/\bTotal\s*$/i.test((cols[i] || "").trim())) return true;
+  }
+  return false;
 }
 
-// ── Helper tampilan berdasarkan jumlah anomali ──
-function countColor(v)    { if (v === 0) return "text-emerald-600"; if (v <= 5) return "text-blue-600"; if (v <= 15) return "text-amber-500"; return "text-rose-500"; }
-function countBarColor(v) { if (v === 0) return "bg-emerald-400";  if (v <= 5) return "bg-blue-500";   if (v <= 15) return "bg-amber-400";  return "bg-rose-400"; }
-function countBadge(v)    { if (v === 0) return "bg-emerald-50 text-emerald-700 ring-emerald-200"; if (v <= 5) return "bg-blue-50 text-blue-700 ring-blue-200"; if (v <= 15) return "bg-amber-50 text-amber-700 ring-amber-200"; return "bg-rose-50 text-rose-700 ring-rose-200"; }
-function countLabel(v)    { if (v === 0) return "Aman"; if (v <= 5) return "Ringan"; if (v <= 15) return "Sedang"; return "Perlu Perhatian"; }
+function isKodeKec(v) { return /^1507\d{3}$/.test((v || "").trim()); }
+function isNamaKec(v) { return KECAMATAN_ORDER.includes((v || "").trim().toUpperCase()); }
 
-function statusBadge(status) {
+// ── Helpers warna ──
+function countColor(v)    { if(v===0)return"#10b981"; if(v<=5)return"#3b82f6"; if(v<=15)return"#f59e0b"; return"#f43f5e"; }
+function countBarColor(v) { if(v===0)return"#10b981"; if(v<=5)return"#3b82f6"; if(v<=15)return"#f59e0b"; return"#f43f5e"; }
+function countBadgeStyle(v){
+  if(v===0)return{bg:"#d1fae5",text:"#065f46",dot:"#10b981"};
+  if(v<=5)return{bg:"#dbeafe",text:"#1e40af",dot:"#3b82f6"};
+  if(v<=15)return{bg:"#fef3c7",text:"#92400e",dot:"#f59e0b"};
+  return{bg:"#ffe4e6",text:"#9f1239",dot:"#f43f5e"};
+}
+function countLabel(v) { if(v===0)return"Aman"; if(v<=5)return"Ringan"; if(v<=15)return"Sedang"; return"Perlu Perhatian"; }
+
+function statusBadgeStyle(status) {
   const s = (status || "").trim();
-  if (s.startsWith("01")) return "bg-emerald-50 text-emerald-700 ring-emerald-200";
-  if (s.startsWith("02")) return "bg-rose-50 text-rose-700 ring-rose-200";
-  return "bg-gray-50 text-gray-500 ring-gray-200";
+  if(s.startsWith("01"))return{bg:"#d1fae5",text:"#065f46",dot:"#10b981"};
+  if(s.startsWith("02"))return{bg:"#ffe4e6",text:"#9f1239",dot:"#f43f5e"};
+  return{bg:"#f1f5f9",text:"#475569",dot:"#94a3b8"};
 }
 function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
+// ── Progress Bar ──
 function ProgressBar({ value, max, color }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
-    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-      <div className={`h-2 rounded-full transition-all duration-700 ${color}`} style={{ width: `${pct}%` }} />
+    <div style={{ width:"100%", height:"6px", background:"#f1f5f9", borderRadius:"99px", overflow:"hidden" }}>
+      <div style={{
+        height:"100%", width:`${pct}%`, borderRadius:"99px",
+        background: color,
+        transition:"width 0.7s cubic-bezier(0.4,0,0.2,1)",
+        boxShadow: pct > 0 ? `0 0 6px ${color}66` : "none",
+      }}/>
     </div>
   );
 }
 
-function StatCard({ label, value, sub, icon, variant }) {
-  const styles = {
-    gray:   { card: "bg-[#5a6273] text-white", icon: "bg-white/20", label: "text-white/80", sub: "text-white/60" },
-    orange: { card: "bg-[#f5820a] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
-    blue:   { card: "bg-[#3a8fe8] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
-    rose:   { card: "bg-[#e0525f] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
-  };
-  const s = styles[variant];
+// ── Stat Card global (header) ──
+function StatCard({ label, value, sub, icon, accentColor }) {
+  const isLight = accentColor === "#f43f5e" || accentColor === "#10b981" || accentColor === "#3b82f6";
   return (
-    <div className={`relative rounded-2xl p-5 overflow-hidden flex flex-col gap-4 ${s.card}`}>
-      <div className="absolute -top-7 -right-7 w-28 h-28 rounded-full bg-white opacity-10 pointer-events-none" />
-      <div className="absolute bottom-0 right-7 w-14 h-14 rounded-full bg-white opacity-10 pointer-events-none" />
-      <div className="relative flex items-start justify-between">
-        <p className={`text-[11px] font-semibold uppercase tracking-widest leading-tight max-w-[110px] ${s.label}`}>{label}</p>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${s.icon}`}>{icon}</div>
+    <div style={{
+      background: `${accentColor}14`,
+      borderRadius:"16px", padding:"20px 20px 16px",
+      border:`1.5px solid ${accentColor}25`,
+      display:"flex", flexDirection:"column", justifyContent:"space-between",
+      minHeight:"110px", position:"relative", overflow:"hidden",
+    }}>
+      <div style={{ position:"absolute", right:"-18px", bottom:"-18px", width:"72px", height:"72px", borderRadius:"50%", background:`${accentColor}15`, pointerEvents:"none" }}/>
+      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"8px" }}>
+        <p style={{ fontSize:"11px", fontWeight:600, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em", margin:0 }}>{label}</p>
+        <div style={{ width:"32px", height:"32px", borderRadius:"10px", background:`${accentColor}20`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:"16px" }}>{icon}</div>
       </div>
-      <div className="relative">
-        <p className="text-3xl font-black leading-none tracking-tight">{value}</p>
-        {sub && <p className={`text-xs mt-1 ${s.sub}`}>{sub}</p>}
+      <div>
+        <p style={{ fontSize:"28px", fontWeight:800, color:accentColor, margin:0, lineHeight:1.1 }}>{value}</p>
+        {sub && <p style={{ fontSize:"11px", color:"#94a3b8", marginTop:"3px", margin:0 }}>{sub}</p>}
       </div>
     </div>
   );
 }
 
+// ── Kecamatan Card ──
 function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClick, isSelected }) {
-  const textColor = countColor(count), barColor = countBarColor(count);
+  const color = countColor(count);
+  const badge = countBadgeStyle(count);
+  const label = countLabel(count);
   return (
-    <button onClick={onClick} className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200 ${isSelected ? "border-orange-400 bg-orange-50 shadow-md shadow-orange-100" : "border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1 min-w-0 pr-2">
-          <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">Kecamatan</p>
-          <p className="text-base font-bold text-gray-800 leading-tight">{kecamatan}</p>
+    <button onClick={onClick} style={{ width:"100%", textAlign:"left", border:"none", background:"none", padding:0, cursor:"pointer" }}>
+      <div style={{
+        background: isSelected ? "#fff7ed" : "#fff",
+        borderRadius:"16px", padding:"18px 20px",
+        border: isSelected ? "2px solid #f97316" : "1.5px solid #f1f5f9",
+        boxShadow: isSelected ? "0 4px 20px rgba(249,115,22,0.15)" : "0 1px 4px rgba(0,0,0,0.04)",
+        transition:"all 0.2s cubic-bezier(0.4,0,0.2,1)",
+        display:"flex", flexDirection:"column", gap:"12px",
+      }}>
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"8px" }}>
+          <div style={{ flex:1, minWidth:0 }}>
+            <p style={{ fontSize:"10px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.08em", margin:"0 0 3px 0" }}>Kecamatan</p>
+            <p style={{ fontSize:"15px", fontWeight:700, color:"#1e293b", margin:0, lineHeight:1.3 }}>{kecamatan}</p>
+          </div>
+          <span style={{ fontSize:"24px", fontWeight:800, color, flexShrink:0, lineHeight:1 }}>{count}</span>
         </div>
-        <span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{count}</span>
-      </div>
-      <ProgressBar value={count} max={maxCount} color={barColor} />
-      <div className="flex items-center justify-between mt-2.5 gap-2 flex-wrap">
-        <div className="flex gap-3">
-          <span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countDesa}</span> Desa</span>
-          <span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countSLS}</span> SLS</span>
+        <ProgressBar value={count} max={maxCount} color={color} />
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"6px" }}>
+          <div style={{ display:"flex", gap:"12px" }}>
+            {[["Desa", countDesa], ["SLS", countSLS]].map(([lbl, val]) => (
+              <span key={lbl} style={{ fontSize:"12px", color:"#94a3b8", display:"flex", alignItems:"center", gap:"4px" }}>
+                <span style={{ display:"inline-block", width:"6px", height:"6px", borderRadius:"50%", background:"#cbd5e1" }}/>
+                <b style={{ color:"#475569", fontWeight:600 }}>{val}</b> {lbl}
+              </span>
+            ))}
+          </div>
+          <span style={{ fontSize:"11px", fontWeight:700, padding:"3px 10px", borderRadius:"99px", background:badge.bg, color:badge.text, display:"flex", alignItems:"center", gap:"5px" }}>
+            <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:badge.dot, flexShrink:0 }}/>
+            {label}
+          </span>
         </div>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${countBadge(count)}`}>{countLabel(count)}</span>
       </div>
     </button>
   );
 }
 
-function AnomaliRow({ row, rank, onDetail }) {
+// ── Mini Status Card (Sesuai / Perbaiki / Belum) ──
+function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
-    <div className="py-3 border-b border-gray-50 last:border-0">
-      <div className="flex items-start gap-3">
-        <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{rank}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-gray-700 truncate">{row.namaUsaha}</p>
-          <p className="text-xs text-gray-400 truncate mt-0.5">
-            {row.namaDesa} · SLS {row.kodeSLS}{row.subSLS ? `-${row.subSLS}` : ""}{row.namaSLS ? ` · ${row.namaSLS}` : ""}
+    <button
+      onClick={onClick}
+      style={{
+        flex:1, border:"none", cursor:"pointer", textAlign:"left",
+        background: isActive ? color : bg,
+        borderRadius:"14px", padding:"12px 14px",
+        border: isActive ? `2px solid ${color}` : `1.5px solid ${bg === "#fff" ? "#f1f5f9" : bg}`,
+        boxShadow: isActive ? `0 4px 16px ${color}33` : "none",
+        transition:"all 0.18s cubic-bezier(0.4,0,0.2,1)",
+        transform: isActive ? "translateY(-2px)" : "none",
+      }}
+    >
+      <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"6px" }}>
+        <span style={{ width:"7px", height:"7px", borderRadius:"50%", background: isActive ? "rgba(255,255,255,0.8)" : dot, flexShrink:0 }}/>
+        <span style={{ fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color: isActive ? "rgba(255,255,255,0.85)" : "#64748b" }}>{label}</span>
+      </div>
+      <p style={{ fontSize:"22px", fontWeight:800, margin:0, lineHeight:1, color: isActive ? "#fff" : color }}>{count}</p>
+      <p style={{ fontSize:"10px", margin:"3px 0 0 0", color: isActive ? "rgba(255,255,255,0.7)" : "#94a3b8" }}>{pct}% dari total</p>
+    </button>
+  );
+}
+
+// ── Anomali Row (diperbaiki) ──
+function AnomaliRow({ row, rank, onDetail }) {
+  const badge = statusBadgeStyle(row.hasilKonfirmasiPML);
+  return (
+    <div style={{ padding:"14px 0", borderBottom:"1px solid #f8fafc" }}>
+      <div style={{ display:"flex", alignItems:"flex-start", gap:"12px" }}>
+        <span style={{ fontSize:"11px", fontWeight:700, color:"#cbd5e1", width:"20px", textAlign:"right", flexShrink:0, marginTop:"2px" }}>{rank}</span>
+        <div style={{ flex:1, minWidth:0 }}>
+          <p style={{ fontSize:"13px", fontWeight:700, color:"#1e293b", margin:"0 0 3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaUsaha}</p>
+          <p style={{ fontSize:"11px", color:"#94a3b8", margin:"0 0 3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            {row.namaDesa}{row.namaSLS ? ` · ${row.namaSLS}` : ""} · SLS {row.kodeSLS}{row.subSLS ? `-${row.subSLS}` : ""}
           </p>
-          <p className="text-xs text-gray-400 truncate mt-0.5">
-            <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
-            {row.namaPML || "-"}
-            <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 mr-1">Petugas</span>
-            {row.namaPetugas || "-"}
-          </p>
-          <p className="text-xs text-gray-500 truncate mt-1">{row.namaAnomali}</p>
+          {/* ── Baris PML dan Petugas diperbaiki ── */}
+        <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    marginBottom: "4px",
+    flexWrap: "wrap",
+  }}
+>
+  {/* PML */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+    }}
+  >
+    <span
+      style={{
+        background: "#fff7ed",
+        color: "#ea580c",
+        fontSize: "10px",
+        fontWeight: 700,
+        padding: "2px 6px",
+        borderRadius: "5px",
+      }}
+    >
+      PML
+    </span>
+
+    <span
+      style={{
+        fontSize: "12px",
+        color: "#64748b",
+        maxWidth: "110px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {row.namaPML || "-"}
+    </span>
+  </div>
+
+  {/* PPL */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+    }}
+  >
+    <span
+      style={{
+        background: "#eff6ff",
+        color: "#2563eb",
+        fontSize: "10px",
+        fontWeight: 700,
+        padding: "1px 6px",
+        borderRadius: "5px",
+      }}
+    >
+      PPL
+    </span>
+
+    <span
+      style={{
+        fontSize: "12px",
+        color: "#64748b",
+        maxWidth: "130px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {row.namaPetugas || "-"}
+    </span>
+  </div>
+</div>
+          <p style={{ fontSize:"11px", color:"#64748b", margin:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaAnomali}</p>
         </div>
-        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 whitespace-nowrap ${statusBadge(row.hasilKonfirmasiPML)}`}>{statusLabel(row.hasilKonfirmasiPML)}</span>
-          <button onClick={() => onDetail(row)} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap">Detail</button>
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px", flexShrink:0 }}>
+          <span style={{ fontSize:"10px", fontWeight:700, padding:"3px 8px", borderRadius:"99px", background:badge.bg, color:badge.text, whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:"4px" }}>
+            <span style={{ width:"5px", height:"5px", borderRadius:"50%", background:badge.dot }}/>
+            {statusLabel(row.hasilKonfirmasiPML)}
+          </span>
+          <button
+            onClick={() => onDetail(row)}
+            style={{ fontSize:"11px", fontWeight:600, padding:"4px 10px", borderRadius:"8px", background:"#fff7ed", color:"#ea580c", border:"1px solid #fed7aa", cursor:"pointer", whiteSpace:"nowrap" }}
+          >Detail</button>
         </div>
       </div>
     </div>
   );
+}
+
+// ── Custom hook untuk deteksi mobile ──
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) setMatches(media.matches);
+    const listener = () => setMatches(media.matches);
+    window.addEventListener("resize", listener);
+    return () => window.removeEventListener("resize", listener);
+  }, [matches, query]);
+  return matches;
 }
 
 // ── Komponen Utama ──
@@ -143,273 +301,406 @@ export default function MonitoringAnomaliUsaha() {
   const [search, setSearch]           = useState("");
   const [sortBy, setSortBy]           = useState("urut");
   const [lastUpdated, setLastUpdated] = useState(null);
-  const [searchUsaha, setSearchUsaha] = useState("");
+  const [searchKK, setSearchKK]       = useState("");
   const [modalRow, setModalRow]       = useState(null);
+  const [activeFilter, setActiveFilter] = useState(null);
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
-  useEffect(() => { if (tableRef.current) tableRef.current.scrollTop = 0; setSearchUsaha(""); }, [selectedKec]);
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(max-width: 1024px)");
+
+  useEffect(() => {
+    if (tableRef.current) tableRef.current.scrollTop = 0;
+    setSearchKK("");
+    setActiveFilter(null);
+  }, [selectedKec]);
 
   const handleSelectKec = (kec) => {
     const next = selectedKec === kec ? null : kec;
     setSelectedKec(next);
-    if (next && window.innerWidth < 1024) {
+    if (next && isMobile) {
       setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     }
   };
 
-  // ── Ambil data dari spreadsheet ──
+  const handleFilterCard = (key) => {
+    setActiveFilter(prev => prev === key ? null : key);
+    if (tableRef.current) tableRef.current.scrollTop = 0;
+    setSearchKK("");
+  };
+
+  // ── Fetch & parse CSV ──
   useEffect(() => {
     fetch(`${CSV_ANOMALI}&_cb=${Date.now()}`)
       .then(r => { if (!r.ok) throw new Error("Gagal mengambil data anomali."); return r.text(); })
       .then(text => {
         const parsed = parseCSV(text);
-
-        // Urutan kolom asli sheet "Daftar Anomali" (Anomali Usaha):
-        // A Kode Kec | B Nama Kecamatan | C Kode Desa | D Nama Desa/Kel |
-        // E Nama PML | F Nama Petugas | G Kode SLS | H Sub SLS | I Nama SLS |
-        // J Nama Usaha | K Nama Anomali | L Keterangan Anomali | M Link Fasih |
-        // N (kosong) | O Hasil Konfirmasi PML/PPL | P Keterangan | Q Hasil Konfirmasi Korwil
-        let lastKodeKec = "", lastNamaKec = "", lastKodeDesa = "", lastNamaDesa = "";
-        let lastPML = "", lastPetugas = "", lastKodeSLS = "", lastSubSLS = "", lastNamaSLS = "";
+        let lastKodeKec="",lastNamaKec="",lastKodeDesa="",lastNamaDesa="",lastPML="",lastPetugas="",lastKodeSLS="",lastSubSLS="",lastNamaSLS="";
         const data = [];
-
         parsed.slice(1).forEach((cols, idx) => {
-          // idx=0 → elemen kedua dari CSV (baris ke-2 di spreadsheet, 1-indexed),
-          // jadi nomor baris asli di spreadsheet = idx + 2.
-          const sheetRow = idx + 2;
-
-          const kodeKec  = (cols[0] || "").trim(); if (kodeKec  && !isTotalMarker(kodeKec))  lastKodeKec  = kodeKec;
-          const namaKec  = (cols[1] || "").trim(); if (namaKec  && !isTotalMarker(namaKec))  lastNamaKec  = namaKec;
-          const kodeDesa = (cols[2] || "").trim(); if (kodeDesa && !isTotalMarker(kodeDesa)) lastKodeDesa = kodeDesa;
-          const namaDesa = (cols[3] || "").trim(); if (namaDesa && !isTotalMarker(namaDesa)) lastNamaDesa = namaDesa;
-          const namaPML     = (cols[4] || "").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
-          const namaPetugas = (cols[5] || "").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
-          const kodeSLS  = (cols[6] || "").trim(); if (kodeSLS  && !isTotalMarker(kodeSLS))  lastKodeSLS  = kodeSLS;
-          const subSLS   = (cols[7] || "").trim(); if (subSLS   && !isTotalMarker(subSLS))   lastSubSLS   = subSLS;
-          const namaSLS  = (cols[8] || "").trim(); if (namaSLS  && !isTotalMarker(namaSLS))  lastNamaSLS  = namaSLS;
-
-          const namaUsaha   = (cols[9]  || "").trim();
-          const namaAnomali = (cols[10] || "").trim();
-
-          // Baris subtotal pivot (mis. "0029 Total", "SAMSON AMBARITA Total") tidak
-          // memiliki nama usaha & nama anomali → dilewati.
-          if (!namaUsaha || !namaAnomali) return;
-
+          while (cols.length < 17) cols.push("");
+          if (isSubtotalRow(cols)) return;
+          const rawKodeKec = (cols[0]||"").trim();
+          if (isKodeKec(rawKodeKec)) { lastKodeKec=rawKodeKec; if(KODE_KEC_MAP[rawKodeKec])lastNamaKec=KODE_KEC_MAP[rawKodeKec]; }
+          const rawNamaKec = (cols[1]||"").trim().toUpperCase();
+          if (isNamaKec(rawNamaKec)) lastNamaKec=rawNamaKec;
+          const rawKodeDesa = (cols[2]||"").trim();
+          if (/^\d{7,10}$/.test(rawKodeDesa)) lastKodeDesa=rawKodeDesa;
+          const rawNamaDesa = (cols[3]||"").trim();
+          if (rawNamaDesa && !/^\d+$/.test(rawNamaDesa) && !isSubtotalRow([rawNamaDesa])) lastNamaDesa=rawNamaDesa;
+          const rawPML = (cols[4]||"").trim();
+          if (rawPML && !isSubtotalRow([rawPML])) lastPML=rawPML;
+          const rawPetugas = (cols[5]||"").trim();
+          if (rawPetugas && !isSubtotalRow([rawPetugas])) lastPetugas=rawPetugas;
+          const rawKodeSLS = (cols[6]||"").trim();
+          if (/^\d{4}$/.test(rawKodeSLS)) lastKodeSLS=rawKodeSLS;
+          const rawSubSLS = (cols[7]||"").trim();
+          if (/^\d{2}$/.test(rawSubSLS)) lastSubSLS=rawSubSLS;
+          const rawNamaSLS = (cols[8]||"").trim();
+          if (rawNamaSLS && !isSubtotalRow([rawNamaSLS])) lastNamaSLS=rawNamaSLS;
+          const namaUsaha   = (cols[9]||"").trim();
+          const namaAnomali = (cols[10]||"").trim();
+          if (!namaUsaha || !namaAnomali || !lastNamaKec) return;
           data.push({
-            rowIndex: sheetRow,
-            kodeKec: lastKodeKec, namaKec: lastNamaKec,
-            kodeDesa: lastKodeDesa, namaDesa: lastNamaDesa,
-            namaPML: lastPML, namaPetugas: lastPetugas,
-            kodeSLS: lastKodeSLS, subSLS: lastSubSLS, namaSLS: lastNamaSLS,
-            namaUsaha, namaAnomali,
-            keteranganAnomali: (cols[11] || "").trim(),
-            linkFasih: (cols[12] || "").trim(),
-            hasilKonfirmasiPML: (cols[14] || "").trim(),
-            keteranganKoreksi: (cols[15] || "").trim(),
-            hasilKonfirmasiKorwil: (cols[16] || "").trim(),
+            rowIndex:idx+2, kodeKec:lastKodeKec, namaKec:lastNamaKec, kodeDesa:lastKodeDesa,
+            namaDesa:lastNamaDesa, namaPML:lastPML, namaPetugas:lastPetugas, kodeSLS:lastKodeSLS,
+            subSLS:lastSubSLS, namaSLS:lastNamaSLS, namaKK:namaUsaha, namaUsaha, namaAnomali,
+            keteranganAnomali:(cols[11]||"").trim(), linkFasih:(cols[12]||"").trim(),
+            hasilKonfirmasiPML:(cols[14]||"").trim(), keteranganKoreksi:(cols[15]||"").trim(),
+            hasilKonfirmasiKorwil:(cols[16]||"").trim(),
           });
         });
-
-        setRawRows(data);
-        setLastUpdated(new Date());
-        setLoading(false);
+        setRawRows(data); setLastUpdated(new Date()); setLoading(false);
       })
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  // ── Agregasi per kecamatan ──
   const kecamatanMap = useMemo(() => {
     const m = {};
-    rawRows.forEach(r => { if (!m[r.namaKec]) m[r.namaKec] = []; m[r.namaKec].push(r); });
+    rawRows.forEach(r => { if(!r.namaKec)return; if(!m[r.namaKec])m[r.namaKec]=[]; m[r.namaKec].push(r); });
     return m;
   }, [rawRows]);
 
   const kecamatanList = useMemo(() => {
-    const namaList = new Set([...KECAMATAN_ORDER, ...Object.keys(kecamatanMap)]);
-    return [...namaList]
-      .map(nama => {
-        const list = kecamatanMap[nama] || [];
-        const desaSet = new Set(list.map(r => `${r.kodeDesa}||${r.namaDesa}`));
-        const slsSet  = new Set(list.map(r => `${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
-        return { kecamatan: nama, count: list.length, countDesa: desaSet.size, countSLS: slsSet.size };
-      })
-      .filter(k => k.count > 0 || KECAMATAN_ORDER.includes(k.kecamatan))
-      .filter(k => search === "" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => sortBy === "jumlah"
-        ? b.count - a.count
-        : (KECAMATAN_ORDER.indexOf(a.kecamatan) - KECAMATAN_ORDER.indexOf(b.kecamatan)) || a.kecamatan.localeCompare(b.kecamatan)
-      );
+    const namaSet = new Set([...KECAMATAN_ORDER, ...Object.keys(kecamatanMap)]);
+    return [...namaSet].map(nama => {
+      const list    = kecamatanMap[nama]||[];
+      const desaSet = new Set(list.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
+      const slsSet  = new Set(list.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
+      return { kecamatan:nama, count:list.length, countDesa:desaSet.size, countSLS:slsSet.size };
+    })
+    .filter(k => k.count>0 || KECAMATAN_ORDER.includes(k.kecamatan))
+    .filter(k => search===""||k.kecamatan.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b)=>sortBy==="jumlah"?b.count-a.count:(KECAMATAN_ORDER.indexOf(a.kecamatan)-KECAMATAN_ORDER.indexOf(b.kecamatan))||a.kecamatan.localeCompare(b.kecamatan));
   }, [kecamatanMap, search, sortBy]);
 
-  const maxCount = useMemo(() => kecamatanList.reduce((m, k) => Math.max(m, k.count), 0), [kecamatanList]);
+  const maxCount = useMemo(() => kecamatanList.reduce((m,k)=>Math.max(m,k.count),0), [kecamatanList]);
 
   const selectedRows = useMemo(() => {
     if (!selectedKec) return [];
-    return [...(kecamatanMap[selectedKec] || [])].sort((a, b) => a.namaDesa.localeCompare(b.namaDesa) || a.kodeSLS.localeCompare(b.kodeSLS));
+    return [...(kecamatanMap[selectedKec]||[])].sort((a,b)=>a.namaDesa.localeCompare(b.namaDesa)||a.kodeSLS.localeCompare(b.kodeSLS));
   }, [selectedKec, kecamatanMap]);
 
+  const statusCounts = useMemo(() => ({
+    sesuai:  selectedRows.filter(r=>r.hasilKonfirmasiPML.startsWith("01")).length,
+    perbaiki:selectedRows.filter(r=>r.hasilKonfirmasiPML.startsWith("02")).length,
+    belum:   selectedRows.filter(r=>!r.hasilKonfirmasiPML.trim()).length,
+  }), [selectedRows]);
+
   const filteredRows = useMemo(() => {
-    if (!searchUsaha.trim()) return selectedRows;
-    const q = searchUsaha.toLowerCase();
-    return selectedRows.filter(r => (r.namaUsaha || "").toLowerCase().includes(q) || (r.namaDesa || "").toLowerCase().includes(q));
-  }, [selectedRows, searchUsaha]);
+    let result = selectedRows;
+    if (activeFilter === "sesuai")   result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("01"));
+    if (activeFilter === "perbaiki") result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("02"));
+    if (activeFilter === "belum")    result = result.filter(r=>!r.hasilKonfirmasiPML.trim());
+    if (!searchKK.trim()) return result;
+    const q = searchKK.toLowerCase();
+    return result.filter(r=>(r.namaUsaha||"").toLowerCase().includes(q)||(r.namaDesa||"").toLowerCase().includes(q)||(r.namaAnomali||"").toLowerCase().includes(q));
+  }, [selectedRows, activeFilter, searchKK]);
 
   const globalStats = useMemo(() => {
     if (!rawRows.length) return null;
-    const kecSet  = new Set(rawRows.map(r => r.namaKec).filter(Boolean));
-    const desaSet = new Set(rawRows.map(r => `${r.kodeDesa}||${r.namaDesa}`));
-    const slsSet  = new Set(rawRows.map(r => `${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
-    return { totalKecamatan: kecSet.size, totalDesa: desaSet.size, totalSLS: slsSet.size, totalBaris: rawRows.length };
+    const kecSet  = new Set(rawRows.map(r=>r.namaKec).filter(Boolean));
+    const desaSet = new Set(rawRows.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
+    const slsSet  = new Set(rawRows.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
+    return { totalKecamatan:kecSet.size, totalDesa:desaSet.size, totalSLS:slsSet.size, totalBaris:rawRows.length };
   }, [rawRows]);
 
-  const handleDetail = (row) => setModalRow(row);
-
   const handleSaved = (updatedRow) => {
-    setRawRows(prev => prev.map(r => (r.rowIndex === updatedRow.rowIndex ? updatedRow : r)));
+    setRawRows(prev=>prev.map(r=>r.rowIndex===updatedRow.rowIndex?updatedRow:r));
     setModalRow(updatedRow);
   };
 
+  const filterLabel = activeFilter === "sesuai" ? "Sudah Sesuai" : activeFilter === "perbaiki" ? "Perlu Diperbaiki" : activeFilter === "belum" ? "Belum Dikonfirmasi" : null;
+  const filterColor = activeFilter === "sesuai" ? "#10b981" : activeFilter === "perbaiki" ? "#f43f5e" : activeFilter === "belum" ? "#94a3b8" : null;
+
+  // ── Styles responsif ──
+  const mainLayoutStyle = {
+    display: "flex",
+    gap: "20px",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+    flexDirection: isMobile ? "column" : "row",
+  };
+
+  const kecamatanGridStyle = {
+    flex: isMobile ? "1 1 100%" : "1 1 380px",
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : (isTablet ? "repeat(auto-fill, minmax(200px, 1fr))" : "repeat(auto-fill, minmax(260px, 1fr))"),
+    gap: "12px",
+    alignContent: "start",
+    width: "100%",
+  };
+
+  const detailPanelStyle = {
+    flex: isMobile ? "1 1 100%" : "0 0 500px",
+    minWidth: isMobile ? "auto" : "300px",
+    position: isMobile ? "static" : "sticky",
+    top: "24px",
+    width: "100%",
+  };
+
+  const statGridStyle = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: "14px",
+    marginBottom: "28px",
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" }}>
 
-      {modalRow && <DetailAnomaliUsaha row={modalRow} onClose={() => setModalRow(null)} onSaved={handleSaved} />}
+      {modalRow && (
+        <DetailAnomaliUsaha row={modalRow} onClose={()=>setModalRow(null)} onSaved={handleSaved} />
+      )}
 
-      <header className="relative overflow-hidden" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      {/* ── HEADER ── */}
+      <header style={{ background:"linear-gradient(135deg,#fb923c 0%,#f97316 45%,#ea580c 100%)", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", right:"-40px", top:"-40px", width:"200px", height:"200px", borderRadius:"50%", background:"rgba(255,255,255,0.07)", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", right:"120px", bottom:"-30px", width:"120px", height:"120px", borderRadius:"50%", background:"rgba(255,255,255,0.05)", pointerEvents:"none" }}/>
+        <div style={{ maxWidth:"1200px", margin:"0 auto", padding: isMobile ? "20px 16px 24px" : "28px 24px 32px", position:"relative", zIndex:1 }}>
+          <div style={{ display:"flex", flexWrap:"wrap", alignItems:"flex-end", justifyContent:"space-between", gap:"16px" }}>
             <div>
-              <h1 className="text-white text-2xl sm:text-3xl font-black leading-tight">Monitoring Anomali Usaha</h1>
-              <p className="text-orange-100 mt-1">Sensus Ekonomi 2026</p>
+              <h1 style={{ color:"#fff", fontSize: isMobile ? "20px" : "26px", fontWeight:800, margin:"0 0 4px 0", lineHeight:1.2 }}>Monitoring Anomali Usaha</h1>
+              <p style={{ color:"rgba(255,255,255,0.75)", margin:0, fontSize: isMobile ? "14px" : "17px", fontWeight:500 }}>Sensus Ekonomi 2026</p>
             </div>
             {lastUpdated && (
-              <div className="text-right">
-                <p className="text-orange-100">Data diperbarui pada</p>
-                <p className="text-orange-100">{lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul {lastUpdated.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB</p>
+              <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:"12px", padding: isMobile ? "8px 12px" : "10px 16px", border:"1px solid rgba(255,255,255,0.2)" }}>
+                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"11px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui</p>
+                <p style={{ color:"#fff", fontSize:"12px", margin:0, fontWeight:700 }}>
+                  {lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} · 07.00 WIB
+                </p>
               </div>
             )}
           </div>
         </div>
-        <div className="absolute -right-12 -top-12 w-52 h-52 rounded-full bg-white opacity-5" />
-        <div className="absolute right-20 bottom-0 w-32 h-32 rounded-full bg-white opacity-5" />
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main style={{ maxWidth:"1200px", margin:"0 auto", padding: isMobile ? "16px 12px 32px" : "28px 24px 48px" }}>
+
         {loading && (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin" />
-            <p className="text-gray-400 text-sm">Mengambil data anomali dari spreadsheet…</p>
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"80px 0", gap:"16px" }}>
+            <div style={{ width:"40px", height:"40px", borderRadius:"50%", border:"3px solid #fed7aa", borderTopColor:"#f97316", animation:"spin 0.8s linear infinite" }}/>
+            <p style={{ color:"#94a3b8", fontSize:"14px", margin:0 }}>Mengambil data anomali dari spreadsheet…</p>
           </div>
         )}
+
         {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 mt-4">
-            <p className="text-rose-600 font-semibold">Gagal memuat data</p>
-            <p className="text-rose-400 text-sm mt-1">{error}</p>
+          <div style={{ background:"#fff1f2", border:"1.5px solid #fecdd3", borderRadius:"16px", padding:"20px 24px", marginTop:"16px" }}>
+            <p style={{ color:"#e11d48", fontWeight:700, margin:"0 0 4px 0" }}>Gagal memuat data</p>
+            <p style={{ color:"#fb7185", fontSize:"13px", margin:0 }}>{error}</p>
           </div>
         )}
 
         {!loading && !error && globalStats && (
           <>
-            {/* Stat Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-              <StatCard label="Jumlah Kecamatan" value={globalStats.totalKecamatan} sub="wilayah terdampak"      icon="🏘️" variant="gray"   />
-              <StatCard label="Jumlah Desa"      value={globalStats.totalDesa}      sub="desa/kelurahan"        icon="🏡" variant="orange" />
-              <StatCard label="Jumlah SLS"       value={globalStats.totalSLS}       sub="satuan lingkungan"     icon="📍" variant="blue"   />
-              <StatCard label="Baris Anomali"    value={globalStats.totalBaris}     sub="isian anomali usaha"   icon="⚠️" variant="rose"  />
+            {/* ── Stat Cards global ── */}
+            <div style={statGridStyle}>
+              <StatCard label="Jumlah Kecamatan" value={globalStats.totalKecamatan} sub="wilayah terdampak"    icon="🏘️" accentColor="#64748b"/>
+              <StatCard label="Jumlah Desa"       value={globalStats.totalDesa}      sub="desa/kelurahan"      icon="🏡" accentColor="#f97316"/>
+              <StatCard label="Jumlah SLS"        value={globalStats.totalSLS}       sub="satuan lingkungan"   icon="📍" accentColor="#3b82f6"/>
+              <StatCard label="Baris Anomali"     value={globalStats.totalBaris}     sub="isian anomali usaha" icon="⚠️" accentColor="#f43f5e"/>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
-              <div className="relative flex-1">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            {/* ── Search & Sort ── */}
+            <div style={{ display:"flex", flexWrap:"wrap", gap:"10px", marginBottom:"20px" }}>
+              <div style={{ position:"relative", flex:1, minWidth: isMobile ? "140px" : "200px" }}>
+                <svg style={{ position:"absolute", left:"12px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}
+                  width="16" height="16" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
                 <input type="text" placeholder="Cari nama kecamatan…" value={search}
-                  onChange={e => { setSearch(e.target.value); setSelectedKec(null); }}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+                  onChange={e=>{setSearch(e.target.value);setSelectedKec(null);}}
+                  style={{ width:"100%", paddingLeft:"40px", paddingRight:"16px", paddingTop: isMobile ? "8px" : "10px", paddingBottom: isMobile ? "8px" : "10px", borderRadius:"12px", border:"1.5px solid #e2e8f0", background:"#fff", fontSize: isMobile ? "13px" : "14px", outline:"none", boxSizing:"border-box" }}
+                  onFocus={e=>e.target.style.borderColor="#f97316"}
+                  onBlur={e=>e.target.style.borderColor="#e2e8f0"}
+                />
               </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button onClick={() => setSortBy("urut")} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy === "urut" ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Urutan</button>
-                <button onClick={() => setSortBy("jumlah")} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy === "jumlah" ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Terbanyak ↓</button>
+              <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
+                {[["urut","Urutan"],["jumlah","Terbanyak ↓"]].map(([val,lbl])=>(
+                  <button key={val} onClick={()=>setSortBy(val)} style={{
+                    padding: isMobile ? "6px 12px" : "10px 18px",
+                    borderRadius:"12px",
+                    fontSize: isMobile ? "12px" : "13px",
+                    fontWeight:600,
+                    cursor:"pointer",
+                    border: sortBy===val?"none":"1.5px solid #e2e8f0",
+                    background: sortBy===val?"#f97316":"#fff",
+                    color: sortBy===val?"#fff":"#64748b",
+                    transition:"all 0.15s",
+                  }}>{lbl}</button>
+                ))}
               </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-5">
-              <div className="lg:w-[55%] grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
+            {/* ── Layout dua kolom (responsif) ── */}
+            <div style={mainLayoutStyle}>
+
+              {/* Kecamatan grid */}
+              <div style={kecamatanGridStyle}>
                 {kecamatanList.map(({ kecamatan, count, countDesa, countSLS }) => (
-                  <KecamatanCard key={kecamatan} kecamatan={kecamatan} count={count} maxCount={maxCount}
+                  <KecamatanCard
+                    key={kecamatan} kecamatan={kecamatan} count={count} maxCount={maxCount}
                     countDesa={countDesa} countSLS={countSLS}
-                    isSelected={selectedKec === kecamatan} onClick={() => handleSelectKec(kecamatan)} />
+                    isSelected={selectedKec===kecamatan}
+                    onClick={()=>handleSelectKec(kecamatan)}
+                  />
                 ))}
               </div>
 
-              <div ref={detailRef} className="lg:w-[45%]">
+              {/* Detail panel */}
+              <div ref={detailRef} style={detailPanelStyle}>
                 {!selectedKec ? (
-                  <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-20 text-center px-8">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
-                      <svg className="w-7 h-7 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <div style={{ background:"#fff", borderRadius:"20px", border:"2px dashed #e2e8f0", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding: isMobile ? "40px 20px" : "60px 32px", textAlign:"center" }}>
+                    <div style={{ width:"52px", height:"52px", borderRadius:"14px", background:"#fff7ed", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"16px" }}>
+                      <svg width="26" height="26" fill="none" stroke="#fdba74" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
                     </div>
-                    <p className="font-semibold text-gray-600">Pilih Kecamatan</p>
-                    <p className="text-gray-400 text-sm mt-1">Klik kartu kecamatan untuk melihat daftar usaha dengan anomali.</p>
+                    <p style={{ fontWeight:700, color:"#475569", fontSize: isMobile ? "14px" : "15px", margin:"0 0 6px 0" }}>Pilih Kecamatan</p>
+                    <p style={{ color:"#94a3b8", fontSize:"13px", margin:0, lineHeight:1.6 }}>Klik kartu kecamatan untuk melihat daftar usaha dengan anomali.</p>
                   </div>
                 ) : (
-                  <div className="sticky top-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-6 py-5" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-0.5">Kecamatan</p>
-                          <h2 className="text-white text-xl font-black">{selectedKec}</h2>
+                  <div style={{ background:"#fff", borderRadius:"20px", border:"1.5px solid #f1f5f9", boxShadow:"0 4px 24px rgba(0,0,0,0.06)", overflow:"hidden" }}>
+
+                    {/* Panel header */}
+                    <div style={{ background:"linear-gradient(135deg,#fb923c 0%,#f97316 50%,#ea580c 100%)", padding: isMobile ? "16px 16px 14px" : "20px 22px 18px", position:"relative", overflow:"hidden" }}>
+                      <div style={{ position:"absolute", right:"-20px", bottom:"-20px", width:"100px", height:"100px", borderRadius:"50%", background:"rgba(255,255,255,0.08)", pointerEvents:"none" }}/>
+                      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"12px", marginBottom:"14px" }}>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.1em", margin:"0 0 3px 0" }}>Kecamatan</p>
+                          <h2 style={{ color:"#fff", fontSize: isMobile ? "18px" : "20px", fontWeight:800, margin:0, lineHeight:1.2 }}>{selectedKec}</h2>
                         </div>
-                        <button onClick={() => setSelectedKec(null)} className="text-orange-200 hover:text-white transition-colors mt-1 p-1">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        <button onClick={()=>setSelectedKec(null)} style={{ background:"rgba(255,255,255,0.2)", border:"none", borderRadius:"8px", width:"30px", height:"30px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                          <svg width="15" height="15" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
                         </button>
                       </div>
-                      <div className="mt-3 flex items-center justify-between text-white text-sm">
-                        <span className="opacity-80">Total anomali di kecamatan ini</span>
-                        <span className="font-bold text-lg">{selectedRows.length}</span>
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"6px" }}>
+                        <span style={{ color:"rgba(255,255,255,0.8)", fontSize:"12px" }}>Total anomali</span>
+                        <span style={{ color:"#fff", fontSize:"15px", fontWeight:800 }}>{selectedRows.length}</span>
                       </div>
                     </div>
-                    <div ref={tableRef} className="px-6 py-2 max-h-[500px] overflow-y-auto">
-                      <div className="sticky top-0 bg-white pt-2 pb-1 z-10">
-                        <div className="relative mb-2">
-                          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+
+                    {/* ── 3 Status Mini Cards ── */}
+                    <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fafafa", borderBottom:"1px solid #f1f5f9" }}>
+                      <p style={{ fontSize:"11px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.07em", margin:"0 0 10px 0" }}>
+                        Filter status
+                      </p>
+                      <div style={{ display:"flex", gap:"8px", flexWrap: isMobile ? "wrap" : "nowrap" }}>
+                        <MiniStatusCard
+                          label="Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
+                          color="#10b981" bg="#f0fdf4" dot="#10b981"
+                          isActive={activeFilter==="sesuai"}
+                          onClick={()=>handleFilterCard("sesuai")}
+                        />
+                        <MiniStatusCard
+                          label="Perbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
+                          color="#f43f5e" bg="#fff1f2" dot="#f43f5e"
+                          isActive={activeFilter==="perbaiki"}
+                          onClick={()=>handleFilterCard("perbaiki")}
+                        />
+                        <MiniStatusCard
+                          label="Belum" count={statusCounts.belum} total={selectedRows.length}
+                          color="#64748b" bg="#f8fafc" dot="#94a3b8"
+                          isActive={activeFilter==="belum"}
+                          onClick={()=>handleFilterCard("belum")}
+                        />
+                      </div>
+                      {activeFilter && (
+                        <button
+                          onClick={()=>setActiveFilter(null)}
+                          style={{ marginTop:"10px", fontSize:"11px", fontWeight:600, color:"#94a3b8", background:"none", border:"1.5px solid #e2e8f0", borderRadius:"8px", padding:"4px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:"5px" }}
+                        >
+                          <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                          Hapus filter
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Daftar anomali */}
+                    <div ref={tableRef} style={{ padding: isMobile ? "0 12px" : "0 20px", maxHeight: isMobile ? "380px" : "440px", overflowY:"auto" }}>
+                      <div style={{ position:"sticky", top:0, background:"#fff", paddingTop:"12px", paddingBottom:"2px", zIndex:10 }}>
+                        {/* Search */}
+                        <div style={{ position:"relative", marginBottom:"10px" }}>
+                          <svg style={{ position:"absolute", left:"10px", top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}
+                            width="14" height="14" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                           </svg>
-                          <input type="text" placeholder="Cari nama usaha / desa…" value={searchUsaha}
-                            onChange={e => { setSearchUsaha(e.target.value); if (tableRef.current) tableRef.current.scrollTop = 0; }}
-                            className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300" />
-                          {searchUsaha && (
-                            <button onClick={() => setSearchUsaha("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          <input type="text" placeholder="Cari nama usaha / desa / anomali…" value={searchKK}
+                            onChange={e=>{setSearchKK(e.target.value); if(tableRef.current)tableRef.current.scrollTop=0;}}
+                            style={{ width:"100%", paddingLeft:"32px", paddingRight:searchKK?"28px":"12px", paddingTop:"8px", paddingBottom:"8px", borderRadius:"10px", border:"1.5px solid #e2e8f0", background:"#f8fafc", fontSize:"12px", outline:"none", boxSizing:"border-box" }}
+                          />
+                          {searchKK && (
+                            <button onClick={()=>setSearchKK("")} style={{ position:"absolute", right:"8px", top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#cbd5e1", padding:"2px", display:"flex" }}>
+                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
                             </button>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 py-2 border-b border-gray-100">
-                          <span className="text-xs text-gray-400 w-5">#</span>
-                          <span className="text-xs text-gray-400 flex-1">Nama Usaha · Desa/SLS · PML/Petugas</span>
-                          <span className="text-xs text-gray-400 w-20 text-right">Status</span>
+
+                        {/* Filter indicator */}
+                        {filterLabel && (
+                          <div style={{ display:"flex", alignItems:"center", gap:"6px", padding:"6px 10px", borderRadius:"8px", background:`${filterColor}10`, marginBottom:"8px" }}>
+                            <span style={{ width:"7px", height:"7px", borderRadius:"50%", background:filterColor, flexShrink:0 }}/>
+                            <span style={{ fontSize:"11px", fontWeight:700, color:filterColor }}>Menampilkan: {filterLabel}</span>
+                            <span style={{ fontSize:"11px", color:"#94a3b8", marginLeft:"auto" }}>{filteredRows.length} data</span>
+                          </div>
+                        )}
+
+                        <div style={{ display:"flex", alignItems:"center", gap:"10px", paddingBottom:"8px", borderBottom:"1px solid #f1f5f9" }}>
+                          <span style={{ fontSize:"11px", color:"#cbd5e1", width:"20px", textAlign:"right" }}>#</span>
+                          <span style={{ fontSize:"11px", color:"#cbd5e1", flex:1 }}>Nama Usaha · Desa/SLS · PML/Petugas</span>
+                          <span style={{ fontSize:"11px", color:"#cbd5e1", width:"70px", textAlign:"right" }}>Status</span>
                         </div>
                       </div>
+
                       {filteredRows.length === 0 ? (
-                        <p className="text-gray-400 text-sm text-center py-8">
-                          {searchUsaha ? `Tidak ada hasil untuk "${searchUsaha}"` : "Belum ada data anomali."}
-                        </p>
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 0", gap:"8px" }}>
+                          <svg width="32" height="32" fill="none" stroke="#e2e8f0" strokeWidth="1.5" strokeLinecap="round" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                          </svg>
+                          <p style={{ color:"#cbd5e1", fontSize:"13px", margin:0 }}>
+                            {searchKK ? `Tidak ada hasil untuk "${searchKK}"` : `Tidak ada anomali dengan status "${filterLabel}"`}
+                          </p>
+                        </div>
                       ) : (
-                        filteredRows.map((r, i) => (
-                          <AnomaliRow key={`${r.kodeDesa}-${r.kodeSLS}-${r.namaUsaha}-${i}`} row={r} rank={i + 1} onDetail={handleDetail} />
+                        filteredRows.map((r,i) => (
+                          <AnomaliRow key={`${r.kodeDesa}-${r.kodeSLS}-${r.namaUsaha}-${i}`} row={r} rank={i+1} onDetail={setModalRow} />
                         ))
                       )}
                     </div>
-                    <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-                      <div className="flex gap-3 text-xs text-gray-400 flex-wrap">
-                        <span className="font-semibold text-gray-600">
-                          {filteredRows.length}{searchUsaha ? ` / ${selectedRows.length}` : ""} Anomali
+
+                    {/* Footer */}
+                    <div style={{ padding: isMobile ? "10px 16px" : "12px 20px", background:"#f8fafc", borderTop:"1px solid #f1f5f9" }}>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:"8px 14px", alignItems:"center", fontSize: isMobile ? "11px" : "12px" }}>
+                        <span style={{ fontWeight:700, color:"#475569" }}>
+                          {filteredRows.length}{(searchKK||activeFilter)?` / ${selectedRows.length}`:""} Anomali
                         </span>
-                        <span>·</span>
-                        <span className="text-emerald-600 font-medium">{filteredRows.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length} sudah sesuai</span>
-                        <span>·</span>
-                        <span className="text-rose-400 font-medium">{filteredRows.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length} perlu diperbaiki</span>
-                        <span>·</span>
-                        <span className="text-gray-400 font-medium">{filteredRows.filter(r => !r.hasilKonfirmasiPML.trim()).length} belum dikonfirmasi</span>
+                        <span style={{ color:"#cbd5e1" }}>·</span>
+                        <span style={{ color:"#10b981", fontWeight:600 }}>{filteredRows.filter(r=>r.hasilKonfirmasiPML.startsWith("01")).length} sesuai</span>
+                        <span style={{ color:"#cbd5e1" }}>·</span>
+                        <span style={{ color:"#f43f5e", fontWeight:600 }}>{filteredRows.filter(r=>r.hasilKonfirmasiPML.startsWith("02")).length} perbaiki</span>
+                        <span style={{ color:"#cbd5e1" }}>·</span>
+                        <span style={{ color:"#94a3b8", fontWeight:600 }}>{filteredRows.filter(r=>!r.hasilKonfirmasiPML.trim()).length} belum</span>
                       </div>
                     </div>
                   </div>
@@ -421,8 +712,8 @@ export default function MonitoringAnomaliUsaha() {
       </main>
 
       <style>{`
-        @keyframes fadeIn{from{opacity:0;transform:scale(0.97) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
-        .animate-fadeIn{animation:fadeIn 0.2s ease-out;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
       `}</style>
     </div>
   );
