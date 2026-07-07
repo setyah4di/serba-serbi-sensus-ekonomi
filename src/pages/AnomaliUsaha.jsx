@@ -76,6 +76,20 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
+function getStatusKey(row) {
+  const h = (row.hasilKonfirmasiPML || "").trim();
+  if (h.startsWith("01")) return "sesuai";
+  if (h.startsWith("02")) return "perbaiki";
+  return "belum";
+}
+
+function getKorwilStatusKey(row) {
+  const h = (row.hasilKonfirmasiKorwil || "").trim();
+  if (h.startsWith("01")) return "korwil_ditangani";
+  if (h.startsWith("02")) return "korwil_diperbaiki";
+  return null;
+}
+
 // ── Progress Bar ──
 function ProgressBar({ value, max, color }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
@@ -173,11 +187,9 @@ function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick
       }}
     >
       <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"6px" }}>
-        <span style={{ width:"7px", height:"7px", borderRadius:"50%", background: isActive ? "rgba(255,255,255,0.8)" : dot, flexShrink:0 }}/>
-        <span style={{ fontSize:"10px", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.08em", color: isActive ? "rgba(255,255,255,0.85)" : "#64748b" }}>{label}</span>
+        <span style={{ fontSize:"10px", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.08em", color: isActive ? "rgba(255,255,255,0.85)" : "#64748b" }}>{label}</span>
       </div>
-      <p style={{ fontSize:"22px", fontWeight:800, margin:0, lineHeight:1, color: isActive ? "#fff" : color }}>{count}</p>
-      <p style={{ fontSize:"10px", margin:"3px 0 0 0", color: isActive ? "rgba(255,255,255,0.7)" : "#94a3b8" }}>{pct}% dari total</p>
+      <p style={{ fontSize:"20px", fontWeight:800, margin:0, lineHeight:1, color: isActive ? "#fff" : color }}>{count}</p>
     </button>
   );
 }
@@ -336,7 +348,9 @@ export default function MonitoringAnomaliUsaha() {
     const sesuai = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
     const perbaiki = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
     const belum = rawRows.filter(r => !r.hasilKonfirmasiPML.trim()).length;
-    return { sesuai, perbaiki, belum, total: rawRows.length };
+    const korwilDitangani = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+    const korwilDiperbaiki = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length;
+    return { sesuai, perbaiki, belum, korwilDitangani, korwilDiperbaiki, total: rawRows.length };
   }, [rawRows]);
 
   // KecamatanList dengan count = perbaiki + belum
@@ -369,18 +383,20 @@ const pmlList = useMemo(() => {
 }, [selectedRows]);
 
   const statusCounts = useMemo(() => ({
-    sesuai:  selectedRows.filter(r=>r.hasilKonfirmasiPML.startsWith("01")).length,
-    perbaiki:selectedRows.filter(r=>r.hasilKonfirmasiPML.startsWith("02")).length,
-    belum:   selectedRows.filter(r=>!r.hasilKonfirmasiPML.trim()).length,
+    sesuai:           selectedRows.filter(r => getStatusKey(r) === "sesuai").length,
+    perbaiki:         selectedRows.filter(r => getStatusKey(r) === "perbaiki").length,
+    belum:            selectedRows.filter(r => getStatusKey(r) === "belum").length,
+    korwilDitangani:  selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length,
+    korwilDiperbaiki: selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length,
   }), [selectedRows]);
 
 const filteredRows = useMemo(() => {
   let result = selectedRows;
-  if (activeFilter === "sesuai")   result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("01"));
-  if (activeFilter === "perbaiki") result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("02"));
-  if (activeFilter === "belum")    result = result.filter(r=>!r.hasilKonfirmasiPML.trim());
-  if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);
-  if (!searchKK.trim()) return result;
+  if (activeFilter === "sesuai")   result = result.filter(r => getStatusKey(r) === "sesuai");
+  if (activeFilter === "perbaiki") result = result.filter(r => getStatusKey(r) === "perbaiki");
+  if (activeFilter === "belum")    result = result.filter(r => getStatusKey(r) === "belum");
+  if (activeFilter === "korwil_ditangani")  result = result.filter(r => getKorwilStatusKey(r) === "korwil_ditangani");
+  if (activeFilter === "korwil_diperbaiki") result = result.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki");
   const q = searchKK.toLowerCase();
   return result.filter(r =>
     (r.namaUsaha   || "").toLowerCase().includes(q) ||
@@ -393,8 +409,18 @@ const filteredRows = useMemo(() => {
     setModalRow(updatedRow);
   };
 
-  const filterLabel = activeFilter === "sesuai" ? "Sudah Sesuai" : activeFilter === "perbaiki" ? "Perlu Diperbaiki" : activeFilter === "belum" ? "Belum Dikonfirmasi" : null;
-  const filterColor = activeFilter === "sesuai" ? "#10b981" : activeFilter === "perbaiki" ? "#f43f5e" : activeFilter === "belum" ? "#94a3b8" : null;
+  const filterLabel = activeFilter === "sesuai" ? "Sudah Sesuai"
+    : activeFilter === "perbaiki" ? "Perlu Diperbaiki"
+    : activeFilter === "belum" ? "Belum Dikonfirmasi"
+    : activeFilter === "korwil_ditangani" ? "Ditangani Korwil"
+    : activeFilter === "korwil_diperbaiki" ? "Diperbaiki PCL & Diapprove PML"
+    : null;
+  const filterColor = activeFilter === "sesuai" ? "#10b981"
+    : activeFilter === "perbaiki" ? "#f43f5e"
+    : activeFilter === "belum" ? "#94a3b8"
+    : activeFilter === "korwil_ditangani" ? "#3b82f6"
+    : activeFilter === "korwil_diperbaiki" ? "#7c3aed"
+    : null;
 
   // ── Styles responsif ──
   const mainLayoutStyle = {
@@ -424,7 +450,7 @@ const filteredRows = useMemo(() => {
 
   const statGridStyle = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit, minmax(150px, 1fr))",
+    gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))",
     gap: "14px",
     marginBottom: "28px",
   };
@@ -478,10 +504,11 @@ const filteredRows = useMemo(() => {
           <>
             {/* ── Stat Cards global ── */}
             <div style={statGridStyle}>
-              <StatCard label="Sudah Sesuai" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`}
- icon="✅" accentColor="#10b981"/>
+              <StatCard label="Sudah Sesuai" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`} icon="✅" accentColor="#10b981"/>
               <StatCard label="Perlu Diperbaiki" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
               <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
+              <StatCard label="Ditangani Korwil" value={globalStatus.korwilDitangani} sub={`${((globalStatus.korwilDitangani/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛡️" accentColor="#3b82f6"/>
+              <StatCard label="Diperbaiki PCL & Diapprove PML" value={globalStatus.korwilDiperbaiki} sub={`${((globalStatus.korwilDiperbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🔧" accentColor="#7c3aed"/>
               <StatCard label="Total Anomali" value={globalStatus.total} sub="seluruh baris anomali" icon="📊" accentColor="#f97316"/>
             </div>
 
@@ -564,12 +591,12 @@ const filteredRows = useMemo(() => {
                       </div>
                     </div>
 
-                    {/* ── 3 Status Mini Cards ── */}
+                    {/* ── 5 Status Mini Cards ── */}
                     <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fafafa", borderBottom:"1px solid #f1f5f9" }}>
                       <p style={{ fontSize:"11px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.07em", margin:"0 0 10px 0" }}>
                         Filter status
                       </p>
-                      <div style={{ display:"flex", gap:"8px", flexWrap: isMobile ? "wrap" : "nowrap" }}>
+                      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(5, minmax(0, 1fr))", gap:"10px" }}>
                         <MiniStatusCard
                           label="Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
                           color="#10b981" bg="#f0fdf4" dot="#10b981"
@@ -587,6 +614,18 @@ const filteredRows = useMemo(() => {
                           color="#64748b" bg="#f8fafc" dot="#94a3b8"
                           isActive={activeFilter==="belum"}
                           onClick={()=>handleFilterCard("belum")}
+                        />
+                        <MiniStatusCard
+                          label="Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
+                          color="#3b82f6" bg="#eff6ff" dot="#3b82f6"
+                          isActive={activeFilter==="korwil_ditangani"}
+                          onClick={()=>handleFilterCard("korwil_ditangani")}
+                        />
+                        <MiniStatusCard
+                          label="Diperbaiki PCL" count={statusCounts.korwilDiperbaiki} total={selectedRows.length}
+                          color="#7c3aed" bg="#f5f3ff" dot="#7c3aed"
+                          isActive={activeFilter==="korwil_diperbaiki"}
+                          onClick={()=>handleFilterCard("korwil_diperbaiki")}
                         />
                       </div>
                       {activeFilter && (
