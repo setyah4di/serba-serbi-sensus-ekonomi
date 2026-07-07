@@ -58,25 +58,53 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
-// ── Stat Card global ──
+// ── Stat Card global (palet pastel/lembut) ──
 function StatCard({ label, value, sub, icon, variant }) {
   const styles = {
-    gray:   { card: "bg-[#5a6273] text-white", icon: "bg-white/20", label: "text-white/80", sub: "text-white/60" },
-    orange: { card: "bg-[#f5820a] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
-    blue:   { card: "bg-[#3a8fe8] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
-    rose:   { card: "bg-[#e0525f] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
+    gray: {
+      card:  "bg-gray-100",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-gray-500",
+      value: "text-gray-800",
+      sub:   "text-gray-600",
+      circle: "bg-gray-300",
+    },
+    orange: {
+      card:  "bg-orange-50",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-orange-500",
+      value: "text-orange-500",
+      sub:   "text-gray-600",
+      circle: "bg-orange-200",
+    },
+    blue: {
+      card:  "bg-blue-50",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-blue-500",
+      value: "text-blue-600",
+      sub:   "text-gray-600",
+      circle: "bg-blue-200",
+    },
+    rose: {
+      card:  "bg-rose-50",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-rose-500",
+      value: "text-rose-500",
+      sub:   "text-gray-600",
+      circle: "bg-rose-200",
+    },
   };
   const s = styles[variant];
   return (
     <div className={`relative rounded-2xl p-5 overflow-hidden flex flex-col gap-4 ${s.card}`}>
-      <div className="absolute -top-7 -right-7 w-28 h-28 rounded-full bg-white opacity-10 pointer-events-none" />
-      <div className="absolute bottom-0 right-7 w-14 h-14 rounded-full bg-white opacity-10 pointer-events-none" />
+      <div className={`absolute -top-7 -right-7 w-28 h-28 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
+      <div className={`absolute bottom-0 right-7 w-14 h-14 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
       <div className="relative flex items-start justify-between">
         <p className={`text-[11px] font-semibold uppercase tracking-widest leading-tight max-w-[110px] ${s.label}`}>{label}</p>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${s.icon}`}>{icon}</div>
       </div>
       <div className="relative">
-        <p className="text-3xl font-black leading-none tracking-tight">{value}</p>
+        <p className={`text-3xl font-black leading-none tracking-tight ${s.value}`}>{value}</p>
         {sub && <p className={`text-xs mt-1 ${s.sub}`}>{sub}</p>}
       </div>
     </div>
@@ -419,7 +447,7 @@ export default function MonitoringAnomali() {
       )}
 
       {/* ── HEADER ── */}
-      <header className="relative overflow-hidden" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
+      <header className="relative overflow-hidden" style={{ background: "linear-gradient(135deg,#fb923c 0%,#f97316 45%,#ea580c 100%)" }}>
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>

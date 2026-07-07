@@ -17,21 +17,34 @@ const KODE_KEC_MAP = {
   "1507030":"TUNGKAL ILIR","1507031":"BRAM ITAM","1507032":"SEBERANG KOTA","1507040":"BETARA","1507041":"KUALA BETARA",
 };
 
+// ── Parser CSV (mendukung koma DAN newline di dalam tanda kutip) ──
 function parseCSV(text) {
-  const lines = text.replace(/\r/g, "").split("\n");
-  return lines.map(line => {
-    const cols = []; let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
-      cur += ch;
-    }
-    cols.push(cur.trim());
-    return cols;
-  });
-}
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQ = false;
+  const clean = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i];
+    if (inQ) {
+      if (ch === '"') {
+        if (clean[i + 1] === '"') { field += '"'; i++; } // tanda kutip ganda = escape
+        else { inQ = false; }
+      } else {
+        field += ch; // termasuk newline di dalam kutip — bagian dari sel yang sama
+      }
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(field.trim()); field = ""; }
+      else if (ch === '\n') { row.push(field.trim()); rows.push(row); row = []; field = ""; }
+      else { field += ch; }
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field.trim()); rows.push(row); }
+
+  return rows;
+}
 function isSubtotalRow(cols) {
   for (let i = 0; i <= 8; i++) {
     if (/\bTotal\s*$/i.test((cols[i] || "").trim())) return true;
@@ -96,7 +109,7 @@ function StatCard({ label, value, sub, icon, accentColor }) {
       </div>
       <div>
         <p style={{ fontSize:"28px", fontWeight:800, color:accentColor, margin:0, lineHeight:1.1 }}>{value}</p>
-        {sub && <p style={{ fontSize:"11px", color:"#94a3b8", marginTop:"3px", margin:0 }}>{sub}</p>}
+        {sub && <p style={{ fontSize:"13px", color:"gray", marginTop:"3px", margin:0 }}>{sub}</p>}
       </div>
     </div>
   );
@@ -486,7 +499,7 @@ export default function MonitoringAnomaliUsaha() {
             </div>
             {lastUpdated && (
               <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:"12px", padding: isMobile ? "8px 12px" : "10px 16px", border:"1px solid rgba(255,255,255,0.2)" }}>
-                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"11px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui</p>
+                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"13px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui</p>
                 <p style={{ color:"#fff", fontSize:"12px", margin:0, fontWeight:700 }}>
                   {lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} · 07.00 WIB
                 </p>

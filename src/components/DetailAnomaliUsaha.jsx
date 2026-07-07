@@ -106,7 +106,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                   <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" />
                 </span>
               </div>
-              <p className="text-sm text-gray-400">Menghubungi spreadsheet, mohon tunggu…</p>
+              <p className="text-sm text-gray-400">Mohon tunggu…</p>
             </div>
           )}
 
@@ -174,7 +174,8 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan Anomali</td>
-                <td className="px-3 py-2.5 text-gray-700 leading-relaxed">{row.keteranganAnomali || "-"}</td>
+                {/* whitespace-pre-line: menampilkan newline asli dari sel spreadsheet sebagai baris baru */}
+                <td className="px-3 py-2.5 text-gray-700 leading-relaxed whitespace-pre-line">{row.keteranganAnomali || "-"}</td>
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Hasil Konfirmasi<br />PML/PPL</td>
