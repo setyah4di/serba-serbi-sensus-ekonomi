@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 // ── GANTI dengan URL deployment Apps Script kamu (lihat Code.gs) ──
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHBDXZU058A4yB7iXrnMiHQt6hSdn9Qfj00neyO8XcyfRP_zIJdpIn4bqS3lj8Mb0L/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRUf3OHTxIdzR7owCiePmeyPjbO-zcyeG3vnqV2A3MxA-a9i_nw20zQcyAy7ax3_1XJg/exec";
 
 const OPSI_HASIL_KONFIRMASI = [
   { value: "", label: "— Belum Dikonfirmasi —" },

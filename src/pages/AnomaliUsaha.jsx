@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import DetailAnomaliUsaha from "../components/DetailAnomaliUsaha";
 
 // ── Konfigurasi Spreadsheet ──
-const SPREADSHEET_ID = "1AyowS7Vpd34FLrdbzR31AsDeSwVG-yOt79p0NN40D4I";
+const SPREADSHEET_ID = "1lUDHElN9DJtMLvsQRYjbO2-N0GMh_8UYUO4uIftmiR8";
 const GID_ANOMALI    = "649978969";
 const CSV_ANOMALI = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_ANOMALI}`;
 

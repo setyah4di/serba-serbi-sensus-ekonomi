@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import DetailAnomaliKeluarga from "../components/DetailAnomaliKeluarga";
 
 // ── Konfigurasi Spreadsheet ──
-const SPREADSHEET_ID = "1CvpNntuuSiDhjzexFVFbNF7z_zUQU1O5MSRowSckswI";
-const GID_ANOMALI    = "367057747";
+const SPREADSHEET_ID = "1NrrW4Yd6JTzZisJ_qMaX0HxW8tuF9aEEVp_eNWflTbU";
+const GID_ANOMALI    = "2062667195";
 const CSV_ANOMALI = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_ANOMALI}`;
 
 const KECAMATAN_ORDER = [
