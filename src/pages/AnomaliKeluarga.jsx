@@ -257,15 +257,18 @@ export default function MonitoringAnomali() {
   const [searchKK, setSearchKK]         = useState("");
   const [modalRow, setModalRow]         = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [pmlFilter, setPmlFilter] = useState(null);   // ← BARU
+
 
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
-  useEffect(() => {
-    if (tableRef.current) tableRef.current.scrollTop = 0;
-    setSearchKK("");
-    setStatusFilter(null);
-  }, [selectedKec]);
+ useEffect(() => {
+  if (tableRef.current) tableRef.current.scrollTop = 0;
+  setSearchKK("");
+  setStatusFilter(null);
+  setPmlFilter(null);   // ← BARU
+}, [selectedKec]);
 
   const handleSelectKec = (kec) => {
     const next = selectedKec === kec ? null : kec;
@@ -279,6 +282,11 @@ export default function MonitoringAnomali() {
     setStatusFilter(prev => prev === key ? null : key);
     if (tableRef.current) tableRef.current.scrollTop = 0;
   };
+
+  const handlePmlFilter = (pml) => {
+  setPmlFilter(prev => prev === pml ? null : pml);
+  if (tableRef.current) tableRef.current.scrollTop = 0;
+};
 
   // ── Fetch CSV ──
   useEffect(() => {
@@ -384,6 +392,11 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
       (a,b) => a.namaDesa.localeCompare(b.namaDesa) || a.kodeSLS.localeCompare(b.kodeSLS)
     );
   }, [selectedKec, kecamatanMap]);
+  const pmlList = useMemo(() => {
+  const set = new Set();
+  selectedRows.forEach(r => { if (r.namaPML) set.add(r.namaPML); });
+  return [...set].sort((a, b) => a.localeCompare(b));
+}, [selectedRows]);
 
   const statusCounts = useMemo(() => ({
     sesuai: selectedRows.filter(r => getStatusKey(r)==="sesuai").length,
@@ -391,18 +404,19 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
     belum:  selectedRows.filter(r => getStatusKey(r)==="belum").length,
   }), [selectedRows]);
 
-  const filteredRows = useMemo(() => {
-    let result = selectedRows;
-    if (statusFilter) result = result.filter(r => getStatusKey(r)===statusFilter);
-    if (searchKK.trim()) {
-      const q = searchKK.toLowerCase();
-      result = result.filter(r =>
-        (r.namaKK   ||"").toLowerCase().includes(q) ||
-        (r.namaDesa ||"").toLowerCase().includes(q)
-      );
-    }
-    return result;
-  }, [selectedRows, statusFilter, searchKK]);
+ const filteredRows = useMemo(() => {
+  let result = selectedRows;
+  if (statusFilter) result = result.filter(r => getStatusKey(r)===statusFilter);
+  if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);   // ← BARU
+  if (searchKK.trim()) {
+    const q = searchKK.toLowerCase();
+    result = result.filter(r =>
+      (r.namaKK   ||"").toLowerCase().includes(q) ||
+      (r.namaPetugas ||"").toLowerCase().includes(q)
+    );
+  }
+  return result;
+}, [selectedRows, statusFilter, pmlFilter, searchKK]);   // ← tambahkan pmlFilter di dependency
 
   const handleSaved = (updatedRow) => {
     setRawRows(prev => prev.map(r => r.rowIndex===updatedRow.rowIndex ? updatedRow : r));
@@ -413,6 +427,7 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
     : statusFilter==="perlu"  ? "✗ Perlu Diperbaiki"
     : statusFilter==="belum"  ? "⏳ Belum Dikonfirmasi"
     : null;
+  
 
   // ════════════════════════════════════════════════════════════════════════════
   return (
@@ -496,7 +511,7 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
             </div>
 
             {/* ── Filter & sort kecamatan ── */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
+            <div className="flex flex-col sm:flex-row gap-3 mb-2">
               <div className="relative flex-1">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
@@ -589,9 +604,44 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
                         <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}  activeKey="belum"  currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}  colorScheme="gray"    />
                       </div>
                     </div>
-
+{/* ── Filter PML ── */}
+{pmlList.length > 0 && (
+  <div className="px-5 py-4 border-b border-gray-100">
+    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
+      Filter berdasarkan PML
+      {pmlFilter && (
+        <button onClick={() => setPmlFilter(null)} className="ml-2 text-orange-500 normal-case font-semibold hover:underline">
+          (reset)
+        </button>
+      )}
+    </p>
+    <div className="flex gap-2 flex-wrap">
+      <button
+        onClick={() => setPmlFilter(null)}
+        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap
+          ${!pmlFilter
+            ? "bg-orange-500 text-white"
+            : "bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100"}`}
+      >
+        Semua PML
+      </button>
+      {pmlList.map(pml => (
+        <button
+          key={pml}
+          onClick={() => handlePmlFilter(pml)}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap
+            ${pmlFilter === pml
+              ? "bg-orange-500 text-white"
+              : "bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100"}`}
+        >
+          {pml}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
                     {/* Daftar KK */}
-                    <div ref={tableRef} className="px-6 py-2 max-h-[460px] overflow-y-auto">
+                    <div ref={tableRef} className="px-6 max-h-[460px] overflow-y-auto">
                       <div className="sticky top-0 bg-white pt-2 pb-1 z-10">
                         {filterLabel && (
                           <div className="mb-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-between">
@@ -608,7 +658,7 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
                           </svg>
                           <input
-                            type="text" placeholder="Cari nama KK / desa…" value={searchKK}
+                            type="text" placeholder="Cari nama Kepala Keluarga / nama PPL" value={searchKK}
                             onChange={e => { setSearchKK(e.target.value); if(tableRef.current) tableRef.current.scrollTop=0; }}
                             className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300"
                           />
@@ -655,8 +705,10 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
                     <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-100">
                       <div className="flex gap-2 text-xs text-gray-400 flex-wrap items-center">
                         <span className="font-semibold text-gray-600">
-                          {filteredRows.length}{(searchKK||statusFilter) ? ` / ${selectedRows.length}` : ""} KK
-                        </span>
+{filteredRows.length}{(searchKK||statusFilter||pmlFilter) ? ` / ${selectedRows.length}` : ""} KK                        </span>
+{pmlFilter && (
+  <span className="text-blue-500 font-medium">· PML: {pmlFilter}</span>
+)}
                         {statusFilter ? (
                           <span className="text-orange-500 font-medium">· {filterLabel}</span>
                         ) : (

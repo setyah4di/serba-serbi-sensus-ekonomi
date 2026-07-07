@@ -246,6 +246,7 @@ export default function MonitoringAnomaliUsaha() {
   const [searchKK, setSearchKK]       = useState("");
   const [modalRow, setModalRow]       = useState(null);
   const [activeFilter, setActiveFilter] = useState(null);
+  const [pmlFilter, setPmlFilter] = useState(null);   // ← BARU
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
@@ -253,10 +254,11 @@ export default function MonitoringAnomaliUsaha() {
   const isTablet = useMediaQuery("(max-width: 1024px)");
 
   useEffect(() => {
-    if (tableRef.current) tableRef.current.scrollTop = 0;
-    setSearchKK("");
-    setActiveFilter(null);
-  }, [selectedKec]);
+  if (tableRef.current) tableRef.current.scrollTop = 0;
+  setSearchKK("");
+  setActiveFilter(null);
+  setPmlFilter(null);   // ← BARU
+}, [selectedKec]);
 
   const handleSelectKec = (kec) => {
     const next = selectedKec === kec ? null : kec;
@@ -271,6 +273,10 @@ export default function MonitoringAnomaliUsaha() {
     if (tableRef.current) tableRef.current.scrollTop = 0;
     setSearchKK("");
   };
+  const handlePmlFilter = (pml) => {
+  setPmlFilter(prev => prev === pml ? null : pml);
+  if (tableRef.current) tableRef.current.scrollTop = 0;
+};
 
   // ── Fetch & parse CSV ──
   useEffect(() => {
@@ -356,21 +362,31 @@ export default function MonitoringAnomaliUsaha() {
     return [...(kecamatanMap[selectedKec]||[])].sort((a,b)=>a.namaDesa.localeCompare(b.namaDesa)||a.kodeSLS.localeCompare(b.kodeSLS));
   }, [selectedKec, kecamatanMap]);
 
+const pmlList = useMemo(() => {
+  const set = new Set();
+  selectedRows.forEach(r => { if (r.namaPML) set.add(r.namaPML); });
+  return [...set].sort((a, b) => a.localeCompare(b));
+}, [selectedRows]);
+
   const statusCounts = useMemo(() => ({
     sesuai:  selectedRows.filter(r=>r.hasilKonfirmasiPML.startsWith("01")).length,
     perbaiki:selectedRows.filter(r=>r.hasilKonfirmasiPML.startsWith("02")).length,
     belum:   selectedRows.filter(r=>!r.hasilKonfirmasiPML.trim()).length,
   }), [selectedRows]);
 
-  const filteredRows = useMemo(() => {
-    let result = selectedRows;
-    if (activeFilter === "sesuai")   result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("01"));
-    if (activeFilter === "perbaiki") result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("02"));
-    if (activeFilter === "belum")    result = result.filter(r=>!r.hasilKonfirmasiPML.trim());
-    if (!searchKK.trim()) return result;
-    const q = searchKK.toLowerCase();
-    return result.filter(r=>(r.namaUsaha||"").toLowerCase().includes(q)||(r.namaDesa||"").toLowerCase().includes(q)||(r.namaAnomali||"").toLowerCase().includes(q));
-  }, [selectedRows, activeFilter, searchKK]);
+const filteredRows = useMemo(() => {
+  let result = selectedRows;
+  if (activeFilter === "sesuai")   result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("01"));
+  if (activeFilter === "perbaiki") result = result.filter(r=>r.hasilKonfirmasiPML.startsWith("02"));
+  if (activeFilter === "belum")    result = result.filter(r=>!r.hasilKonfirmasiPML.trim());
+  if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);
+  if (!searchKK.trim()) return result;
+  const q = searchKK.toLowerCase();
+  return result.filter(r =>
+    (r.namaUsaha   || "").toLowerCase().includes(q) ||
+    (r.namaPetugas || "").toLowerCase().includes(q)
+  );
+}, [selectedRows, activeFilter, pmlFilter, searchKK]); // ← tambahkan pmlFilter
 
   const handleSaved = (updatedRow) => {
     setRawRows(prev=>prev.map(r=>r.rowIndex===updatedRow.rowIndex?updatedRow:r));
@@ -582,6 +598,54 @@ export default function MonitoringAnomaliUsaha() {
                         </button>
                       )}
                     </div>
+                    {/* ── Filter PML ── */}
+{pmlList.length > 0 && (
+  <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fff", borderBottom:"1px solid #f1f5f9" }}>
+    <p style={{ fontSize:"11px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.07em", margin:"0 0 10px 0" }}>
+      Filter PML
+    </p>
+    <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+      <button
+        onClick={() => setPmlFilter(null)}
+        style={{
+          padding: "6px 14px", borderRadius:"99px", fontSize:"12px", fontWeight:700,
+          cursor:"pointer", whiteSpace:"nowrap",
+          border: !pmlFilter ? "none" : "1.5px solid #fed7aa",
+          background: !pmlFilter ? "#f97316" : "#fff7ed",
+          color: !pmlFilter ? "#fff" : "#ea580c",
+          transition:"all 0.15s",
+        }}
+      >
+        Semua PML
+      </button>
+      {pmlList.map(pml => (
+        <button
+          key={pml}
+          onClick={() => handlePmlFilter(pml)}
+          style={{
+            padding: "6px 14px", borderRadius:"99px", fontSize:"12px", fontWeight:700,
+            cursor:"pointer", whiteSpace:"nowrap",
+            border: pmlFilter === pml ? "none" : "1.5px solid #fed7aa",
+            background: pmlFilter === pml ? "#f97316" : "#fff7ed",
+            color: pmlFilter === pml ? "#fff" : "#ea580c",
+            transition:"all 0.15s",
+          }}
+        >
+          {pml}
+        </button>
+      ))}
+    </div>
+    {pmlFilter && (
+      <button
+        onClick={() => setPmlFilter(null)}
+        style={{ marginTop:"10px", fontSize:"11px", fontWeight:600, color:"#94a3b8", background:"none", border:"1.5px solid #e2e8f0", borderRadius:"8px", padding:"4px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:"5px" }}
+      >
+        <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Hapus filter PML
+      </button>
+    )}
+  </div>
+)}
 
                     {/* Daftar anomali */}
                     <div ref={tableRef} style={{ padding: isMobile ? "0 12px" : "0 20px", maxHeight: isMobile ? "380px" : "440px", overflowY:"auto" }}>
@@ -592,8 +656,7 @@ export default function MonitoringAnomaliUsaha() {
                             width="14" height="14" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                           </svg>
-                          <input type="text" placeholder="Cari nama usaha / desa / anomali…" value={searchKK}
-                            onChange={e=>{setSearchKK(e.target.value); if(tableRef.current)tableRef.current.scrollTop=0;}}
+                        <input type="text" placeholder="Cari nama usaha / nama PCL…" value={searchKK}                            onChange={e=>{setSearchKK(e.target.value); if(tableRef.current)tableRef.current.scrollTop=0;}}
                             style={{ width:"100%", paddingLeft:"32px", paddingRight:searchKK?"28px":"12px", paddingTop:"8px", paddingBottom:"8px", borderRadius:"10px", border:"1.5px solid #e2e8f0", background:"#f8fafc", fontSize:"12px", outline:"none", boxSizing:"border-box" }}
                           />
                           {searchKK && (
@@ -639,8 +702,13 @@ export default function MonitoringAnomaliUsaha() {
                     <div style={{ padding: isMobile ? "10px 16px" : "12px 20px", background:"#f8fafc", borderTop:"1px solid #f1f5f9" }}>
                       <div style={{ display:"flex", flexWrap:"wrap", gap:"8px 14px", alignItems:"center", fontSize: isMobile ? "11px" : "12px" }}>
                         <span style={{ fontWeight:700, color:"#475569" }}>
-                          {filteredRows.length}{(searchKK||activeFilter)?` / ${selectedRows.length}`:""} Anomali
-                        </span>
+{filteredRows.length}{(searchKK||activeFilter||pmlFilter)?` / ${selectedRows.length}`:""} Anomali                        </span>
+{pmlFilter && (
+  <>
+    <span style={{ color:"#cbd5e1" }}>·</span>
+    <span style={{ color:"#2563eb", fontWeight:600 }}>PML: {pmlFilter}</span>
+  </>
+)}
                         <span style={{ color:"#cbd5e1" }}>·</span>
                         <span style={{ color:"#10b981", fontWeight:600 }}>{filteredRows.filter(r=>r.hasilKonfirmasiPML.startsWith("01")).length} sesuai</span>
                         <span style={{ color:"#cbd5e1" }}>·</span>
