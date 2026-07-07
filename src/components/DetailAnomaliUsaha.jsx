@@ -13,7 +13,7 @@ const OPSI_HASIL_KONFIRMASI = [
 // kolom "Hasil Konfirmasi Korwil" pada spreadsheet dan sesuaikan kalau berbeda.
 const OPSI_KORWIL = [
   { value: "", label: "— Belum Ditindaklanjuti —" },
-  { value: "01 Sudah ditangani", label: "01 Sudah ditangani" },
+  { value: "01 Sudah Ditangani Korwil", label: "01 Sudah Ditangani Korwil" },
   { value: "02 Sudah Diperbaiki PCL & Diapprove PML", label: "02 Sudah Diperbaiki PCL & Diapprove PML" },
 ];
 

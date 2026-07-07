@@ -14,7 +14,7 @@ const OPSI_HASIL_KONFIRMASI = [
 // "Hasil Konfirmasi Korwil" pada spreadsheet kalau berbeda.
 const OPSI_KORWIL = [
   { value: "", label: "— Belum Ditindaklanjuti —" },
-  { value: "01 Sudah ditangani", label: "01 Sudah ditangani" },
+  { value: "01 Sudah Ditangani Korwil", label: "01 Sudah Ditangani Korwil" },
   { value: "02 Sudah Diperbaiki PCL & Diapprove PML", label: "02 Sudah Diperbaiki PCL & Diapprove PML" },
 ];
 
@@ -203,7 +203,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
                 </td>
               </tr>
               <tr>
-                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Ditindaklanjuti<br />Korwil</td>
+                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Hasil Penanganan<br />Korwil</td>
                 <td className="px-3 py-2.5">
                   <select
                     value={hasilKorwil}
