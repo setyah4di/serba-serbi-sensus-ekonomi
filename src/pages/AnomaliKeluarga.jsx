@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import DetailAnomaliKK from "../components/DetailAnomaliKeluarga";
+import DetailAnomaliKeluarga from "../components/DetailAnomaliKeluarga";
 
 // ── Konfigurasi Spreadsheet ──
 // Spreadsheet: 1507_Anomali_keluarga, sheet "Daftar Anomali"
@@ -264,7 +264,7 @@ export default function MonitoringAnomali() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
 
-      {modalRow && <DetailAnomaliKK row={modalRow} onClose={() => setModalRow(null)} onSaved={handleSaved} />}
+      {modalRow && <DetailAnomaliKeluarga row={modalRow} onClose={() => setModalRow(null)} onSaved={handleSaved} />}
 
       <header className="relative overflow-hidden" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
@@ -276,7 +276,7 @@ export default function MonitoringAnomali() {
             {lastUpdated && (
               <div className="text-right">
                 <p className="text-orange-100">Data diperbarui pada</p>
-                <p className="text-orange-100">{lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul {lastUpdated.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })} WIB</p>
+                <p className="text-orange-100">{lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul 07.00 WIB</p>
               </div>
             )}
           </div>
