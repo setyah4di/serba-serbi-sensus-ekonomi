@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 // ── GANTI dengan URL deployment Apps Script kamu (lihat Code.gs) ──
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRUf3OHTxIdzR7owCiePmeyPjbO-zcyeG3vnqV2A3MxA-a9i_nw20zQcyAy7ax3_1XJg/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzx2b0fxAKYbBBedR_qgGUVcoFd1szuRH-oxClyqtX4yqFhnHy58Zi6wdZVQ1LErFFhXw/exec";
 
 const OPSI_HASIL_KONFIRMASI = [
   { value: "", label: "— Belum Dikonfirmasi —" },
@@ -15,6 +15,7 @@ const OPSI_HASIL_KONFIRMASI = [
 const OPSI_KORWIL = [
   { value: "", label: "— Belum Ditindaklanjuti —" },
   { value: "01 Sudah ditangani", label: "01 Sudah ditangani" },
+  { value: "02 Sudah Diperbaiki PCL & Diapprove PML", label: "02 Sudah Diperbaiki PCL & Diapprove PML" },
 ];
 
 function IdSubSLS(row) {

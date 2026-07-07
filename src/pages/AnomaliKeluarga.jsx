@@ -317,9 +317,9 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
     namaKK, namaAnomali,
     keteranganAnomali:     (cols[11]||"").trim(),   // 10 → 11
     linkFasih:             (cols[12]||"").trim(),   // 11 → 12
-    hasilKonfirmasiPML:    (cols[13]||"").trim(),   // tetap
-    keteranganKoreksi:     (cols[14]||"").trim(),   // tetap
-    hasilKonfirmasiKorwil: (cols[15]||"").trim(),   // tetap
+    hasilKonfirmasiPML:    (cols[14]||"").trim(),   // tetap
+    keteranganKoreksi:     (cols[15]||"").trim(),   // tetap
+    hasilKonfirmasiKorwil: (cols[16]||"").trim(),   // tetap
   });
 });
         setRawRows(data);
