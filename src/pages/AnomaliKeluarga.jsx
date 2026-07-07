@@ -287,39 +287,41 @@ export default function MonitoringAnomali() {
       .then(text => {
         const parsed = parseCSV(text);
         let lastKodeKec="", lastNamaKec="", lastKodeDesa="", lastNamaDesa="";
-        let lastKodeSLS="", lastSubSLS="", lastPML="", lastPetugas="";
+let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  // tambahkan lastNamaSLS=""
         const data = [];
 
-        parsed.slice(1).forEach((cols, idx) => {
-          const sheetRow = idx + 2;
-          const kodeKec     = (cols[0]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
-          const namaKec     = (cols[1]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
-          const kodeDesa    = (cols[2]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
-          const namaDesa    = (cols[3]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
-          const kodeSLS     = (cols[4]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
-          const subSLS      = (cols[5]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
-          const namaPML     = (cols[6]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
-          const namaPetugas = (cols[7]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
+        
+      parsed.slice(1).forEach((cols, idx) => {
+  const sheetRow = idx + 2;
+  const kodeKec     = (cols[0]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
+  const namaKec     = (cols[1]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
+  const kodeDesa    = (cols[2]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
+  const namaDesa    = (cols[3]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
+  const kodeSLS     = (cols[4]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
+  const subSLS      = (cols[5]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
+  const namaSLS     = (cols[6]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;   // ← BARU
+  const namaPML     = (cols[7]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;   // 6 → 7
+  const namaPetugas = (cols[8]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas; // 7 → 8
 
-          const namaKK      = (cols[8] ||"").trim();
-          const namaAnomali = (cols[9] ||"").trim();
-          if (!namaKK || !namaAnomali) return;
+  const namaKK      = (cols[9] ||"").trim();  // 8 → 9
+  const namaAnomali = (cols[10]||"").trim();  // 9 → 10
+  if (!namaKK || !namaAnomali) return;
 
-          data.push({
-            rowIndex: sheetRow,
-            kodeKec: lastKodeKec, namaKec: lastNamaKec,
-            kodeDesa: lastKodeDesa, namaDesa: lastNamaDesa,
-            kodeSLS: lastKodeSLS, subSLS: lastSubSLS,
-            namaPML: lastPML, namaPetugas: lastPetugas,
-            namaKK, namaAnomali,
-            keteranganAnomali:     (cols[10]||"").trim(),
-            linkFasih:             (cols[11]||"").trim(),
-            hasilKonfirmasiPML:    (cols[13]||"").trim(),
-            keteranganKoreksi:     (cols[14]||"").trim(),
-            hasilKonfirmasiKorwil: (cols[15]||"").trim(),
-          });
-        });
-
+  data.push({
+    rowIndex: sheetRow,
+    kodeKec: lastKodeKec, namaKec: lastNamaKec,
+    kodeDesa: lastKodeDesa, namaDesa: lastNamaDesa,
+    kodeSLS: lastKodeSLS, subSLS: lastSubSLS,
+    namaSLS: lastNamaSLS,                          // ← BARU: masukkan ke row object
+    namaPML: lastPML, namaPetugas: lastPetugas,
+    namaKK, namaAnomali,
+    keteranganAnomali:     (cols[11]||"").trim(),   // 10 → 11
+    linkFasih:             (cols[12]||"").trim(),   // 11 → 12
+    hasilKonfirmasiPML:    (cols[13]||"").trim(),   // tetap
+    keteranganKoreksi:     (cols[14]||"").trim(),   // tetap
+    hasilKonfirmasiKorwil: (cols[15]||"").trim(),   // tetap
+  });
+});
         setRawRows(data);
         setLastUpdated(new Date());
         setLoading(false);
