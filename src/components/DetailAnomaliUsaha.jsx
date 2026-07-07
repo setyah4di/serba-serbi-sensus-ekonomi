@@ -204,7 +204,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                 </td>
               </tr>
               <tr>
-                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Ditindaklanjuti<br />Korwil</td>
+                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Hasil Penanganan<br />Korwil</td>
                 <td className="px-3 py-2.5">
                   <select
                     value={hasilKorwil}

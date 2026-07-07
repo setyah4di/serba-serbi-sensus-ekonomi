@@ -39,6 +39,13 @@ function getStatusKey(row) {
   return "belum";
 }
 
+function getKorwilStatusKey(row) {
+  const h = (row.hasilKonfirmasiKorwil || "").trim();
+  if (h.startsWith("01")) return "korwil_ditangani";
+  if (h.startsWith("02")) return "korwil_diperbaiki";
+  return null;
+}
+
 // ── Helpers warna card kecamatan (berdasarkan jumlah BELUM TUNTAS) ──
 // "belum tuntas" = perlu + belum → makin banyak makin merah
 function countColor(v)    { if (v === 0) return "text-emerald-600"; if (v <= 5) return "text-blue-600"; if (v <= 15) return "text-amber-500"; return "text-rose-500"; }
@@ -91,22 +98,38 @@ function StatCard({ label, value, sub, icon, variant }) {
       value:  "text-orange-600",
       sub:    "text-orange-400",
     },
+     blue: {                                    // ← BARU
+    card:   "bg-blue-50",
+    circle: "bg-blue-200",
+    icon:   "bg-white/80 shadow-sm",
+    label:  "text-blue-600",
+    value:  "text-blue-700",
+    sub:    "text-blue-500",
+  },
+  purple: {                                  // ← BARU
+    card:   "bg-purple-50",
+    circle: "bg-purple-200",
+    icon:   "bg-white/80 shadow-sm",
+    label:  "text-purple-600",
+    value:  "text-purple-700",
+    sub:    "text-purple-500",
+  },
   };
   const s = styles[variant];
-  return (
-    <div className={`relative rounded-2xl p-5 overflow-hidden flex flex-col gap-4 ${s.card}`}>
-      <div className={`absolute -top-7 -right-7 w-28 h-28 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
-      <div className={`absolute bottom-0 right-7 w-14 h-14 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
-      <div className="relative flex items-start justify-between">
-        <p className={`text-[11px] font-semibold uppercase tracking-widest leading-tight max-w-[110px] ${s.label}`}>{label}</p>
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${s.icon}`}>{icon}</div>
-      </div>
-      <div className="relative">
-        <p className={`text-3xl font-black leading-none tracking-tight ${s.value}`}>{value}</p>
-        {sub && <p className={`text-xs mt-1 ${s.sub}`}>{sub}</p>}
-      </div>
+ return (
+  <div className={`relative rounded-2xl p-3 overflow-hidden flex flex-col gap-2 ${s.card}`}>
+    <div className={`absolute -top-7 -right-7 w-28 h-28 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
+    <div className={`absolute bottom-0 right-7 w-14 h-14 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
+    <div className="relative flex items-start justify-between">
+      <p className={`text-[10px] font-semibold uppercase tracking-wide leading-tight ${s.label}`}>{label}</p>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${s.icon}`}>{icon}</div>
     </div>
-  );
+    <div className="relative">
+      <p className={`text-xl md:text-2xl font-black leading-none tracking-tight ${s.value}`}>{value}</p>
+      {sub && <p className={`text-[10px] mt-1 ${s.sub}`}>{sub}</p>}
+    </div>
+  </div>
+);
 }
 
 // ── Progress bar ──
@@ -179,20 +202,32 @@ function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, col
       num:    "text-gray-700",
       label:  "text-gray-500",
     },
+    blue: {                                    // ← BARU
+    base:   "border-blue-100 bg-blue-50",
+    active: "border-blue-400 bg-blue-100 shadow-md shadow-blue-100",
+    num:    "text-blue-700",
+    label:  "text-blue-600",
+  },
+  purple: {                                  // ← BARU
+    base:   "border-purple-100 bg-purple-50",
+    active: "border-purple-400 bg-purple-100 shadow-md shadow-purple-100",
+    num:    "text-purple-700",
+    label:  "text-purple-600",
+  }
   };
   const sc = schemes[colorScheme];
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 min-w-0 rounded-xl border-2 px-3 py-3 flex flex-col items-center gap-1
-        transition-all duration-200 select-none
-        ${isActive ? sc.active : sc.base + " hover:brightness-95"}`}
-    >
-      <span className={`text-xl font-black leading-none ${sc.num}`}>{value}</span>
-      <span className={`text-[11px] font-semibold text-center leading-tight ${sc.label}`}>{label}</span>
-      {isActive && <span className={`text-[10px] font-bold mt-0.5 ${sc.label}`}>▲ aktif</span>}
-    </button>
-  );
+ return (
+  <button
+    onClick={onClick}
+    className={`w-full min-w-0 rounded-xl border-2 px-2 py-2.5 flex flex-col items-center gap-1
+      transition-all duration-200 select-none
+      ${isActive ? sc.active : sc.base + " hover:brightness-95"}`}
+  >
+    <span className={`text-lg font-black leading-none ${sc.num}`}>{value}</span>
+    <span className={`text-[9px] font-semibold text-center leading-tight ${sc.label}`}>{label}</span>
+    {isActive && <span className={`text-[8px] font-bold mt-0.5 ${sc.label}`}>▲</span>}
+  </button>
+);
 }
 
 // ── Baris anomali ──
@@ -346,12 +381,14 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
 
   // ── Statistik global (3 kartu utama) ──
   const globalStats = useMemo(() => {
-    if (!rawRows.length) return null;
-    const sesuai = rawRows.filter(r => getStatusKey(r)==="sesuai").length;
-    const perlu  = rawRows.filter(r => getStatusKey(r)==="perlu").length;
-    const belum  = rawRows.filter(r => getStatusKey(r)==="belum").length;
-    return { total: rawRows.length, sesuai, perlu, belum };
-  }, [rawRows]);
+  if (!rawRows.length) return null;
+  const sesuai = rawRows.filter(r => getStatusKey(r)==="sesuai").length;
+  const perlu  = rawRows.filter(r => getStatusKey(r)==="perlu").length;
+  const belum  = rawRows.filter(r => getStatusKey(r)==="belum").length;
+  const korwilDitangani  = rawRows.filter(r => getKorwilStatusKey(r)==="korwil_ditangani").length;   // ← BARU
+  const korwilDiperbaiki = rawRows.filter(r => getKorwilStatusKey(r)==="korwil_diperbaiki").length;  // ← BARU
+  return { total: rawRows.length, sesuai, perlu, belum, korwilDitangani, korwilDiperbaiki };
+}, [rawRows]);
 
   // ── Daftar kartu kecamatan ──
   // Angka di kartu = perlu + belum (belum tuntas)
@@ -398,35 +435,43 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
   return [...set].sort((a, b) => a.localeCompare(b));
 }, [selectedRows]);
 
-  const statusCounts = useMemo(() => ({
-    sesuai: selectedRows.filter(r => getStatusKey(r)==="sesuai").length,
-    perlu:  selectedRows.filter(r => getStatusKey(r)==="perlu").length,
-    belum:  selectedRows.filter(r => getStatusKey(r)==="belum").length,
-  }), [selectedRows]);
+ const statusCounts = useMemo(() => ({
+  sesuai:  selectedRows.filter(r => getStatusKey(r)==="sesuai").length,
+  perlu:   selectedRows.filter(r => getStatusKey(r)==="perlu").length,
+  belum:   selectedRows.filter(r => getStatusKey(r)==="belum").length,
+  korwilDitangani:  selectedRows.filter(r => getKorwilStatusKey(r)==="korwil_ditangani").length,    // ← BARU
+  korwilDiperbaiki: selectedRows.filter(r => getKorwilStatusKey(r)==="korwil_diperbaiki").length,   // ← BARU
+}), [selectedRows]);
 
- const filteredRows = useMemo(() => {
+const filteredRows = useMemo(() => {
   let result = selectedRows;
-  if (statusFilter) result = result.filter(r => getStatusKey(r)===statusFilter);
-  if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);   // ← BARU
+  if (statusFilter === "sesuai" || statusFilter === "perlu" || statusFilter === "belum") {
+    result = result.filter(r => getStatusKey(r) === statusFilter);
+  } else if (statusFilter === "korwil_ditangani" || statusFilter === "korwil_diperbaiki") {   // ← BARU
+    result = result.filter(r => getKorwilStatusKey(r) === statusFilter);
+  }
+  if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);
   if (searchKK.trim()) {
     const q = searchKK.toLowerCase();
     result = result.filter(r =>
-      (r.namaKK   ||"").toLowerCase().includes(q) ||
+      (r.namaKK      ||"").toLowerCase().includes(q) ||
       (r.namaPetugas ||"").toLowerCase().includes(q)
     );
   }
   return result;
-}, [selectedRows, statusFilter, pmlFilter, searchKK]);   // ← tambahkan pmlFilter di dependency
+}, [selectedRows, statusFilter, pmlFilter, searchKK]); // ← tambahkan pmlFilter di dependency
 
   const handleSaved = (updatedRow) => {
     setRawRows(prev => prev.map(r => r.rowIndex===updatedRow.rowIndex ? updatedRow : r));
     setModalRow(updatedRow);
   };
 
-  const filterLabel = statusFilter==="sesuai" ? "✓ Sudah Sesuai"
-    : statusFilter==="perlu"  ? "✗ Perlu Diperbaiki"
-    : statusFilter==="belum"  ? "⏳ Belum Dikonfirmasi"
-    : null;
+ const filterLabel = statusFilter==="sesuai" ? "✓ Sudah Sesuai"
+  : statusFilter==="perlu"  ? "✗ Perlu Diperbaiki"
+  : statusFilter==="belum"  ? "⏳ Belum Dikonfirmasi"
+  : statusFilter==="korwil_ditangani"  ? "🛡️ Ditangani Korwil"
+  : statusFilter==="korwil_diperbaiki" ? "🔧 Diperbaiki PCL & Diapprove PML"
+  : null;
   
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -479,36 +524,50 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
         {!loading && !error && globalStats && (
           <>
             {/* ── 3 Stat Cards: Sesuai / Perlu / Belum + 1 Total ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-              <StatCard
-                label="Total Anomali"
-                value={globalStats.total}
-                sub="seluruh baris anomali"
-                icon="📋"
-                variant="orange"
-              />
-              <StatCard
-                label="Sudah Sesuai"
-                value={globalStats.sesuai}
-                sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
-                icon="✅"
-                variant="emerald"
-              />
-              <StatCard
-                label="Perlu Diperbaiki"
-                value={globalStats.perlu}
-                sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
-                icon="❌"
-                variant="rose"
-              />
-              <StatCard
-                label="Belum Dikonfirmasi"
-                value={globalStats.belum}
-                sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
-                icon="⏳"
-                variant="gray"
-              />
-            </div>
+         <div className="grid grid-cols-6 gap-2 mb-8">
+  <StatCard
+    label="Total Anomali"
+    value={globalStats.total}
+    sub="seluruh baris"
+    icon="📋"
+    variant="orange"
+  />
+  <StatCard
+    label="Sudah Sesuai"
+    value={globalStats.sesuai}
+    sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}%`}
+    icon="✅"
+    variant="emerald"
+  />
+  <StatCard
+    label="Perlu Diperbaiki"
+    value={globalStats.perlu}
+    sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}%`}
+    icon="❌"
+    variant="rose"
+  />
+  <StatCard
+    label="Belum Dikonfirmasi"
+    value={globalStats.belum}
+    sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}%`}
+    icon="⏳"
+    variant="gray"
+  />
+  <StatCard
+    label="Ditangani Korwil"
+    value={globalStats.korwilDitangani}
+    sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}%`}
+    icon="🛡️"
+    variant="blue"
+  />
+  <StatCard
+    label="Diperbaiki PCL & Diapprove PML"
+    value={globalStats.korwilDiperbaiki}
+    sub={`${((globalStats.korwilDiperbaiki/globalStats.total)*100).toFixed(1)}%`}
+    icon="🔧"
+    variant="purple"
+  />
+</div>
 
             {/* ── Filter & sort kecamatan ── */}
             <div className="flex flex-col sm:flex-row gap-3 mb-2">
@@ -590,20 +649,22 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
 
                     {/* ── 3 Status Filter Card ── */}
                     <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
-                        Filter berdasarkan status konfirmasi
-                        {statusFilter && (
-                          <button onClick={() => setStatusFilter(null)} className="ml-2 text-orange-500 normal-case font-semibold hover:underline">
-                            (reset)
-                          </button>
-                        )}
-                      </p>
-                      <div className="flex gap-2">
-                        <StatusFilterCard label="Sudah Sesuai"       value={statusCounts.sesuai} activeKey="sesuai" currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")} colorScheme="emerald" />
-                        <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}  activeKey="perlu"  currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}  colorScheme="rose"    />
-                        <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}  activeKey="belum"  currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}  colorScheme="gray"    />
-                      </div>
-                    </div>
+  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
+    Filter berdasarkan status
+    {statusFilter && (
+      <button onClick={() => setStatusFilter(null)} className="ml-2 text-orange-500 normal-case font-semibold hover:underline">
+        (reset)
+      </button>
+    )}
+  </p>
+  <div className="grid grid-cols-5 gap-1.5">
+    <StatusFilterCard label="Sudah Sesuai"       value={statusCounts.sesuai}            activeKey="sesuai"            currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")}            colorScheme="emerald" />
+    <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}             activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
+    <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}             activeKey="belum"             currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}             colorScheme="gray"    />
+    <StatusFilterCard label="Ditangani Korwil"   value={statusCounts.korwilDitangani}   activeKey="korwil_ditangani"  currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_ditangani")}  colorScheme="blue"    />
+    <StatusFilterCard label="Diperbaiki PCL"     value={statusCounts.korwilDiperbaiki}  activeKey="korwil_diperbaiki" currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_diperbaiki")} colorScheme="purple"  />
+  </div>
+</div>
 {/* ── Filter PML ── */}
 {pmlList.length > 0 && (
   <div className="px-5 py-4 border-b border-gray-100">
