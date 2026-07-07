@@ -204,7 +204,7 @@ function AnomaliRow({ row, rank, onDetail }) {
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-gray-700 truncate">{row.namaKK}</p>
           <p className="text-xs text-gray-400 truncate mt-0.5">
-            {row.namaDesa} · SLS {row.kodeSLS}{row.subSLS ? `-${row.subSLS}` : ""}
+            {row.namaDesa} - {row.namaSLS}
           </p>
           {/* Desktop */}
           <p className="hidden sm:block text-xs text-gray-400 truncate mt-0.5">
@@ -669,11 +669,6 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
                               </svg>
                             </button>
                           )}
-                        </div>
-                        <div className="flex items-center gap-3 py-2 border-b border-gray-100">
-                          <span className="text-xs text-gray-400 w-5">#</span>
-                          <span className="text-xs text-gray-400 flex-1">Nama KK · Desa/SLS · PML/PPL</span>
-                          <span className="text-xs text-gray-400 w-20 text-right">Status</span>
                         </div>
                       </div>
 

@@ -478,9 +478,10 @@ const filteredRows = useMemo(() => {
           <>
             {/* ── Stat Cards global ── */}
             <div style={statGridStyle}>
-              <StatCard label="Sudah Sesuai" value={globalStatus.sesuai} sub="anomali terkonfirmasi sesuai" icon="✅" accentColor="#10b981"/>
-              <StatCard label="Perlu Diperbaiki" value={globalStatus.perbaiki} sub="anomali perlu koreksi" icon="🛠️" accentColor="#f43f5e"/>
-              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub="anomali belum diverifikasi" icon="⏳" accentColor="#64748b"/>
+              <StatCard label="Sudah Sesuai" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`}
+ icon="✅" accentColor="#10b981"/>
+              <StatCard label="Perlu Diperbaiki" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
+              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
               <StatCard label="Total Anomali" value={globalStatus.total} sub="seluruh baris anomali" icon="📊" accentColor="#f97316"/>
             </div>
 
@@ -635,15 +636,7 @@ const filteredRows = useMemo(() => {
         </button>
       ))}
     </div>
-    {pmlFilter && (
-      <button
-        onClick={() => setPmlFilter(null)}
-        style={{ marginTop:"10px", fontSize:"11px", fontWeight:600, color:"#94a3b8", background:"none", border:"1.5px solid #e2e8f0", borderRadius:"8px", padding:"4px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:"5px" }}
-      >
-        <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        Hapus filter PML
-      </button>
-    )}
+   
   </div>
 )}
 
@@ -675,11 +668,6 @@ const filteredRows = useMemo(() => {
                           </div>
                         )}
 
-                        <div style={{ display:"flex", alignItems:"center", gap:"10px", paddingBottom:"8px", borderBottom:"1px solid #f1f5f9" }}>
-                          <span style={{ fontSize:"11px", color:"#cbd5e1", width:"20px", textAlign:"right" }}>#</span>
-                          <span style={{ fontSize:"11px", color:"#cbd5e1", flex:1 }}>Nama Usaha · Desa/SLS · PML/Petugas</span>
-                          <span style={{ fontSize:"11px", color:"#cbd5e1", width:"70px", textAlign:"right" }}>Status</span>
-                        </div>
                       </div>
 
                       {filteredRows.length === 0 ? (
