@@ -14,12 +14,11 @@ const OPSI_HASIL_KONFIRMASI = [
 // "Hasil Konfirmasi Korwil" pada spreadsheet kalau berbeda.
 const OPSI_KORWIL = [
   { value: "", label: "— Belum Ditindaklanjuti —" },
-  { value: "01 Sudah Sesuai", label: "01 Sudah Sesuai" },
-  { value: "02 Perlu diperbaiki", label: "02 Perlu diperbaiki" },
+  { value: "01 Sudah ditangani", label: "01 Sudah ditangani" },
 ];
 
 function IdSubSLS(row) {
-  return row.subSLS ? `${row.kodeSLS}-${row.subSLS}` : row.kodeSLS;
+  return row.subSLS ? `${row.namaDesa} - ${row.namaSLS}` : row.kodeSLS;
 }
 
 // phase: "idle" | "saving" | "success"
@@ -161,7 +160,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
           <table className="w-full text-sm border border-gray-100 rounded-xl overflow-hidden">
             <tbody>
               <tr className="border-b border-gray-100">
-                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 w-1/3 align-top">ID Sub SLS</td>
+                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 w-1/3 align-top">SLS</td>
                 <td className="px-3 py-2.5 text-gray-700">{IdSubSLS(row)}</td>
               </tr>
               <tr className="border-b border-gray-100">
