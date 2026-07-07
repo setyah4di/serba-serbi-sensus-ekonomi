@@ -191,8 +191,8 @@ function AnomaliRow({ row, rank, onDetail }) {
         <span style={{ fontSize:"11px", fontWeight:700, color:"#cbd5e1", width:"20px", textAlign:"right", flexShrink:0, marginTop:"2px" }}>{rank}</span>
         <div style={{ flex:1, minWidth:0 }}>
           <p style={{ fontSize:"13px", fontWeight:700, color:"#1e293b", margin:"0 0 3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaUsaha}</p>
-          <p style={{ fontSize:"11px", color:"#94a3b8", margin:"0 0 3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            {row.namaDesa}{row.namaSLS ? ` · ${row.namaSLS}` : ""} · SLS {row.kodeSLS}{row.subSLS ? `-${row.subSLS}` : ""}
+          <p style={{ fontSize:"13px", color:"#94a3b8", margin:"0 0 3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            {row.namaDesa}{row.namaSLS ? ` · ${row.namaSLS}` : ""} 
           </p>
           <div style={{ display:"flex", alignItems:"center", gap:"4px", marginBottom:"4px", flexWrap:"wrap" }}>
             <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
@@ -204,7 +204,7 @@ function AnomaliRow({ row, rank, onDetail }) {
               <span style={{ fontSize:"12px", color:"#64748b", maxWidth:"130px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaPetugas || "-"}</span>
             </div>
           </div>
-          <p style={{ fontSize:"11px", color:"#64748b", margin:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaAnomali}</p>
+          <p style={{ fontSize:"13px", color:"#64748b", margin:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaAnomali}</p>
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px", flexShrink:0 }}>
           <span style={{ fontSize:"10px", fontWeight:700, padding:"3px 8px", borderRadius:"99px", background:badge.bg, color:badge.text, whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:"4px" }}>
