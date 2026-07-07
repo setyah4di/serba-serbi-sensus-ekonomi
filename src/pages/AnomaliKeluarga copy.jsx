@@ -32,6 +32,9 @@ function isTotalMarker(v) {
 }
 
 // ── Klasifikasi status konfirmasi ──
+// "sesuai"  → hasilKonfirmasiPML dimulai "01"
+// "perlu"   → hasilKonfirmasiPML dimulai "02"
+// "belum"   → kosong / "-"
 function getStatusKey(row) {
   const h = (row.hasilKonfirmasiPML || "").trim();
   if (h.startsWith("01")) return "sesuai";
@@ -39,12 +42,11 @@ function getStatusKey(row) {
   return "belum";
 }
 
-// ── Helpers warna card kecamatan (berdasarkan jumlah BELUM TUNTAS) ──
-// "belum tuntas" = perlu + belum → makin banyak makin merah
+// ── Helpers warna ──
 function countColor(v)    { if (v === 0) return "text-emerald-600"; if (v <= 5) return "text-blue-600"; if (v <= 15) return "text-amber-500"; return "text-rose-500"; }
 function countBarColor(v) { if (v === 0) return "bg-emerald-400"; if (v <= 5) return "bg-blue-500"; if (v <= 15) return "bg-amber-400"; return "bg-rose-400"; }
 function countBadge(v)    { if (v === 0) return "bg-emerald-50 text-emerald-700 ring-emerald-200"; if (v <= 5) return "bg-blue-50 text-blue-700 ring-blue-200"; if (v <= 15) return "bg-amber-50 text-amber-700 ring-amber-200"; return "bg-rose-50 text-rose-700 ring-rose-200"; }
-function countLabel(v)    { if (v === 0) return "Tuntas"; if (v <= 5) return "Ringan"; if (v <= 15) return "Sedang"; return "Perlu Perhatian"; }
+function countLabel(v)    { if (v === 0) return "Aman"; if (v <= 5) return "Ringan"; if (v <= 15) return "Sedang"; return "Perlu Perhatian"; }
 
 function statusBadge(status) {
   const s = (status || "").trim();
@@ -56,40 +58,40 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
-// ── Stat Card global (3 kartu: sesuai, perlu, belum) ──
+// ── Stat Card global (palet pastel/lembut) ──
 function StatCard({ label, value, sub, icon, variant }) {
   const styles = {
-    emerald: {
-      card:   "bg-emerald-50",
-      circle: "bg-emerald-200",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-emerald-600",
-      value:  "text-emerald-700",
-      sub:    "text-emerald-500",
-    },
-    rose: {
-      card:   "bg-rose-50",
-      circle: "bg-rose-200",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-rose-500",
-      value:  "text-rose-600",
-      sub:    "text-rose-400",
-    },
     gray: {
-      card:   "bg-gray-100",
+      card:  "bg-gray-100",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-gray-500",
+      value: "text-gray-800",
+      sub:   "text-gray-600",
       circle: "bg-gray-300",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-gray-500",
-      value:  "text-gray-700",
-      sub:    "text-gray-500",
     },
     orange: {
-      card:   "bg-orange-50",
+      card:  "bg-orange-50",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-orange-500",
+      value: "text-orange-500",
+      sub:   "text-gray-600",
       circle: "bg-orange-200",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-orange-500",
-      value:  "text-orange-600",
-      sub:    "text-orange-400",
+    },
+    blue: {
+      card:  "bg-blue-50",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-blue-500",
+      value: "text-blue-600",
+      sub:   "text-gray-600",
+      circle: "bg-blue-200",
+    },
+    rose: {
+      card:  "bg-rose-50",
+      icon:  "bg-white/80 shadow-sm",
+      label: "text-rose-500",
+      value: "text-rose-500",
+      sub:   "text-gray-600",
+      circle: "bg-rose-200",
     },
   };
   const s = styles[variant];
@@ -120,45 +122,31 @@ function ProgressBar({ value, max, color }) {
 }
 
 // ── Card kecamatan ──
-// Angka besar = jumlah anomali BELUM TUNTAS (perlu + belum konfirmasi)
-// Sub-info    = jumlah sesuai
-function KecamatanCard({ kecamatan, countBelumTuntas, countSesuai, maxCount, onClick, isSelected }) {
-  const textColor = countColor(countBelumTuntas);
-  const barColor  = countBarColor(countBelumTuntas);
+function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClick, isSelected }) {
+  const textColor = countColor(count), barColor = countBarColor(count);
   return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200
-        ${isSelected
-          ? "border-orange-400 bg-orange-50 shadow-md shadow-orange-100"
-          : "border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}
-    >
+    <button onClick={onClick} className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200 ${isSelected ? "border-orange-400 bg-orange-50 shadow-md shadow-orange-100" : "border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0 pr-2">
           <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">Kecamatan</p>
           <p className="text-base font-bold text-gray-800 leading-tight">{kecamatan}</p>
         </div>
-        {/* Angka menonjol = belum tuntas */}
-        <span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{countBelumTuntas}</span>
+        <span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{count}</span>
       </div>
-
-      <ProgressBar value={countBelumTuntas} max={maxCount} color={barColor} />
-
+      <ProgressBar value={count} max={maxCount} color={barColor} />
       <div className="flex items-center justify-between mt-2.5 gap-2 flex-wrap">
-        {/* Info sesuai */}
-        <span className="text-xs text-gray-400">
-          <span className="font-semibold text-emerald-600">{countSesuai}</span> sesuai
-        </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${countBadge(countBelumTuntas)}`}>
-          {countLabel(countBelumTuntas)}
-        </span>
+        <div className="flex gap-3">
+          <span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countDesa}</span> Desa</span>
+          <span className="text-xs text-gray-400"><span className="font-semibold text-gray-600">{countSLS}</span> SLS</span>
+        </div>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${countBadge(count)}`}>{countLabel(count)}</span>
       </div>
     </button>
   );
 }
 
-// ── Mini status card filter ──
-function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, colorScheme }) {
+// ── Mini status card yang bisa diklik untuk filter ──
+function StatusFilterCard({ label, value,  activeKey, currentFilter, onClick, colorScheme }) {
   const isActive = currentFilter === activeKey;
   const schemes = {
     emerald: {
@@ -166,31 +154,36 @@ function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, col
       active: "border-emerald-400 bg-emerald-100 shadow-md shadow-emerald-100",
       num:    "text-emerald-700",
       label:  "text-emerald-600",
+      icon:   "bg-emerald-100",
     },
     rose: {
       base:   "border-rose-100 bg-rose-50",
       active: "border-rose-400 bg-rose-100 shadow-md shadow-rose-100",
       num:    "text-rose-700",
       label:  "text-rose-600",
+      icon:   "bg-rose-100",
     },
     gray: {
       base:   "border-gray-100 bg-gray-50",
       active: "border-gray-400 bg-gray-100 shadow-md shadow-gray-100",
       num:    "text-gray-700",
       label:  "text-gray-500",
+      icon:   "bg-gray-200",
     },
   };
   const sc = schemes[colorScheme];
   return (
     <button
       onClick={onClick}
-      className={`flex-1 min-w-0 rounded-xl border-2 px-3 py-3 flex flex-col items-center gap-1
-        transition-all duration-200 select-none
+      className={`flex-1 min-w-0 rounded-xl border-2 px-3 py-3 flex flex-col items-center gap-1 transition-all duration-200 select-none
         ${isActive ? sc.active : sc.base + " hover:brightness-95"}`}
     >
+      {/* <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-base ${sc.icon}`}>{icon}</span> */}
       <span className={`text-xl font-black leading-none ${sc.num}`}>{value}</span>
       <span className={`text-[11px] font-semibold text-center leading-tight ${sc.label}`}>{label}</span>
-      {isActive && <span className={`text-[10px] font-bold mt-0.5 ${sc.label}`}>▲ aktif</span>}
+      {isActive && (
+        <span className={`text-[10px] font-bold mt-0.5 ${sc.label}`}>▲ aktif</span>
+      )}
     </button>
   );
 }
@@ -201,39 +194,57 @@ function AnomaliRow({ row, rank, onDetail }) {
     <div className="py-3 border-b border-gray-50 last:border-0">
       <div className="flex items-start gap-3">
         <span className="text-xs font-bold text-gray-300 w-5 text-right flex-shrink-0 mt-0.5">{rank}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-gray-700 truncate">{row.namaKK}</p>
-          <p className="text-xs text-gray-400 truncate mt-0.5">
-            {row.namaDesa} · SLS {row.kodeSLS}{row.subSLS ? `-${row.subSLS}` : ""}
-          </p>
-          {/* Desktop */}
-          <p className="hidden sm:block text-xs text-gray-400 truncate mt-0.5">
-            <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
-            {row.namaPML || "-"}
-            <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 mr-1">PPL</span>
-            {row.namaPetugas || "-"}
-          </p>
-          {/* Mobile */}
-          <div className="block sm:hidden text-xs text-gray-400 mt-0.5 space-y-1">
-            <div className="flex items-center gap-1">
-              <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded">PML</span>
-              <span className="truncate">{row.namaPML || "-"}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded">PPL</span>
-              <span className="truncate">{row.namaPetugas || "-"}</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 truncate mt-1">{row.namaAnomali}</p>
-        </div>
+    <div className="flex-1 min-w-0">
+  <p className="text-xs font-bold text-gray-700 truncate">
+    {row.namaKK}
+  </p>
+
+  <p className="text-xs text-gray-400 truncate mt-0.5">
+    {row.namaDesa} · SLS {row.kodeSLS}
+    {row.subSLS ? `-${row.subSLS}` : ""}
+  </p>
+
+  {/* Desktop */}
+  <p className="hidden sm:block text-xs text-gray-400 truncate mt-0.5">
+    <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">
+      PML
+    </span>
+    {row.namaPML || "-"}
+
+    <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 mr-1">
+      PPL
+    </span>
+    {row.namaPetugas || "-"}
+  </p>
+
+  {/* Mobile */}
+  <div className="block sm:hidden text-xs text-gray-400 mt-0.5 space-y-1">
+    <div className="flex items-center gap-1">
+      <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded">
+        PML
+      </span>
+      <span className="truncate">{row.namaPML || "-"}</span>
+    </div>
+
+    <div className="flex items-center gap-1">
+      <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded">
+        PPL
+      </span>
+      <span className="truncate">{row.namaPetugas || "-"}</span>
+    </div>
+  </div>
+
+  <p className="text-xs text-gray-500 truncate mt-1">
+    {row.namaAnomali}
+  </p>
+</div>
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 whitespace-nowrap ${statusBadge(row.hasilKonfirmasiPML)}`}>
             {statusLabel(row.hasilKonfirmasiPML)}
           </span>
           <button
             onClick={() => onDetail(row)}
-            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500
-              hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap"
+            className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 active:bg-orange-200 transition-colors border border-orange-100 whitespace-nowrap"
           >
             Detail
           </button>
@@ -247,20 +258,23 @@ function AnomaliRow({ row, rank, onDetail }) {
 // KOMPONEN UTAMA
 // ══════════════════════════════════════════════════════════════════════════════
 export default function MonitoringAnomali() {
-  const [rawRows, setRawRows]           = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState(null);
-  const [selectedKec, setSelectedKec]   = useState(null);
-  const [search, setSearch]             = useState("");
-  const [sortBy, setSortBy]             = useState("urut");
-  const [lastUpdated, setLastUpdated]   = useState(null);
-  const [searchKK, setSearchKK]         = useState("");
-  const [modalRow, setModalRow]         = useState(null);
+  const [rawRows, setRawRows]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState(null);
+  const [selectedKec, setSelectedKec] = useState(null);
+  const [search, setSearch]           = useState("");
+  const [sortBy, setSortBy]           = useState("urut");
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [searchKK, setSearchKK]       = useState("");
+  const [modalRow, setModalRow]       = useState(null);
+
+  // null = tampilkan semua, "sesuai" | "perlu" | "belum" = filter aktif
   const [statusFilter, setStatusFilter] = useState(null);
 
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
+  // Reset filter & scroll saat pindah kecamatan
   useEffect(() => {
     if (tableRef.current) tableRef.current.scrollTop = 0;
     setSearchKK("");
@@ -271,38 +285,40 @@ export default function MonitoringAnomali() {
     const next = selectedKec === kec ? null : kec;
     setSelectedKec(next);
     if (next && window.innerWidth < 1024) {
-      setTimeout(() => detailRef.current?.scrollIntoView({ behavior:"smooth", block:"start" }), 50);
+      setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     }
   };
 
+  // Toggle filter: klik card aktif → matikan filter
   const handleStatusFilter = (key) => {
     setStatusFilter(prev => prev === key ? null : key);
     if (tableRef.current) tableRef.current.scrollTop = 0;
   };
 
-  // ── Fetch CSV ──
+  // ── Fetch CSV ────────────────────────────────────────────────────────────
   useEffect(() => {
     fetch(`${CSV_ANOMALI}&_cb=${Date.now()}`)
       .then(r => { if (!r.ok) throw new Error("Gagal mengambil data anomali."); return r.text(); })
       .then(text => {
         const parsed = parseCSV(text);
-        let lastKodeKec="", lastNamaKec="", lastKodeDesa="", lastNamaDesa="";
-        let lastKodeSLS="", lastSubSLS="", lastPML="", lastPetugas="";
+
+        let lastKodeKec = "", lastNamaKec = "", lastKodeDesa = "", lastNamaDesa = "";
+        let lastKodeSLS = "", lastSubSLS = "", lastPML = "", lastPetugas = "";
         const data = [];
 
         parsed.slice(1).forEach((cols, idx) => {
           const sheetRow = idx + 2;
-          const kodeKec     = (cols[0]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
-          const namaKec     = (cols[1]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
-          const kodeDesa    = (cols[2]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
-          const namaDesa    = (cols[3]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
-          const kodeSLS     = (cols[4]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
-          const subSLS      = (cols[5]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
-          const namaPML     = (cols[6]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
-          const namaPetugas = (cols[7]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
+          const kodeKec     = (cols[0] || "").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
+          const namaKec     = (cols[1] || "").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
+          const kodeDesa    = (cols[2] || "").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
+          const namaDesa    = (cols[3] || "").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
+          const kodeSLS     = (cols[4] || "").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
+          const subSLS      = (cols[5] || "").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
+          const namaPML     = (cols[6] || "").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
+          const namaPetugas = (cols[7] || "").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
 
-          const namaKK      = (cols[8] ||"").trim();
-          const namaAnomali = (cols[9] ||"").trim();
+          const namaKK      = (cols[8]  || "").trim();
+          const namaAnomali = (cols[9]  || "").trim();
           if (!namaKK || !namaAnomali) return;
 
           data.push({
@@ -312,11 +328,11 @@ export default function MonitoringAnomali() {
             kodeSLS: lastKodeSLS, subSLS: lastSubSLS,
             namaPML: lastPML, namaPetugas: lastPetugas,
             namaKK, namaAnomali,
-            keteranganAnomali:     (cols[10]||"").trim(),
-            linkFasih:             (cols[11]||"").trim(),
-            hasilKonfirmasiPML:    (cols[13]||"").trim(),
-            keteranganKoreksi:     (cols[14]||"").trim(),
-            hasilKonfirmasiKorwil: (cols[15]||"").trim(),
+            keteranganAnomali:     (cols[10] || "").trim(),
+            linkFasih:             (cols[11] || "").trim(),
+            hasilKonfirmasiPML:    (cols[13] || "").trim(),
+            keteranganKoreksi:     (cols[14] || "").trim(),
+            hasilKonfirmasiKorwil: (cols[15] || "").trim(),
           });
         });
 
@@ -327,89 +343,99 @@ export default function MonitoringAnomali() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  // ── Agregasi ──
+  // ── Agregasi per kecamatan ────────────────────────────────────────────────
   const kecamatanMap = useMemo(() => {
     const m = {};
-    rawRows.forEach(r => { if (!m[r.namaKec]) m[r.namaKec]=[]; m[r.namaKec].push(r); });
+    rawRows.forEach(r => { if (!m[r.namaKec]) m[r.namaKec] = []; m[r.namaKec].push(r); });
     return m;
   }, [rawRows]);
 
-  // ── Statistik global (3 kartu utama) ──
-  const globalStats = useMemo(() => {
-    if (!rawRows.length) return null;
-    const sesuai = rawRows.filter(r => getStatusKey(r)==="sesuai").length;
-    const perlu  = rawRows.filter(r => getStatusKey(r)==="perlu").length;
-    const belum  = rawRows.filter(r => getStatusKey(r)==="belum").length;
-    return { total: rawRows.length, sesuai, perlu, belum };
-  }, [rawRows]);
-
-  // ── Daftar kartu kecamatan ──
-  // Angka di kartu = perlu + belum (belum tuntas)
   const kecamatanList = useMemo(() => {
     const namaList = new Set([...KECAMATAN_ORDER, ...Object.keys(kecamatanMap)]);
     return [...namaList]
       .map(nama => {
-        const list   = kecamatanMap[nama] || [];
-        const sesuai = list.filter(r => getStatusKey(r)==="sesuai").length;
-        const perlu  = list.filter(r => getStatusKey(r)==="perlu").length;
-        const belum  = list.filter(r => getStatusKey(r)==="belum").length;
-        return {
-          kecamatan: nama,
-          countBelumTuntas: perlu + belum,  // ← angka besar di kartu
-          countSesuai: sesuai,
-          countTotal:  list.length,
-        };
+        const list    = kecamatanMap[nama] || [];
+        const desaSet = new Set(list.map(r => `${r.kodeDesa}||${r.namaDesa}`));
+        const slsSet  = new Set(list.map(r => `${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
+        return { kecamatan: nama, count: list.length, countDesa: desaSet.size, countSLS: slsSet.size };
       })
-      .filter(k => k.countTotal > 0 || KECAMATAN_ORDER.includes(k.kecamatan))
-      .filter(k => search==="" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
+      .filter(k => k.count > 0 || KECAMATAN_ORDER.includes(k.kecamatan))
+      .filter(k => search === "" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) =>
         sortBy === "jumlah"
-          ? b.countBelumTuntas - a.countBelumTuntas
+          ? b.count - a.count
           : (KECAMATAN_ORDER.indexOf(a.kecamatan) - KECAMATAN_ORDER.indexOf(b.kecamatan)) ||
             a.kecamatan.localeCompare(b.kecamatan)
       );
   }, [kecamatanMap, search, sortBy]);
 
-  // maxCount untuk proporsi progress bar (pakai belumTuntas)
   const maxCount = useMemo(
-    () => kecamatanList.reduce((m,k) => Math.max(m, k.countBelumTuntas), 0),
+    () => kecamatanList.reduce((m, k) => Math.max(m, k.count), 0),
     [kecamatanList]
   );
 
+  // Semua baris kecamatan terpilih (urut desa→SLS)
   const selectedRows = useMemo(() => {
     if (!selectedKec) return [];
-    return [...(kecamatanMap[selectedKec]||[])].sort(
-      (a,b) => a.namaDesa.localeCompare(b.namaDesa) || a.kodeSLS.localeCompare(b.kodeSLS)
+    return [...(kecamatanMap[selectedKec] || [])].sort(
+      (a, b) => a.namaDesa.localeCompare(b.namaDesa) || a.kodeSLS.localeCompare(b.kodeSLS)
     );
   }, [selectedKec, kecamatanMap]);
 
+  // Hitung per-status untuk 3 card filter
   const statusCounts = useMemo(() => ({
-    sesuai: selectedRows.filter(r => getStatusKey(r)==="sesuai").length,
-    perlu:  selectedRows.filter(r => getStatusKey(r)==="perlu").length,
-    belum:  selectedRows.filter(r => getStatusKey(r)==="belum").length,
+    sesuai: selectedRows.filter(r => getStatusKey(r) === "sesuai").length,
+    perlu:  selectedRows.filter(r => getStatusKey(r) === "perlu").length,
+    belum:  selectedRows.filter(r => getStatusKey(r) === "belum").length,
   }), [selectedRows]);
 
+  // Baris setelah filter status + search KK
   const filteredRows = useMemo(() => {
     let result = selectedRows;
-    if (statusFilter) result = result.filter(r => getStatusKey(r)===statusFilter);
+
+    // Filter berdasarkan card status yang aktif
+    if (statusFilter) {
+      result = result.filter(r => getStatusKey(r) === statusFilter);
+    }
+
+    // Filter berdasarkan search KK
     if (searchKK.trim()) {
       const q = searchKK.toLowerCase();
       result = result.filter(r =>
-        (r.namaKK   ||"").toLowerCase().includes(q) ||
-        (r.namaDesa ||"").toLowerCase().includes(q)
+        (r.namaKK    || "").toLowerCase().includes(q) ||
+        (r.namaDesa  || "").toLowerCase().includes(q)
       );
     }
+
     return result;
   }, [selectedRows, statusFilter, searchKK]);
 
+  // Statistik global
+  const globalStats = useMemo(() => {
+    if (!rawRows.length) return null;
+    const kecSet  = new Set(rawRows.map(r => r.namaKec).filter(Boolean));
+    const desaSet = new Set(rawRows.map(r => `${r.kodeDesa}||${r.namaDesa}`));
+    const slsSet  = new Set(rawRows.map(r => `${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
+    return {
+      totalKecamatan: kecSet.size,
+      totalDesa:      desaSet.size,
+      totalSLS:       slsSet.size,
+      totalBaris:     rawRows.length,
+    };
+  }, [rawRows]);
+
   const handleSaved = (updatedRow) => {
-    setRawRows(prev => prev.map(r => r.rowIndex===updatedRow.rowIndex ? updatedRow : r));
+    setRawRows(prev => prev.map(r => r.rowIndex === updatedRow.rowIndex ? updatedRow : r));
     setModalRow(updatedRow);
   };
 
-  const filterLabel = statusFilter==="sesuai" ? "✓ Sudah Sesuai"
-    : statusFilter==="perlu"  ? "✗ Perlu Diperbaiki"
-    : statusFilter==="belum"  ? "⏳ Belum Dikonfirmasi"
+  // Label judul filter aktif untuk ditampilkan di atas daftar
+  const filterLabel = statusFilter === "sesuai"
+    ? "✓ Sudah Sesuai"
+    : statusFilter === "perlu"
+    ? "✗ Perlu Diperbaiki"
+    : statusFilter === "belum"
+    ? "⏳ Belum Dikonfirmasi"
     : null;
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -421,7 +447,7 @@ export default function MonitoringAnomali() {
       )}
 
       {/* ── HEADER ── */}
-      <header className="relative overflow-hidden" style={{ background:"linear-gradient(135deg,#fb923c 0%,#f97316 45%,#ea580c 100%)" }}>
+      <header className="relative overflow-hidden" style={{ background: "linear-gradient(135deg,#fb923c 0%,#f97316 45%,#ea580c 100%)" }}>
         <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -432,7 +458,7 @@ export default function MonitoringAnomali() {
               <div className="text-right">
                 <p className="text-orange-100">Data diperbarui pada</p>
                 <p className="text-orange-100">
-                  {lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} Pukul 07.00 WIB
+                  {lastUpdated.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} Pukul 07.00 WIB
                 </p>
               </div>
             )}
@@ -461,36 +487,12 @@ export default function MonitoringAnomali() {
 
         {!loading && !error && globalStats && (
           <>
-            {/* ── 3 Stat Cards: Sesuai / Perlu / Belum + 1 Total ── */}
+            {/* ── Stat Cards global ── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-              <StatCard
-                label="Total Anomali"
-                value={globalStats.total}
-                sub="seluruh baris anomali"
-                icon="📋"
-                variant="orange"
-              />
-              <StatCard
-                label="Sudah Sesuai"
-                value={globalStats.sesuai}
-                sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
-                icon="✅"
-                variant="emerald"
-              />
-              <StatCard
-                label="Perlu Diperbaiki"
-                value={globalStats.perlu}
-                sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
-                icon="❌"
-                variant="rose"
-              />
-              <StatCard
-                label="Belum Dikonfirmasi"
-                value={globalStats.belum}
-                sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
-                icon="⏳"
-                variant="gray"
-              />
+              <StatCard label="Jumlah Kecamatan" value={globalStats.totalKecamatan} sub="wilayah terdampak"      icon="🏘️" variant="gray"   />
+              <StatCard label="Jumlah Desa"       value={globalStats.totalDesa}      sub="desa/kelurahan"        icon="🏡" variant="orange" />
+              <StatCard label="Jumlah SLS"        value={globalStats.totalSLS}       sub="satuan lingkungan"     icon="📍" variant="blue"   />
+              <StatCard label="Baris Anomali"     value={globalStats.totalBaris}     sub="isian anomali keluarga" icon="⚠️" variant="rose"  />
             </div>
 
             {/* ── Filter & sort kecamatan ── */}
@@ -506,32 +508,22 @@ export default function MonitoringAnomali() {
                 />
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                <button onClick={() => setSortBy("urut")}   className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy==="urut"   ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Urutan</button>
-                <button onClick={() => setSortBy("jumlah")} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy==="jumlah" ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Terbanyak ↓</button>
+                <button onClick={() => setSortBy("urut")}   className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy === "urut"   ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Urutan</button>
+                <button onClick={() => setSortBy("jumlah")} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy === "jumlah" ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Terbanyak ↓</button>
               </div>
             </div>
-
-            {/* ── Keterangan angka kartu ── */}
-            {/* <p className="text-xs text-gray-400 mb-3 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Angka pada kartu kecamatan = jumlah anomali <strong className="text-gray-600">belum tuntas</strong> (perlu diperbaiki + belum dikonfirmasi)
-            </p> */}
 
             {/* ── Layout dua kolom ── */}
             <div className="flex flex-col lg:flex-row gap-5">
 
               {/* Kolom kiri: kartu kecamatan */}
               <div className="lg:w-[55%] grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
-                {kecamatanList.map(({ kecamatan, countBelumTuntas, countSesuai }) => (
+                {kecamatanList.map(({ kecamatan, count, countDesa, countSLS }) => (
                   <KecamatanCard
                     key={kecamatan}
-                    kecamatan={kecamatan}
-                    countBelumTuntas={countBelumTuntas}
-                    countSesuai={countSesuai}
-                    maxCount={maxCount}
-                    isSelected={selectedKec===kecamatan}
+                    kecamatan={kecamatan} count={count} maxCount={maxCount}
+                    countDesa={countDesa} countSLS={countSLS}
+                    isSelected={selectedKec === kecamatan}
                     onClick={() => handleSelectKec(kecamatan)}
                   />
                 ))}
@@ -543,7 +535,7 @@ export default function MonitoringAnomali() {
                   <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-20 text-center px-8">
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
                       <svg className="w-7 h-7 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <p className="font-semibold text-gray-600">Pilih Kecamatan</p>
@@ -552,8 +544,8 @@ export default function MonitoringAnomali() {
                 ) : (
                   <div className="sticky top-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-                    {/* Panel header */}
-                    <div className="px-6 py-5" style={{ background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
+                    {/* Panel header kecamatan terpilih */}
+                    <div className="px-6 py-5" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-0.5">Kecamatan</p>
@@ -561,7 +553,7 @@ export default function MonitoringAnomali() {
                         </div>
                         <button onClick={() => setSelectedKec(null)} className="text-orange-200 hover:text-white transition-colors mt-1 p-1">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
                       </div>
@@ -576,51 +568,83 @@ export default function MonitoringAnomali() {
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
                         Filter berdasarkan status konfirmasi
                         {statusFilter && (
-                          <button onClick={() => setStatusFilter(null)} className="ml-2 text-orange-500 normal-case font-semibold hover:underline">
+                          <button
+                            onClick={() => setStatusFilter(null)}
+                            className="ml-2 text-orange-500 normal-case font-semibold hover:underline"
+                          >
                             (reset)
                           </button>
                         )}
                       </p>
                       <div className="flex gap-2">
-                        <StatusFilterCard label="Sudah Sesuai"       value={statusCounts.sesuai} activeKey="sesuai" currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")} colorScheme="emerald" />
-                        <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}  activeKey="perlu"  currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}  colorScheme="rose"    />
-                        <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}  activeKey="belum"  currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}  colorScheme="gray"    />
+                        <StatusFilterCard
+                          label="Sudah Sesuai"
+                          value={statusCounts.sesuai}
+                          // icon="✅"
+                          activeKey="sesuai"
+                          currentFilter={statusFilter}
+                          onClick={() => handleStatusFilter("sesuai")}
+                          colorScheme="emerald"
+                        />
+                        <StatusFilterCard
+                          label="Perlu Diperbaiki"
+                          value={statusCounts.perlu}
+                          // icon="❌"
+                          activeKey="perlu"
+                          currentFilter={statusFilter}
+                          onClick={() => handleStatusFilter("perlu")}
+                          colorScheme="rose"
+                        />
+                        <StatusFilterCard
+                          label="Belum Dikonfirmasi"
+                          value={statusCounts.belum}
+                          // icon="⏳"
+                          activeKey="belum"
+                          currentFilter={statusFilter}
+                          onClick={() => handleStatusFilter("belum")}
+                          colorScheme="gray"
+                        />
                       </div>
                     </div>
 
                     {/* Daftar KK */}
                     <div ref={tableRef} className="px-6 py-2 max-h-[460px] overflow-y-auto">
                       <div className="sticky top-0 bg-white pt-2 pb-1 z-10">
+
+                        {/* Label filter aktif */}
                         {filterLabel && (
                           <div className="mb-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-between">
                             <span className="text-xs font-semibold text-orange-600">{filterLabel}</span>
                             <button onClick={() => setStatusFilter(null)} className="text-orange-400 hover:text-orange-600">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
                           </div>
                         )}
+
+                        {/* Search KK */}
                         <div className="relative mb-2">
                           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                           </svg>
                           <input
                             type="text" placeholder="Cari nama KK / desa…" value={searchKK}
-                            onChange={e => { setSearchKK(e.target.value); if(tableRef.current) tableRef.current.scrollTop=0; }}
+                            onChange={e => { setSearchKK(e.target.value); if (tableRef.current) tableRef.current.scrollTop = 0; }}
                             className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300"
                           />
                           {searchKK && (
                             <button onClick={() => setSearchKK("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500">
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
                           )}
                         </div>
+
                         <div className="flex items-center gap-3 py-2 border-b border-gray-100">
                           <span className="text-xs text-gray-400 w-5">#</span>
-                          <span className="text-xs text-gray-400 flex-1">Nama KK · Desa/SLS · PML/PPL</span>
+                          <span className="text-xs text-gray-400 flex-1">Nama KK · Desa/SLS · PML/Petugas</span>
                           <span className="text-xs text-gray-400 w-20 text-right">Status</span>
                         </div>
                       </div>
@@ -628,7 +652,7 @@ export default function MonitoringAnomali() {
                       {filteredRows.length === 0 ? (
                         <div className="text-center py-10">
                           <p className="text-3xl mb-2">
-                            {statusFilter==="sesuai" ? "✅" : statusFilter==="perlu" ? "❌" : statusFilter==="belum" ? "⏳" : "🔍"}
+                            {statusFilter === "sesuai" ? "✅" : statusFilter === "perlu" ? "❌" : statusFilter === "belum" ? "⏳" : "🔍"}
                           </p>
                           <p className="text-gray-400 text-sm">
                             {searchKK
@@ -639,10 +663,10 @@ export default function MonitoringAnomali() {
                           </p>
                         </div>
                       ) : (
-                        filteredRows.map((r,i) => (
+                        filteredRows.map((r, i) => (
                           <AnomaliRow
                             key={`${r.kodeDesa}-${r.kodeSLS}-${r.namaKK}-${i}`}
-                            row={r} rank={i+1}
+                            row={r} rank={i + 1}
                             onDetail={setModalRow}
                           />
                         ))
@@ -653,11 +677,13 @@ export default function MonitoringAnomali() {
                     <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-100">
                       <div className="flex gap-2 text-xs text-gray-400 flex-wrap items-center">
                         <span className="font-semibold text-gray-600">
-                          {filteredRows.length}{(searchKK||statusFilter) ? ` / ${selectedRows.length}` : ""} KK
+                          {filteredRows.length}
+                          {(searchKK || statusFilter) ? ` / ${selectedRows.length}` : ""} KK
                         </span>
-                        {statusFilter ? (
+                        {statusFilter && (
                           <span className="text-orange-500 font-medium">· {filterLabel}</span>
-                        ) : (
+                        )}
+                        {!statusFilter && (
                           <>
                             <span>·</span>
                             <span className="text-emerald-600 font-medium">{statusCounts.sesuai} sesuai</span>

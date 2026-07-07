@@ -17,7 +17,7 @@ const KODE_KEC_MAP = {
   "1507030":"TUNGKAL ILIR","1507031":"BRAM ITAM","1507032":"SEBERANG KOTA","1507040":"BETARA","1507041":"KUALA BETARA",
 };
 
-// ── Parser CSV ──
+// ── Parser CSV (mendukung koma DAN newline di dalam tanda kutip) ──
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -29,10 +29,10 @@ function parseCSV(text) {
     const ch = clean[i];
     if (inQ) {
       if (ch === '"') {
-        if (clean[i + 1] === '"') { field += '"'; i++; }
+        if (clean[i + 1] === '"') { field += '"'; i++; } // tanda kutip ganda = escape
         else { inQ = false; }
       } else {
-        field += ch;
+        field += ch; // termasuk newline di dalam kutip — bagian dari sel yang sama
       }
     } else {
       if (ch === '"') { inQ = true; }
@@ -42,9 +42,9 @@ function parseCSV(text) {
     }
   }
   if (field.length > 0 || row.length > 0) { row.push(field.trim()); rows.push(row); }
+
   return rows;
 }
-
 function isSubtotalRow(cols) {
   for (let i = 0; i <= 8; i++) {
     if (/\bTotal\s*$/i.test((cols[i] || "").trim())) return true;
@@ -91,8 +91,9 @@ function ProgressBar({ value, max, color }) {
   );
 }
 
-// ── Stat Card global (diubah menjadi status anomali) ──
+// ── Stat Card global (header) ──
 function StatCard({ label, value, sub, icon, accentColor }) {
+  const isLight = accentColor === "#f43f5e" || accentColor === "#10b981" || accentColor === "#3b82f6";
   return (
     <div style={{
       background: `${accentColor}14`,
@@ -114,7 +115,7 @@ function StatCard({ label, value, sub, icon, accentColor }) {
   );
 }
 
-// ── Kecamatan Card (angka = perbaiki + belum) ──
+// ── Kecamatan Card ──
 function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClick, isSelected }) {
   const color = countColor(count);
   const badge = countBadgeStyle(count);
@@ -182,7 +183,7 @@ function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick
   );
 }
 
-// ── Anomali Row ──
+// ── Anomali Row (diperbaiki) ──
 function AnomaliRow({ row, rank, onDetail }) {
   const badge = statusBadgeStyle(row.hasilKonfirmasiPML);
   return (
@@ -194,16 +195,86 @@ function AnomaliRow({ row, rank, onDetail }) {
           <p style={{ fontSize:"11px", color:"#94a3b8", margin:"0 0 3px 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
             {row.namaDesa}{row.namaSLS ? ` · ${row.namaSLS}` : ""} · SLS {row.kodeSLS}{row.subSLS ? `-${row.subSLS}` : ""}
           </p>
-          <div style={{ display:"flex", alignItems:"center", gap:"4px", marginBottom:"4px", flexWrap:"wrap" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
-              <span style={{ background:"#fff7ed", color:"#ea580c", fontSize:"10px", fontWeight:700, padding:"2px 6px", borderRadius:"5px" }}>PML</span>
-              <span style={{ fontSize:"12px", color:"#64748b", maxWidth:"110px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaPML || "-"}</span>
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
-              <span style={{ background:"#eff6ff", color:"#2563eb", fontSize:"10px", fontWeight:700, padding:"1px 6px", borderRadius:"5px" }}>PPL</span>
-              <span style={{ fontSize:"12px", color:"#64748b", maxWidth:"130px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaPetugas || "-"}</span>
-            </div>
-          </div>
+          {/* ── Baris PML dan Petugas diperbaiki ── */}
+        <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    marginBottom: "4px",
+    flexWrap: "wrap",
+  }}
+>
+  {/* PML */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+    }}
+  >
+    <span
+      style={{
+        background: "#fff7ed",
+        color: "#ea580c",
+        fontSize: "10px",
+        fontWeight: 700,
+        padding: "2px 6px",
+        borderRadius: "5px",
+      }}
+    >
+      PML
+    </span>
+
+    <span
+      style={{
+        fontSize: "12px",
+        color: "#64748b",
+        maxWidth: "110px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {row.namaPML || "-"}
+    </span>
+  </div>
+
+  {/* PPL */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+    }}
+  >
+    <span
+      style={{
+        background: "#eff6ff",
+        color: "#2563eb",
+        fontSize: "10px",
+        fontWeight: 700,
+        padding: "1px 6px",
+        borderRadius: "5px",
+      }}
+    >
+      PPL
+    </span>
+
+    <span
+      style={{
+        fontSize: "12px",
+        color: "#64748b",
+        maxWidth: "130px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {row.namaPetugas || "-"}
+    </span>
+  </div>
+</div>
           <p style={{ fontSize:"11px", color:"#64748b", margin:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.namaAnomali}</p>
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px", flexShrink:0 }}>
@@ -318,31 +389,19 @@ export default function MonitoringAnomaliUsaha() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  // ── Agregasi per kecamatan ──
   const kecamatanMap = useMemo(() => {
     const m = {};
     rawRows.forEach(r => { if(!r.namaKec)return; if(!m[r.namaKec])m[r.namaKec]=[]; m[r.namaKec].push(r); });
     return m;
   }, [rawRows]);
 
-  // Hitung global status (untuk stat card)
-  const globalStatus = useMemo(() => {
-    const sesuai = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
-    const perbaiki = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
-    const belum = rawRows.filter(r => !r.hasilKonfirmasiPML.trim()).length;
-    return { sesuai, perbaiki, belum, total: rawRows.length };
-  }, [rawRows]);
-
-  // KecamatanList dengan count = perbaiki + belum
   const kecamatanList = useMemo(() => {
     const namaSet = new Set([...KECAMATAN_ORDER, ...Object.keys(kecamatanMap)]);
     return [...namaSet].map(nama => {
       const list    = kecamatanMap[nama]||[];
-      // Hitung jumlah yang TIDAK sesuai (perbaiki + belum)
-      const count = list.filter(r => !r.hasilKonfirmasiPML.startsWith("01")).length;
       const desaSet = new Set(list.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
       const slsSet  = new Set(list.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
-      return { kecamatan:nama, count, countDesa:desaSet.size, countSLS:slsSet.size };
+      return { kecamatan:nama, count:list.length, countDesa:desaSet.size, countSLS:slsSet.size };
     })
     .filter(k => k.count>0 || KECAMATAN_ORDER.includes(k.kecamatan))
     .filter(k => search===""||k.kecamatan.toLowerCase().includes(search.toLowerCase()))
@@ -371,6 +430,14 @@ export default function MonitoringAnomaliUsaha() {
     const q = searchKK.toLowerCase();
     return result.filter(r=>(r.namaUsaha||"").toLowerCase().includes(q)||(r.namaDesa||"").toLowerCase().includes(q)||(r.namaAnomali||"").toLowerCase().includes(q));
   }, [selectedRows, activeFilter, searchKK]);
+
+  const globalStats = useMemo(() => {
+    if (!rawRows.length) return null;
+    const kecSet  = new Set(rawRows.map(r=>r.namaKec).filter(Boolean));
+    const desaSet = new Set(rawRows.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
+    const slsSet  = new Set(rawRows.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
+    return { totalKecamatan:kecSet.size, totalDesa:desaSet.size, totalSLS:slsSet.size, totalBaris:rawRows.length };
+  }, [rawRows]);
 
   const handleSaved = (updatedRow) => {
     setRawRows(prev=>prev.map(r=>r.rowIndex===updatedRow.rowIndex?updatedRow:r));
@@ -458,14 +525,14 @@ export default function MonitoringAnomaliUsaha() {
           </div>
         )}
 
-        {!loading && !error && globalStatus && (
+        {!loading && !error && globalStats && (
           <>
             {/* ── Stat Cards global ── */}
             <div style={statGridStyle}>
-              <StatCard label="Sudah Sesuai" value={globalStatus.sesuai} sub="anomali terkonfirmasi sesuai" icon="✅" accentColor="#10b981"/>
-              <StatCard label="Perlu Diperbaiki" value={globalStatus.perbaiki} sub="anomali perlu koreksi" icon="🛠️" accentColor="#f43f5e"/>
-              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub="anomali belum diverifikasi" icon="⏳" accentColor="#64748b"/>
-              <StatCard label="Total Anomali" value={globalStatus.total} sub="seluruh baris anomali" icon="📊" accentColor="#f97316"/>
+              <StatCard label="Jumlah Kecamatan" value={globalStats.totalKecamatan} sub="wilayah terdampak"    icon="🏘️" accentColor="#64748b"/>
+              <StatCard label="Jumlah Desa"       value={globalStats.totalDesa}      sub="desa/kelurahan"      icon="🏡" accentColor="#f97316"/>
+              <StatCard label="Jumlah SLS"        value={globalStats.totalSLS}       sub="satuan lingkungan"   icon="📍" accentColor="#3b82f6"/>
+              <StatCard label="Baris Anomali"     value={globalStats.totalBaris}     sub="isian anomali usaha" icon="⚠️" accentColor="#f43f5e"/>
             </div>
 
             {/* ── Search & Sort ── */}
