@@ -433,12 +433,13 @@ const filteredRows = useMemo(() => {
   if (activeFilter === "belum")    result = result.filter(r => getStatusKey(r) === "belum");
   if (activeFilter === "korwil_ditangani")  result = result.filter(r => getKorwilStatusKey(r) === "korwil_ditangani");
   if (activeFilter === "korwil_diperbaiki") result = result.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki");
+  if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);   // ← BARU: baris yang hilang
   const q = searchKK.toLowerCase();
   return result.filter(r =>
     (r.namaUsaha   || "").toLowerCase().includes(q) ||
     (r.namaPetugas || "").toLowerCase().includes(q)
   );
-}, [selectedRows, activeFilter, pmlFilter, searchKK]); // ← tambahkan pmlFilter
+}, [selectedRows, activeFilter, pmlFilter, searchKK]);
 
   const handleSaved = (updatedRow) => {
     setRawRows(prev=>prev.map(r=>r.rowIndex===updatedRow.rowIndex?updatedRow:r));
