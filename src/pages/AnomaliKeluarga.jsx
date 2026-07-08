@@ -11,20 +11,52 @@ const KECAMATAN_ORDER = [
   "PENGABUAN","SENYERANG","TUNGKAL ILIR","BRAM ITAM","SEBERANG KOTA","BETARA","KUALA BETARA",
 ];
 
-// ── Parser CSV ──
+// ── Parser CSV (versi diperbaiki: menangani newline & koma di dalam tanda kutip) ──
 function parseCSV(text) {
-  const lines = text.replace(/\r/g, "").split("\n");
-  return lines.map(line => {
-    const cols = []; let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
-      cur += ch;
+  const rows = [];
+  let row = [];
+  let cur = "";
+  let inQ = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inQ) {
+      if (ch === '"' && next === '"') {
+        cur += '"';   // escaped quote ("")
+        i++;
+      } else if (ch === '"') {
+        inQ = false;  // tutup quote
+      } else {
+        cur += ch;    // termasuk \n, \r, koma di dalam quote — disimpan apa adanya
+      }
+    } else {
+      if (ch === '"') {
+        inQ = true;
+      } else if (ch === ',') {
+        row.push(cur);
+        cur = "";
+      } else if (ch === '\r') {
+        // abaikan, \n yang menjadi penanda baris
+      } else if (ch === '\n') {
+        row.push(cur);
+        rows.push(row);
+        row = [];
+        cur = "";
+      } else {
+        cur += ch;
+      }
     }
-    cols.push(cur.trim());
-    return cols;
-  });
+  }
+
+  // tangani baris terakhir jika file tidak diakhiri newline
+  if (cur.length > 0 || row.length > 0) {
+    row.push(cur);
+    rows.push(row);
+  }
+
+  return rows.map(r => r.map(c => c.trim()));
 }
 
 function isTotalMarker(v) {
