@@ -199,16 +199,18 @@ function MiniStatusCellFlat({ label, value, color, isActive, showDivider, onClic
     <button
       onClick={onClick}
       style={{
-        flex:1, minWidth:0, border:"none", cursor:"pointer",
-        background: isActive ? `${color}0f` : "transparent",
-        borderRight: showDivider ? "1px solid #f1f5f9" : "none",
-        borderRadius: isActive ? "10px" : 0,
-        padding:"4px 2px",
-        display:"flex", flexDirection:"column", alignItems:"center", gap:"3px",
+        flex:1, minWidth:0, border: isActive ? `2px solid ${color}` : `1.5px solid ${color}1f`, cursor:"pointer",
+        background: isActive ? `${color}12` : `${color}08`,
+        borderRadius:"10px",
+        padding:"8px 6px",
+        display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
+        transition:"all 0.15s cubic-bezier(0.4,0,0.2,1)",
+        transform: isActive ? "scale(1.05)" : "scale(1)",
+        boxShadow: isActive ? `0 2px 8px ${color}20` : "none",
       }}
     >
       <span style={{ fontSize:"18px", fontWeight:800, color, lineHeight:1 }}>{value}</span>
-      <span style={{ fontSize:"9px", fontWeight:600, color:"#94a3b8", textAlign:"center", lineHeight:1.25 }}>{label}</span>
+      <span style={{ fontSize:"9px", fontWeight:600, color: isActive ? color : "#94a3b8", textAlign:"center", lineHeight:1.25 }}>{label}</span>
     </button>
   );
 }
@@ -632,30 +634,30 @@ const filteredRows = useMemo(() => {
                       </p>
 
                       {isMobile ? (
-                        <div style={{ display:"flex", background:"#fff", border:"1px solid #f1f5f9", borderRadius:"14px", padding:"10px 2px" }}>
+                        <div style={{ display:"flex", gap:"8px" }}>
                           <MiniStatusCellFlat
                             label="Sudah Sesuai" value={statusCounts.sesuai} color="#10b981"
-                            isActive={activeFilter==="sesuai"} showDivider
+                            isActive={activeFilter==="sesuai"}
                             onClick={()=>handleFilterCard("sesuai")}
                           />
                           <MiniStatusCellFlat
                             label="Perlu Diperbaiki" value={statusCounts.perbaiki} color="#f43f5e"
-                            isActive={activeFilter==="perbaiki"} showDivider
+                            isActive={activeFilter==="perbaiki"}
                             onClick={()=>handleFilterCard("perbaiki")}
                           />
                           <MiniStatusCellFlat
                             label="Belum Dikonfirmasi" value={statusCounts.belum} color="#1e293b"
-                            isActive={activeFilter==="belum"} showDivider
+                            isActive={activeFilter==="belum"}
                             onClick={()=>handleFilterCard("belum")}
                           />
                           <MiniStatusCellFlat
                             label="Ditangani Korwil" value={statusCounts.korwilDitangani} color="#3b82f6"
-                            isActive={activeFilter==="korwil_ditangani"} showDivider
+                            isActive={activeFilter==="korwil_ditangani"}
                             onClick={()=>handleFilterCard("korwil_ditangani")}
                           />
                           <MiniStatusCellFlat
                             label="Diperbaiki PCL" value={statusCounts.korwilDiperbaiki} color="#7c3aed"
-                            isActive={activeFilter==="korwil_diperbaiki"} showDivider={false}
+                            isActive={activeFilter==="korwil_diperbaiki"}
                             onClick={()=>handleFilterCard("korwil_diperbaiki")}
                           />
                         </div>
