@@ -170,16 +170,15 @@ function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClic
   );
 }
 
-// ── Mini Status Card (Sesuai / Perbaiki / Belum) ──
-function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick }) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+// ── Mini Status Card (desktop: pill dengan background berwarna) ──
+function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick, isMobile }) {
   return (
     <button
       onClick={onClick}
       style={{
         flex:1, border:"none", cursor:"pointer", textAlign:"left",
         background: isActive ? color : bg,
-        borderRadius:"14px", padding:"12px 14px",
+        borderRadius:"14px", padding: isMobile ? "10px 12px" : "12px 14px",
         border: isActive ? `2px solid ${color}` : `1.5px solid ${bg === "#fff" ? "#f1f5f9" : bg}`,
         boxShadow: isActive ? `0 4px 16px ${color}33` : "none",
         transition:"all 0.18s cubic-bezier(0.4,0,0.2,1)",
@@ -187,9 +186,29 @@ function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick
       }}
     >
       <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"6px" }}>
-        <span style={{ fontSize:"10px", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.08em", color: isActive ? "rgba(255,255,255,0.85)" : "#64748b" }}>{label}</span>
+        <span style={{ fontSize: isMobile ? "9px" : "10px", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.08em", color: isActive ? "rgba(255,255,255,0.85)" : "#64748b" }}>{label}</span>
       </div>
-      <p style={{ fontSize:"20px", fontWeight:800, margin:0, lineHeight:1, color: isActive ? "#fff" : color }}>{count}</p>
+      <p style={{ fontSize: isMobile ? "16px" : "20px", fontWeight:800, margin:0, lineHeight:1, color: isActive ? "#fff" : color }}>{count}</p>
+    </button>
+  );
+}
+
+// ── Mini Status Cell (mobile: flat, satu panel, 5 kolom sederhana) ──
+function MiniStatusCellFlat({ label, value, color, isActive, showDivider, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex:1, minWidth:0, border:"none", cursor:"pointer",
+        background: isActive ? `${color}0f` : "transparent",
+        borderRight: showDivider ? "1px solid #f1f5f9" : "none",
+        borderRadius: isActive ? "10px" : 0,
+        padding:"4px 2px",
+        display:"flex", flexDirection:"column", alignItems:"center", gap:"3px",
+      }}
+    >
+      <span style={{ fontSize:"18px", fontWeight:800, color, lineHeight:1 }}>{value}</span>
+      <span style={{ fontSize:"9px", fontWeight:600, color:"#94a3b8", textAlign:"center", lineHeight:1.25 }}>{label}</span>
     </button>
   );
 }
@@ -607,42 +626,79 @@ const filteredRows = useMemo(() => {
                     </div>
 
                     {/* ── 5 Status Mini Cards ── */}
-                    <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fafafa", borderBottom:"1px solid #f1f5f9" }}>
+                    <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fafafa", borderBottom:"1px solid #f1f5f9", overflowX: isMobile ? "auto" : "visible" }}>
                       <p style={{ fontSize:"11px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.07em", margin:"0 0 10px 0" }}>
                         Filter status
                       </p>
-                      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(5, minmax(0, 1fr))", gap:"10px" }}>
-                        <MiniStatusCard
-                          label="Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
-                          color="#10b981" bg="#f0fdf4" dot="#10b981"
-                          isActive={activeFilter==="sesuai"}
-                          onClick={()=>handleFilterCard("sesuai")}
-                        />
-                        <MiniStatusCard
-                          label="Perbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
-                          color="#f43f5e" bg="#fff1f2" dot="#f43f5e"
-                          isActive={activeFilter==="perbaiki"}
-                          onClick={()=>handleFilterCard("perbaiki")}
-                        />
-                        <MiniStatusCard
-                          label="Belum" count={statusCounts.belum} total={selectedRows.length}
-                          color="#64748b" bg="#f8fafc" dot="#94a3b8"
-                          isActive={activeFilter==="belum"}
-                          onClick={()=>handleFilterCard("belum")}
-                        />
-                        <MiniStatusCard
-                          label="Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
-                          color="#3b82f6" bg="#eff6ff" dot="#3b82f6"
-                          isActive={activeFilter==="korwil_ditangani"}
-                          onClick={()=>handleFilterCard("korwil_ditangani")}
-                        />
-                        <MiniStatusCard
-                          label="Diperbaiki PCL" count={statusCounts.korwilDiperbaiki} total={selectedRows.length}
-                          color="#7c3aed" bg="#f5f3ff" dot="#7c3aed"
-                          isActive={activeFilter==="korwil_diperbaiki"}
-                          onClick={()=>handleFilterCard("korwil_diperbaiki")}
-                        />
-                      </div>
+
+                      {isMobile ? (
+                        <div style={{ display:"flex", background:"#fff", border:"1px solid #f1f5f9", borderRadius:"14px", padding:"10px 2px" }}>
+                          <MiniStatusCellFlat
+                            label="Sudah Sesuai" value={statusCounts.sesuai} color="#10b981"
+                            isActive={activeFilter==="sesuai"} showDivider
+                            onClick={()=>handleFilterCard("sesuai")}
+                          />
+                          <MiniStatusCellFlat
+                            label="Perlu Diperbaiki" value={statusCounts.perbaiki} color="#f43f5e"
+                            isActive={activeFilter==="perbaiki"} showDivider
+                            onClick={()=>handleFilterCard("perbaiki")}
+                          />
+                          <MiniStatusCellFlat
+                            label="Belum Dikonfirmasi" value={statusCounts.belum} color="#1e293b"
+                            isActive={activeFilter==="belum"} showDivider
+                            onClick={()=>handleFilterCard("belum")}
+                          />
+                          <MiniStatusCellFlat
+                            label="Ditangani Korwil" value={statusCounts.korwilDitangani} color="#3b82f6"
+                            isActive={activeFilter==="korwil_ditangani"} showDivider
+                            onClick={()=>handleFilterCard("korwil_ditangani")}
+                          />
+                          <MiniStatusCellFlat
+                            label="Diperbaiki PCL" value={statusCounts.korwilDiperbaiki} color="#7c3aed"
+                            isActive={activeFilter==="korwil_diperbaiki"} showDivider={false}
+                            onClick={()=>handleFilterCard("korwil_diperbaiki")}
+                          />
+                        </div>
+                      ) : (
+                        <div style={{ display:"grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap:"10px" }}>
+                          <MiniStatusCard
+                            label="Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
+                            color="#10b981" bg="#f0fdf4" dot="#10b981"
+                            isActive={activeFilter==="sesuai"}
+                            onClick={()=>handleFilterCard("sesuai")}
+                            isMobile={isMobile}
+                          />
+                          <MiniStatusCard
+                            label="Perbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
+                            color="#f43f5e" bg="#fff1f2" dot="#f43f5e"
+                            isActive={activeFilter==="perbaiki"}
+                            onClick={()=>handleFilterCard("perbaiki")}
+                            isMobile={isMobile}
+                          />
+                          <MiniStatusCard
+                            label="Belum" count={statusCounts.belum} total={selectedRows.length}
+                            color="#64748b" bg="#f8fafc" dot="#94a3b8"
+                            isActive={activeFilter==="belum"}
+                            onClick={()=>handleFilterCard("belum")}
+                            isMobile={isMobile}
+                          />
+                          <MiniStatusCard
+                            label="Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
+                            color="#3b82f6" bg="#eff6ff" dot="#3b82f6"
+                            isActive={activeFilter==="korwil_ditangani"}
+                            onClick={()=>handleFilterCard("korwil_ditangani")}
+                            isMobile={isMobile}
+                          />
+                          <MiniStatusCard
+                            label="Diperbaiki PCL" count={statusCounts.korwilDiperbaiki} total={selectedRows.length}
+                            color="#7c3aed" bg="#f5f3ff" dot="#7c3aed"
+                            isActive={activeFilter==="korwil_diperbaiki"}
+                            onClick={()=>handleFilterCard("korwil_diperbaiki")}
+                            isMobile={isMobile}
+                          />
+                        </div>
+                      )}
+
                       {activeFilter && (
                         <button
                           onClick={()=>setActiveFilter(null)}

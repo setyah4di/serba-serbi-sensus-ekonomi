@@ -480,9 +480,11 @@ const filteredRows = useMemo(() => {
               <p className="text-orange-100 mt-1">Sensus Ekonomi 2026</p>
             </div>
             {computedLastUpdated && (
-              <div className="text-right">
-                <p className="text-orange-100">Data diperbarui pada</p>
-                <p className="text-orange-100">
+              <div className="rounded-xl px-4 py-2.5 bg-white/15 border border-white/20 self-start sm:self-auto">
+                <p className="text-white/75 text-[11px] sm:text-xs font-semibold uppercase tracking-wider mb-0.5">
+                  Data diperbarui pada
+                </p>
+                <p className="text-white text-sm font-bold">
                   {computedLastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} Pukul 06.00 WIB
                 </p>
               </div>
@@ -575,14 +577,6 @@ const filteredRows = useMemo(() => {
                 <button onClick={() => setSortBy("jumlah")} className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${sortBy==="jumlah" ? "bg-orange-500 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-orange-300"}`}>Terbanyak ↓</button>
               </div>
             </div>
-
-            {/* ── Keterangan angka kartu ── */}
-            {/* <p className="text-xs text-gray-400 mb-3 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Angka pada kartu kecamatan = jumlah anomali <strong className="text-gray-600">belum tuntas</strong> (perlu diperbaiki + belum dikonfirmasi)
-            </p> */}
 
             {/* ── Layout dua kolom ── */}
             <div className="flex flex-col lg:flex-row gap-5">
