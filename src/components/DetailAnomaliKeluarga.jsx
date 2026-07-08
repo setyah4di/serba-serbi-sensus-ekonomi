@@ -33,6 +33,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
   const [phase, setPhase] = useState("idle");
   const [saveError, setSaveError] = useState(null);
   const [subKeterangan, setSubKeterangan] = useState("");
+  const [isDetailKeteranganOpen, setIsDetailKeteranganOpen] = useState(false);
   const closeTimeoutRef = useRef(null);
 
   // Ditentukan sekali saat modal dibuka: apakah semua kolom isian masih kosong.
@@ -217,6 +218,45 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
         </div>
       )}
 
+      {isDetailKeteranganOpen && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 px-4" onClick={() => setIsDetailKeteranganOpen(false)}>
+          <div
+            className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden animate-fadeIn"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between bg-orange-500 px-5 py-4 text-white">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-orange-100">Detail Keterangan</p>
+                <p className="text-sm font-semibold">Rincian Detail Keterangan</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDetailKeteranganOpen(false)}
+                className="rounded-full p-1.5 text-orange-100 hover:bg-white/10"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto p-5">
+              <div className="rounded-xl border border-orange-100 bg-orange-50/70 p-4 text-sm text-gray-700 whitespace-pre-line">
+                {keterangan?.trim() ? keterangan : "Belum ada isian keterangan."}
+              </div>
+            </div>
+            <div className="flex justify-end border-t border-gray-100 bg-gray-50 px-5 py-3">
+              <button
+                type="button"
+                onClick={() => setIsDetailKeteranganOpen(false)}
+                className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Sub-dialog: minta keterangan/alasan ketika memilih "01 Sudah Sesuai" ── */}
       {phase === "asking_keterangan" && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4" onClick={handleBatalKeterangan}>
@@ -311,6 +351,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
                   <tr className="border-b border-gray-100">
                     <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan</td>
                     <td className="px-3 py-2.5">
+                     
                       <textarea
                         value={keterangan}
                         onChange={e => setKeterangan(e.target.value)}
@@ -319,6 +360,15 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
                         placeholder="Tulis keterangan koreksi…"
                         className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none disabled:bg-gray-50 disabled:text-gray-400"
                       />
+                       <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsDetailKeteranganOpen(true)}
+                          className="rounded-full border border-orange-200 px-2.5 py-1 text-[11px] font-semibold text-orange-600 hover:bg-orange-50"
+                        >
+                          Detail Keterangan
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   <tr>
