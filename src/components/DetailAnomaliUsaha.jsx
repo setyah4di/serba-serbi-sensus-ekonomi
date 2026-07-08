@@ -17,19 +17,31 @@ const OPSI_KORWIL = [
   { value: "02 Sudah Diperbaiki PCL & Diapprove PML", label: "02 Sudah Diperbaiki PCL & Diapprove PML" },
 ];
 
+// Nilai keterangan otomatis ketika PML/PPL memilih "02 Perlu diperbaiki"
+const KETERANGAN_OTOMATIS_02 = "Perlu di reject PML, lalu diperbaiki PCL, dan diapprove PML";
+const KORWIL_OTOMATIS_01 = "01 Sudah Ditangani Korwil";
+
 function idSubSLS(row) {
   const kode = row.subSLS ? `${row.kodeSLS}-${row.subSLS}` : row.kodeSLS;
   return row.namaSLS ? ` ${row.namaDesa} - ${row.namaSLS}` : kode;
 }
 
-// phase: "idle" | "saving" | "success"
+// phase: "idle" | "asking_keterangan" | "saving" | "success" | "notice02"
 export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
   const [hasilKonfirmasi, setHasilKonfirmasi] = useState(row?.hasilKonfirmasiPML || "");
   const [keterangan, setKeterangan] = useState(row?.keteranganKoreksi || "");
   const [hasilKorwil, setHasilKorwil] = useState(row?.hasilKonfirmasiKorwil || "");
   const [phase, setPhase] = useState("idle");
   const [saveError, setSaveError] = useState(null);
+  const [subKeterangan, setSubKeterangan] = useState("");
   const closeTimeoutRef = useRef(null);
+
+  // Ditentukan sekali saat modal dibuka: apakah semua kolom isian masih kosong.
+  // Dipakai untuk memutuskan mode ringkas (hanya field Hasil Konfirmasi PML/PPL)
+  // vs mode lengkap (semua kolom tampil).
+  const [isEmptyInitial] = useState(
+    () => !row?.hasilKonfirmasiPML && !row?.keteranganKoreksi && !row?.hasilKonfirmasiKorwil
+  );
 
   useEffect(() => {
     return () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); };
@@ -38,55 +50,98 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
   if (!row) return null;
 
   const isBusy = phase !== "idle";
+  const showFullForm = !isEmptyInitial;
+
   const isDirty =
     hasilKonfirmasi !== (row.hasilKonfirmasiPML || "") ||
     keterangan !== (row.keteranganKoreksi || "") ||
     hasilKorwil !== (row.hasilKonfirmasiKorwil || "");
 
-  const handleSave = async () => {
+  // ── Fungsi simpan generik ke Apps Script ──
+  // korwil === undefined artinya field ini SENGAJA tidak disertakan di payload
+  // (bukan dikirim string kosong), supaya Apps Script tidak menyentuh kolom
+  // "Hasil Penanganan Korwil" sama sekali — menghindari bentrok dengan
+  // data validation dropdown di kolom tersebut.
+  const persist = async (hk, ket, korwil, { successPhase = "success", closeDelay = 2000 } = {}) => {
     setPhase("saving");
     setSaveError(null);
     try {
+      const payload = {
+        sheetRow: row.rowIndex,
+        namaUsaha: row.namaUsaha,
+        namaAnomali: row.namaAnomali,
+        hasilKonfirmasi: hk,
+        keterangan: ket,
+      };
+      if (korwil !== undefined) {
+        payload.hasilKorwil = korwil;
+      }
+
       const res = await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         // text/plain menghindari CORS preflight yang tidak didukung Apps Script secara default
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          sheetRow: row.rowIndex,
-          namaUsaha: row.namaUsaha,
-          namaAnomali: row.namaAnomali,
-          hasilKonfirmasi,
-          keterangan,
-          hasilKorwil,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Gagal menyimpan perubahan.");
 
+      setHasilKonfirmasi(hk);
+      setKeterangan(ket);
+      if (korwil !== undefined) setHasilKorwil(korwil);
+
       onSaved?.({
         ...row,
-        hasilKonfirmasiPML: hasilKonfirmasi,
-        keteranganKoreksi: keterangan,
-        hasilKonfirmasiKorwil: hasilKorwil,
+        hasilKonfirmasiPML: hk,
+        keteranganKoreksi: ket,
+        ...(korwil !== undefined ? { hasilKonfirmasiKorwil: korwil } : {}),
       });
 
-      setPhase("success");
-
-      // Tutup modal otomatis 2 detik setelah animasi berhasil ditampilkan
+      setPhase(successPhase);
       closeTimeoutRef.current = setTimeout(() => {
         onClose();
-      }, 2000);
+      }, closeDelay);
     } catch (err) {
       setSaveError(err.message);
       setPhase("idle");
     }
   };
 
+  // Simpan manual lewat tombol "Simpan Perubahan" (mode lengkap / edit bebas)
+  const handleSave = () => {
+    persist(hasilKonfirmasi, keterangan, hasilKorwil);
+  };
+
+  // Dipicu saat memilih dropdown Hasil Konfirmasi PML/PPL dalam mode ringkas
+  const handlePilihHasilKonfirmasi = (value) => {
+    setHasilKonfirmasi(value);
+
+    if (!isEmptyInitial) return; // mode lengkap: biarkan user pakai tombol Simpan Perubahan
+
+    if (value === "01 Sudah Sesuai") {
+      setSubKeterangan("");
+      setPhase("asking_keterangan");
+    } else if (value === "02 Perlu diperbaiki") {
+      persist(value, KETERANGAN_OTOMATIS_02, undefined, { successPhase: "notice02", closeDelay: 4000 });
+    }
+  };
+
+  const handleBatalKeterangan = () => {
+    setHasilKonfirmasi("");
+    setSubKeterangan("");
+    setPhase("idle");
+  };
+
+  const handleSubmitKeterangan = () => {
+    if (!subKeterangan.trim()) return;
+    persist("01 Sudah Sesuai", subKeterangan.trim(), KORWIL_OTOMATIS_01);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" onClick={isBusy ? undefined : onClose}>
 
-      {/* ── Overlay full-screen tunggal: loading → sukses ── */}
-      {isBusy && (
+      {/* ── Overlay full-screen: loading → sukses / notice02 ── */}
+      {(phase === "saving" || phase === "success" || phase === "notice02") && (
         <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-5 bg-white/95 backdrop-blur-sm px-6 text-center">
           {phase === "saving" && (
             <div key="loading" className="flex flex-col items-center gap-5 animate-fadeIn">
@@ -137,6 +192,62 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
               </div>
             </div>
           )}
+
+          {phase === "notice02" && (
+            <div key="notice02" className="flex flex-col items-center gap-5 animate-successIn max-w-sm">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-amber-400 animate-pingOnce" />
+                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-200">
+                  <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8v5" stroke="white" strokeWidth="2.6" strokeLinecap="round" />
+                    <circle cx="12" cy="16.3" r="1.15" fill="white" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-800">Perlu Diperbaiki</p>
+                <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{KETERANGAN_OTOMATIS_02}</p>
+              </div>
+              <div className="w-40 h-1 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full bg-amber-500 animate-toastProgress3" />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Sub-dialog: minta keterangan/alasan ketika memilih "01 Sudah Sesuai" ── */}
+      {phase === "asking_keterangan" && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4" onClick={handleBatalKeterangan}>
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fadeIn"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-5 py-4" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
+              <p className="text-white text-base font-bold">Konfirmasi: Sudah Sesuai</p>
+              <p className="text-orange-100 text-xs mt-0.5">Tuliskan keterangan / alasan sudah sesuai</p>
+            </div>
+            <div className="px-5 py-4">
+              <textarea
+                autoFocus
+                value={subKeterangan}
+                onChange={e => setSubKeterangan(e.target.value)}
+                rows={3}
+                placeholder="Contoh: Data usaha sudah sesuai kondisi lapangan…"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
+              />
+            </div>
+            <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2">
+              <button onClick={handleBatalKeterangan} className="px-4 py-2 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors">Batal</button>
+              <button
+                onClick={handleSubmitKeterangan}
+                disabled={!subKeterangan.trim()}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors ${!subKeterangan.trim() ? "bg-orange-300 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 active:bg-orange-700"}`}
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -172,17 +283,18 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Nama Anomali</td>
                 <td className="px-3 py-2.5 text-gray-700">{row.namaAnomali}</td>
               </tr>
-              <tr className="border-b border-gray-100">
+              <tr className={showFullForm ? "border-b border-gray-100" : ""}>
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan Anomali</td>
                 {/* whitespace-pre-line: menampilkan newline asli dari sel spreadsheet sebagai baris baru */}
                 <td className="px-3 py-2.5 text-gray-700 leading-relaxed whitespace-pre-line">{row.keteranganAnomali || "-"}</td>
               </tr>
-              <tr className="border-b border-gray-100">
+
+              <tr className={showFullForm ? "border-b border-gray-100" : ""}>
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Hasil Konfirmasi<br />PML/PPL</td>
                 <td className="px-3 py-2.5">
                   <select
                     value={hasilKonfirmasi}
-                    onChange={e => setHasilKonfirmasi(e.target.value)}
+                    onChange={e => handlePilihHasilKonfirmasi(e.target.value)}
                     disabled={isBusy}
                     className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400"
                   >
@@ -190,32 +302,40 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                   </select>
                 </td>
               </tr>
-              <tr className="border-b border-gray-100">
-                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan</td>
-                <td className="px-3 py-2.5">
-                  <textarea
-                    value={keterangan}
-                    onChange={e => setKeterangan(e.target.value)}
-                    rows={2}
-                    disabled={isBusy}
-                    placeholder="Tulis keterangan koreksi…"
-                    className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none disabled:bg-gray-50 disabled:text-gray-400"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Hasil Penanganan<br />Korwil</td>
-                <td className="px-3 py-2.5">
-                  <select
-                    value={hasilKorwil}
-                    onChange={e => setHasilKorwil(e.target.value)}
-                    disabled={isBusy}
-                    className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400"
-                  >
-                    {OPSI_KORWIL.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </td>
-              </tr>
+
+              {/* Kolom Keterangan & Hasil Penanganan Korwil hanya tampil jika data sudah
+                  pernah terisi sebelumnya (mode lengkap). Saat masih kosong semua,
+                  alurnya ditangani otomatis lewat dropdown di atas. */}
+              {showFullForm && (
+                <>
+                  <tr className="border-b border-gray-100">
+                    <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan</td>
+                    <td className="px-3 py-2.5">
+                      <textarea
+                        value={keterangan}
+                        onChange={e => setKeterangan(e.target.value)}
+                        rows={2}
+                        disabled={isBusy}
+                        placeholder="Tulis keterangan koreksi…"
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Hasil Penanganan<br />Korwil</td>
+                    <td className="px-3 py-2.5">
+                      <select
+                        value={hasilKorwil}
+                        onChange={e => setHasilKorwil(e.target.value)}
+                        disabled={isBusy}
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400"
+                      >
+                        {OPSI_KORWIL.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                </>
+              )}
             </tbody>
           </table>
 
@@ -233,21 +353,25 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
           )}
         </div>
 
+        {/* Footer tombol Simpan hanya untuk mode lengkap (edit bebas atas data yang sudah ada).
+            Pada mode ringkas, penyimpanan terjadi otomatis lewat dropdown/dialog di atas. */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex-shrink-0 flex items-center justify-end gap-2">
           <button onClick={onClose} disabled={isBusy} className="px-4 py-2 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Tutup</button>
-          <button
-            onClick={handleSave}
-            disabled={!isDirty || isBusy}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors ${!isDirty || isBusy ? "bg-orange-300 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 active:bg-orange-700"}`}
-          >
-            {phase === "saving" && (
-              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            )}
-            {phase === "saving" ? "Menyimpan…" : "Simpan Perubahan"}
-          </button>
+          {showFullForm && (
+            <button
+              onClick={handleSave}
+              disabled={!isDirty || isBusy}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors ${!isDirty || isBusy ? "bg-orange-300 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 active:bg-orange-700"}`}
+            >
+              {phase === "saving" && (
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                  <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              )}
+              {phase === "saving" ? "Menyimpan…" : "Simpan Perubahan"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -264,6 +388,9 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
 
         @keyframes toastProgress{from{width:100%;}to{width:0%;}}
         .animate-toastProgress{animation:toastProgress 2s linear forwards;}
+
+        @keyframes toastProgress3{from{width:100%;}to{width:0%;}}
+        .animate-toastProgress3{animation:toastProgress3 3s linear forwards;}
 
         @keyframes drawCheck{to{stroke-dashoffset:0;}}
 

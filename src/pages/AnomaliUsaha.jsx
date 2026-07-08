@@ -290,6 +290,21 @@ export default function MonitoringAnomaliUsaha() {
   if (tableRef.current) tableRef.current.scrollTop = 0;
 };
 
+  // ── Hitung last update: Minggu terakhir jam 06.00 WIB ──
+  const getLastUpdate = () => {
+    const now = new Date();
+    const update = new Date(now);
+    // Cari Minggu minggu ini
+    update.setDate(now.getDate() - now.getDay());
+    // Set jam update
+    update.setHours(6, 0, 0, 0);
+    // Jika sekarang masih sebelum Minggu 06.00, mundur ke Minggu minggu lalu
+    if (now < update) {
+      update.setDate(update.getDate() - 7);
+    }
+    return update;
+  };
+
   // ── Fetch & parse CSV ──
   useEffect(() => {
     fetch(`${CSV_ANOMALI}&_cb=${Date.now()}`)
@@ -331,7 +346,7 @@ export default function MonitoringAnomaliUsaha() {
             hasilKonfirmasiKorwil:(cols[16]||"").trim(),
           });
         });
-        setRawRows(data); setLastUpdated(new Date()); setLoading(false);
+        setRawRows(data); setLastUpdated(getLastUpdate()); setLoading(false);
       })
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
@@ -474,9 +489,9 @@ const filteredRows = useMemo(() => {
             </div>
             {lastUpdated && (
               <div style={{ background:"rgba(255,255,255,0.15)", borderRadius:"12px", padding: isMobile ? "8px 12px" : "10px 16px", border:"1px solid rgba(255,255,255,0.2)" }}>
-                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"14px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui</p>
-                <p style={{ color:"#fff", fontSize:"12px", margin:0, fontWeight:700 }}>
-                  {lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} · 07.00 WIB
+                <p style={{ color:"rgba(255,255,255,0.75)", fontSize:"14px", margin:"0 0 2px 0", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em" }}>Data diperbarui pada</p>
+                <p style={{ color:"#fff", fontSize:"14px", margin:0, fontWeight:700 }}>
+                  {lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} Pukul 06.00 WIB
                 </p>
               </div>
             )}
@@ -699,14 +714,7 @@ const filteredRows = useMemo(() => {
                         </div>
 
                         {/* Filter indicator */}
-                        {filterLabel && (
-                          <div style={{ display:"flex", alignItems:"center", gap:"6px", padding:"6px 10px", borderRadius:"8px", background:`${filterColor}10`, marginBottom:"8px" }}>
-                            <span style={{ width:"7px", height:"7px", borderRadius:"50%", background:filterColor, flexShrink:0 }}/>
-                            <span style={{ fontSize:"11px", fontWeight:700, color:filterColor }}>Menampilkan: {filterLabel}</span>
-                            <span style={{ fontSize:"11px", color:"#94a3b8", marginLeft:"auto" }}>{filteredRows.length} data</span>
-                          </div>
-                        )}
-
+                       
                       </div>
 
                       {filteredRows.length === 0 ? (
