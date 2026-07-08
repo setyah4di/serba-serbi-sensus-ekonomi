@@ -63,73 +63,48 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
-// ── Stat Card global (3 kartu: sesuai, perlu, belum) ──
-function StatCard({ label, value, sub, icon, variant }) {
-  const styles = {
-    emerald: {
-      card:   "bg-emerald-50",
-      circle: "bg-emerald-200",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-emerald-600",
-      value:  "text-emerald-700",
-      sub:    "text-emerald-500",
-    },
-    rose: {
-      card:   "bg-rose-50",
-      circle: "bg-rose-200",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-rose-500",
-      value:  "text-rose-600",
-      sub:    "text-rose-400",
-    },
-    gray: {
-      card:   "bg-gray-100",
-      circle: "bg-gray-300",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-gray-500",
-      value:  "text-gray-700",
-      sub:    "text-gray-500",
-    },
-    orange: {
-      card:   "bg-orange-50",
-      circle: "bg-orange-200",
-      icon:   "bg-white/80 shadow-sm",
-      label:  "text-orange-500",
-      value:  "text-orange-600",
-      sub:    "text-orange-400",
-    },
-     blue: {                                    // ← BARU
-    card:   "bg-blue-50",
-    circle: "bg-blue-200",
-    icon:   "bg-white/80 shadow-sm",
-    label:  "text-blue-600",
-    value:  "text-blue-700",
-    sub:    "text-blue-500",
-  },
-  purple: {                                  // ← BARU
-    card:   "bg-purple-50",
-    circle: "bg-purple-200",
-    icon:   "bg-white/80 shadow-sm",
-    label:  "text-purple-600",
-    value:  "text-purple-700",
-    sub:    "text-purple-500",
-  },
-  };
-  const s = styles[variant];
- return (
-  <div className={`relative rounded-2xl p-3 overflow-hidden flex flex-col gap-2 ${s.card}`}>
-    <div className={`absolute -top-7 -right-7 w-28 h-28 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
-    <div className={`absolute bottom-0 right-7 w-14 h-14 rounded-full opacity-20 pointer-events-none ${s.circle}`} />
-    <div className="relative flex items-start justify-between">
-      <p className={`text-[10px] font-semibold uppercase tracking-wide leading-tight ${s.label}`}>{label}</p>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${s.icon}`}>{icon}</div>
+// ── Media Query Hook ──
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) setMatches(media.matches);
+    const listener = () => setMatches(media.matches);
+    window.addEventListener("resize", listener);
+    return () => window.removeEventListener("resize", listener);
+  }, [matches, query]);
+  return matches;
+}
+
+// ── Stat Card global ──
+function StatCard({ label, value, sub, icon, accentColor }) {
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${accentColor}08 0%, ${accentColor}02 100%)`,
+      borderRadius:"18px", padding:"18px 16px 14px",
+      border:`2px solid ${accentColor}30`,
+      display:"flex", flexDirection:"column", justifyContent:"space-between",
+      minHeight:"120px", position:"relative", overflow:"hidden",
+      boxShadow: `0 4px 12px ${accentColor}08`,
+      transition: "all 0.3s ease",
+    }}>
+      {/* Decorative elements - top left gradient circle */}
+      <div style={{ position:"absolute", top:"-30px", left:"-30px", width:"80px", height:"80px", borderRadius:"50%", background:`${accentColor}12`, filter:"blur(8px)", pointerEvents:"none" }}/>
+      {/* Decorative elements - bottom right accent */}
+      <div style={{ position:"absolute", bottom:"-25px", right:"-25px", width:"65px", height:"65px", borderRadius:"50%", background:`${accentColor}08`, pointerEvents:"none" }}/>
+      {/* Top accent line */}
+      <div style={{ position:"absolute", top:0, left:0, right:0, height:"3px", background:`linear-gradient(90deg, ${accentColor}00, ${accentColor}60, ${accentColor}00)`, pointerEvents:"none" }}/>
+      
+      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"8px", position:"relative", zIndex:1 }}>
+        <p style={{ fontSize:"10px", fontWeight:700, color:accentColor, textTransform:"uppercase", letterSpacing:"0.08em", margin:0, opacity:0.8 }}>{label}</p>
+        <div style={{ width:"36px", height:"36px", borderRadius:"12px", background:`linear-gradient(135deg, ${accentColor}25, ${accentColor}15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:"18px", border:`1.5px solid ${accentColor}35` }}>{icon}</div>
+      </div>
+      <div style={{ position:"relative", zIndex:1 }}>
+        <p style={{ fontSize:"32px", fontWeight:800, color:accentColor, margin:0, lineHeight:1, marginBottom:"4px" }}>{value}</p>
+        {sub && <p style={{ fontSize:"12px", color:"#64748b", margin:0, fontWeight:500 }}>{sub}</p>}
+      </div>
     </div>
-    <div className="relative">
-      <p className={`text-xl md:text-2xl font-black leading-none tracking-tight ${s.value}`}>{value}</p>
-      {sub && <p className={`text-[10px] mt-1 ${s.sub}`}>{sub}</p>}
-    </div>
-  </div>
-);
+  );
 }
 
 // ── Progress bar ──
@@ -294,6 +269,7 @@ export default function MonitoringAnomali() {
   const [statusFilter, setStatusFilter] = useState(null);
   const [pmlFilter, setPmlFilter] = useState(null);   // ← BARU
 
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
@@ -536,51 +512,51 @@ const filteredRows = useMemo(() => {
 
         {!loading && !error && globalStats && (
           <>
-            {/* ── 3 Stat Cards: Sesuai / Perlu / Belum + 1 Total ── */}
-         <div className="grid grid-cols-6 gap-2 mb-8">
-  <StatCard
-    label="Total Anomali"
-    value={globalStats.total}
-    sub="seluruh baris"
-    icon="📋"
-    variant="orange"
-  />
+            {/* ── Stat Cards global ── */}
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
   <StatCard
     label="Sudah Sesuai"
     value={globalStats.sesuai}
-    sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}%`}
+    sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="✅"
-    variant="emerald"
+    accentColor="#0ea5e9"
   />
   <StatCard
     label="Perlu Diperbaiki"
     value={globalStats.perlu}
-    sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}%`}
+    sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="❌"
-    variant="rose"
+    accentColor="#e11d48"
   />
   <StatCard
     label="Belum Dikonfirmasi"
     value={globalStats.belum}
-    sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}%`}
+    sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="⏳"
-    variant="gray"
+    accentColor="#f59e0b"
   />
   <StatCard
     label="Ditangani Korwil"
     value={globalStats.korwilDitangani}
-    sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}%`}
+    sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="🛡️"
-    variant="blue"
+    accentColor="#a855f7"
   />
   <StatCard
     label="Diperbaiki PCL & Diapprove PML"
     value={globalStats.korwilDiperbaiki}
-    sub={`${((globalStats.korwilDiperbaiki/globalStats.total)*100).toFixed(1)}%`}
+    sub={`${((globalStats.korwilDiperbaiki/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="🔧"
-    variant="purple"
+    accentColor="#10b981"
   />
-</div>
+  <StatCard
+    label="Total Anomali"
+    value={globalStats.total}
+    sub="seluruh baris anomali"
+    icon="📊"
+    accentColor="#06b6d4"
+  />
+            </div>
 
             {/* ── Filter & sort kecamatan ── */}
             <div className="flex flex-col sm:flex-row gap-3 mb-2">

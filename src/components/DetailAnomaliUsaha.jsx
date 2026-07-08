@@ -19,7 +19,6 @@ const OPSI_KORWIL = [
 
 // Nilai keterangan otomatis ketika PML/PPL memilih "02 Perlu diperbaiki"
 const KETERANGAN_OTOMATIS_02 = "Perlu di reject PML, lalu diperbaiki PCL, dan diapprove PML";
-const KORWIL_OTOMATIS_01 = "01 Sudah Ditangani Korwil";
 
 function idSubSLS(row) {
   const kode = row.subSLS ? `${row.kodeSLS}-${row.subSLS}` : row.kodeSLS;
@@ -134,7 +133,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
 
   const handleSubmitKeterangan = () => {
     if (!subKeterangan.trim()) return;
-    persist("01 Sudah Sesuai", subKeterangan.trim(), KORWIL_OTOMATIS_01);
+    persist("01 Sudah Sesuai", subKeterangan.trim(), undefined, { successPhase: "success", closeDelay: 2100 });
   };
 
   return (
