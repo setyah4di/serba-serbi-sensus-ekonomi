@@ -556,21 +556,7 @@ const filteredRows = useMemo(() => {
     value={globalStats.sesuai}
     sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="✅"
-    accentColor="#0ea5e9"
-  />
-  <StatCard
-    label="Perlu Diperbaiki"
-    value={globalStats.perlu}
-    sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="❌"
-    accentColor="#e11d48"
-  />
-  <StatCard
-    label="Belum Dikonfirmasi"
-    value={globalStats.belum}
-    sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="⏳"
-    accentColor="#f59e0b"
+    accentColor="#0f766e"
   />
   <StatCard
     label="Ditangani Korwil"
@@ -580,11 +566,25 @@ const filteredRows = useMemo(() => {
     accentColor="#a855f7"
   />
   <StatCard
+    label="Perlu Diperbaiki"
+    value={globalStats.perlu}
+    sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
+    icon="❌"
+    accentColor="#e11d48"
+  />
+  <StatCard
     label="Diperbaiki PCL & Diapprove PML"
     value={globalStats.korwilDiperbaiki}
     sub={`${((globalStats.korwilDiperbaiki/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="🔧"
     accentColor="#10b981"
+  />
+   <StatCard
+    label="Belum Dikonfirmasi"
+    value={globalStats.belum}
+    sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
+    icon="⏳"
+    accentColor="#f59e0b"
   />
   <StatCard
     label="Total Anomali"
@@ -676,10 +676,10 @@ const filteredRows = useMemo(() => {
     )}
   </p>
   <div className="grid grid-cols-5 gap-1.5">
-    <StatusFilterCard label="Sudah Sesuai"       value={statusCounts.sesuai}            activeKey="sesuai"            currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")}            colorScheme="emerald" />
-    <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}             activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
     <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}             activeKey="belum"             currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}             colorScheme="gray"    />
+    <StatusFilterCard label="Sudah Sesuai"       value={statusCounts.sesuai}            activeKey="sesuai"            currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")}            colorScheme="emerald" />
     <StatusFilterCard label="Ditangani Korwil"   value={statusCounts.korwilDitangani}   activeKey="korwil_ditangani"  currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_ditangani")}  colorScheme="blue"    />
+    <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}             activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
     <StatusFilterCard label="Sudah Diperbaiki PCL"     value={statusCounts.korwilDiperbaiki}  activeKey="korwil_diperbaiki" currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_diperbaiki")} colorScheme="purple"  />
   </div>
 </div>

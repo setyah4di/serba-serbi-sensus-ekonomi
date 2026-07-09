@@ -546,10 +546,10 @@ const filteredRows = useMemo(() => {
             {/* ── Stat Cards global ── */}
             <div style={statGridStyle}>
               <StatCard label="Sudah Sesuai" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`} icon="✅" accentColor="#10b981"/>
-              <StatCard label="Perlu Diperbaiki" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
-              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
               <StatCard label="Ditangani Korwil" value={globalStatus.korwilDitangani} sub={`${((globalStatus.korwilDitangani/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛡️" accentColor="#3b82f6"/>
+              <StatCard label="Perlu Diperbaiki" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
               <StatCard label="Diperbaiki PCL & Diapprove PML" value={globalStatus.korwilDiperbaiki} sub={`${((globalStatus.korwilDiperbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🔧" accentColor="#7c3aed"/>
+              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
               <StatCard label="Total Anomali" value={globalStatus.total} sub="seluruh baris anomali" icon="📊" accentColor="#f97316"/>
             </div>
 
@@ -642,24 +642,24 @@ const filteredRows = useMemo(() => {
                       {isMobile ? (
                         <div style={{ display:"flex", gap:"8px" }}>
                           <MiniStatusCellFlat
-                            label="Sudah Sesuai" value={statusCounts.sesuai} color="#10b981"
-                            isActive={activeFilter==="sesuai"}
-                            onClick={()=>handleFilterCard("sesuai")}
-                          />
-                          <MiniStatusCellFlat
-                            label="Perlu Diperbaiki" value={statusCounts.perbaiki} color="#f43f5e"
-                            isActive={activeFilter==="perbaiki"}
-                            onClick={()=>handleFilterCard("perbaiki")}
-                          />
-                          <MiniStatusCellFlat
                             label="Belum Dikonfirmasi" value={statusCounts.belum} color="#1e293b"
                             isActive={activeFilter==="belum"}
                             onClick={()=>handleFilterCard("belum")}
                           />
                           <MiniStatusCellFlat
+                            label="Sudah Sesuai" value={statusCounts.sesuai} color="#10b981"
+                            isActive={activeFilter==="sesuai"}
+                            onClick={()=>handleFilterCard("sesuai")}
+                          />
+                           <MiniStatusCellFlat
                             label="Ditangani Korwil" value={statusCounts.korwilDitangani} color="#3b82f6"
                             isActive={activeFilter==="korwil_ditangani"}
                             onClick={()=>handleFilterCard("korwil_ditangani")}
+                          />
+                          <MiniStatusCellFlat
+                            label="Perlu Diperbaiki" value={statusCounts.perbaiki} color="#f43f5e"
+                            isActive={activeFilter==="perbaiki"}
+                            onClick={()=>handleFilterCard("perbaiki")}
                           />
                           <MiniStatusCellFlat
                             label="Sudah Diperbaiki PCL" value={statusCounts.korwilDiperbaiki} color="#7c3aed"
@@ -669,6 +669,13 @@ const filteredRows = useMemo(() => {
                         </div>
                       ) : (
                         <div style={{ display:"grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap:"10px" }}>
+                            <MiniStatusCard
+                            label="Belum Dikonfirmasi" count={statusCounts.belum} total={selectedRows.length}
+                            color="#64748b" bg="#f8fafc"
+                            isActive={activeFilter==="belum"}
+                            onClick={()=>handleFilterCard("belum")}
+                            isMobile={isMobile}
+                          />
                           <MiniStatusCard
                             label="Sudah Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
                             color="#10b981" bg="#f0fdf4"
@@ -677,24 +684,17 @@ const filteredRows = useMemo(() => {
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Perlu Diperbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
-                            color="#f43f5e" bg="#fff1f2"
-                            isActive={activeFilter==="perbaiki"}
-                            onClick={()=>handleFilterCard("perbaiki")}
-                            isMobile={isMobile}
-                          />
-                          <MiniStatusCard
-                            label="Belum Dikonfirmasi" count={statusCounts.belum} total={selectedRows.length}
-                            color="#64748b" bg="#f8fafc"
-                            isActive={activeFilter==="belum"}
-                            onClick={()=>handleFilterCard("belum")}
-                            isMobile={isMobile}
-                          />
-                          <MiniStatusCard
                             label="Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
                             color="#3b82f6" bg="#eff6ff"
                             isActive={activeFilter==="korwil_ditangani"}
                             onClick={()=>handleFilterCard("korwil_ditangani")}
+                            isMobile={isMobile}
+                          />
+                          <MiniStatusCard
+                            label="Perlu Diperbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
+                            color="#f43f5e" bg="#fff1f2"
+                            isActive={activeFilter==="perbaiki"}
+                            onClick={()=>handleFilterCard("perbaiki")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
@@ -706,8 +706,6 @@ const filteredRows = useMemo(() => {
                           />
                         </div>
                       )}
-
-                    
                     </div>
                     {/* ── Filter PML ── */}
 {pmlList.length > 0 && (
