@@ -14,8 +14,11 @@ html {
 }
 
 /* Pastikan konten tidak tertutup navbar fixed */
-main.pt-16 {
-  padding-top: 4rem; /* 64px, sesuaikan dengan tinggi navbar Anda */
+/* Hanya tambahkan padding-top pada layar kecil; desktop/`md:` dikelola oleh Tailwind utility classes */
+@media (max-width: 767px) {
+  main.pt-16 {
+    padding-top: 4rem; /* 64px, sesuaikan dengan tinggi navbar Anda */
+  }
 }
 
 /* Atau jika navbar memiliki tinggi berbeda, sesuaikan */
