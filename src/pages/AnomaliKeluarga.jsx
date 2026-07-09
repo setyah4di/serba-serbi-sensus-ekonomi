@@ -80,10 +80,10 @@ function getKorwilStatusKey(row) {
 
 // ── Helpers warna card kecamatan (berdasarkan jumlah BELUM TUNTAS) ──
 // "belum tuntas" = perlu + belum → makin banyak makin merah
-function countColor(v)    { if (v === 0) return "text-emerald-600"; if (v <= 5) return "text-blue-600"; if (v <= 15) return "text-amber-500"; return "text-rose-500"; }
-function countBarColor(v) { if (v === 0) return "bg-emerald-400"; if (v <= 5) return "bg-blue-500"; if (v <= 15) return "bg-amber-400"; return "bg-rose-400"; }
-function countBadge(v)    { if (v === 0) return "bg-emerald-50 text-emerald-700 ring-emerald-200"; if (v <= 5) return "bg-blue-50 text-blue-700 ring-blue-200"; if (v <= 15) return "bg-amber-50 text-amber-700 ring-amber-200"; return "bg-rose-50 text-rose-700 ring-rose-200"; }
-function countLabel(v)    { if (v === 0) return "Tuntas"; if (v <= 5) return "Ringan"; if (v <= 15) return "Sedang"; return "Perlu Perhatian"; }
+function countColor(v)    { if (v === 0) return "text-emerald-600"; if (v <= 50) return "text-blue-600"; if (v <= 100) return "text-amber-500"; return "text-rose-500"; }
+function countBarColor(v) { if (v === 0) return "bg-emerald-400"; if (v <= 50) return "bg-blue-500"; if (v <= 100) return "bg-amber-400"; return "bg-rose-400"; }
+function countBadge(v)    { if (v === 0) return "bg-emerald-50 text-emerald-700 ring-emerald-200"; if (v <= 50) return "bg-blue-50 text-blue-700 ring-blue-200"; if (v <= 100) return "bg-amber-50 text-amber-700 ring-amber-200"; return "bg-rose-50 text-rose-700 ring-rose-200"; }
+function countLabel(v)    { if (v === 0) return "Tuntas"; if (v <= 50) return "Ringan"; if (v <= 100) return "Sedang"; return "Perlu Perhatian"; }
 
 function statusBadge(status) {
   const s = (status || "").trim();
@@ -231,8 +231,10 @@ function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, col
       ${isActive ? sc.active : sc.base + " hover:brightness-95"}`}
   >
     <span className={`text-lg font-black leading-none ${sc.num}`}>{value}</span>
-    <span className={`text-[9px] font-semibold text-center leading-tight ${sc.label}`}>{label}</span>
-    {isActive && <span className={`text-[8px] font-bold mt-0.5 ${sc.label}`}>▲</span>}
+    <span className={`text-[10px] sm:text-[10px] md:text-[11px] lg:text-[11px] xl:text-[11px] font-semibold text-center leading-tight ${sc.label}`}
+>
+  {label}
+</span>
   </button>
 );
 }
@@ -408,9 +410,10 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
         const sesuai = list.filter(r => getStatusKey(r)==="sesuai").length;
         const perlu  = list.filter(r => getStatusKey(r)==="perlu").length;
         const belum  = list.filter(r => getStatusKey(r)==="belum").length;
+        const diperbaiki  = list.filter(r => getKorwilStatusKey(r)==="korwil_diperbaiki").length;
         return {
           kecamatan: nama,
-          countBelumTuntas: perlu + belum,  // ← angka besar di kartu
+          countBelumTuntas: (perlu + belum) - diperbaiki,  // ← angka besar di kartu
           countSesuai: sesuai,
           countTotal:  list.length,
         };
@@ -677,7 +680,7 @@ const filteredRows = useMemo(() => {
     <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}             activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
     <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}             activeKey="belum"             currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}             colorScheme="gray"    />
     <StatusFilterCard label="Ditangani Korwil"   value={statusCounts.korwilDitangani}   activeKey="korwil_ditangani"  currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_ditangani")}  colorScheme="blue"    />
-    <StatusFilterCard label="Diperbaiki PCL"     value={statusCounts.korwilDiperbaiki}  activeKey="korwil_diperbaiki" currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_diperbaiki")} colorScheme="purple"  />
+    <StatusFilterCard label="Sudah Diperbaiki PCL"     value={statusCounts.korwilDiperbaiki}  activeKey="korwil_diperbaiki" currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_diperbaiki")} colorScheme="purple"  />
   </div>
 </div>
 {/* ── Filter PML ── */}

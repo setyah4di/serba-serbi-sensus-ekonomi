@@ -64,7 +64,7 @@ function countBadgeStyle(v){
   if(v<=15)return{bg:"#fef3c7",text:"#92400e",dot:"#f59e0b"};
   return{bg:"#ffe4e6",text:"#9f1239",dot:"#f43f5e"};
 }
-function countLabel(v) { if(v===0)return"Aman"; if(v<=5)return"Ringan"; if(v<=15)return"Sedang"; return"Perlu Perhatian"; }
+function countLabel(v) { if(v===0)return"Aman"; if(v<=5)return"Ringan"; if(v<=30)return"Sedang"; return"Perlu Perhatian"; }
 
 function statusBadgeStyle(status) {
   const s = (status || "").trim();
@@ -117,7 +117,7 @@ function StatCard({ label, value, sub, icon, accentColor }) {
     }}>
       <div style={{ position:"absolute", right:"-18px", bottom:"-18px", width:"72px", height:"72px", borderRadius:"50%", background:`${accentColor}15`, pointerEvents:"none" }}/>
       <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"8px" }}>
-        <p style={{ fontSize:"11px", fontWeight:600, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em", margin:0 }}>{label}</p>
+        <p style={{ fontSize:"10px", fontWeight:600, color:"#64748b", textTransform:"uppercase", letterSpacing:"0.07em", margin:0 }}>{label}</p>
         <div style={{ width:"32px", height:"32px", borderRadius:"10px", background:`${accentColor}20`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:"16px" }}>{icon}</div>
       </div>
       <div>
@@ -153,7 +153,7 @@ function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClic
         <ProgressBar value={count} max={maxCount} color={color} />
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"6px" }}>
           <div style={{ display:"flex", gap:"12px" }}>
-            {[["Desa", countDesa], ["SLS", countSLS]].map(([lbl, val]) => (
+            {[["Sesuai", countDesa]].map(([lbl, val]) => (
               <span key={lbl} style={{ fontSize:"12px", color:"#94a3b8", display:"flex", alignItems:"center", gap:"4px" }}>
                 <span style={{ display:"inline-block", width:"6px", height:"6px", borderRadius:"50%", background:"#cbd5e1" }}/>
                 <b style={{ color:"#475569", fontWeight:600 }}>{val}</b> {lbl}
@@ -170,25 +170,28 @@ function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClic
   );
 }
 
-// ── Mini Status Card (desktop: pill dengan background berwarna) ──
-function MiniStatusCard({ label, count, total, color, bg, dot, isActive, onClick, isMobile }) {
+// ── Mini Status Card ──
+// Layout: angka besar berwarna di atas (terpusat), label berwarna di bawahnya.
+// Kartu berbentuk pill dengan latar warna pastel sesuai status; saat aktif,
+// border warna solid dipertebal sebagai penanda filter yang sedang dipilih.
+function MiniStatusCard({ label, count, total, color, bg, isActive, onClick, isMobile }) {
   return (
     <button
       onClick={onClick}
       style={{
-        flex:1, border:"none", cursor:"pointer", textAlign:"left",
-        background: isActive ? color : bg,
-        borderRadius:"14px", padding: isMobile ? "10px 12px" : "12px 14px",
-        border: isActive ? `2px solid ${color}` : `1.5px solid ${bg === "#fff" ? "#f1f5f9" : bg}`,
-        boxShadow: isActive ? `0 4px 16px ${color}33` : "none",
+        flex:1, minWidth:0, border: isActive ? `2px solid ${color}` : `1.5px solid ${color}30`,
+        cursor:"pointer", textAlign:"center",
+        background: `${color}12`,
+        borderRadius:"16px",
+        padding: isMobile ? "14px 8px" : "10px 14px",
+        display:"flex", flexDirection:"column", alignItems:"center", gap:"2px",
         transition:"all 0.18s cubic-bezier(0.4,0,0.2,1)",
         transform: isActive ? "translateY(-2px)" : "none",
+        boxShadow: isActive ? `0 4px 16px ${color}30` : "none",
       }}
     >
-      <div style={{ display:"flex", alignItems:"center", gap:"6px", marginBottom:"6px" }}>
-        <span style={{ fontSize: isMobile ? "9px" : "10px", fontWeight:500, textTransform:"uppercase", letterSpacing:"0.08em", color: isActive ? "rgba(255,255,255,0.85)" : "#64748b" }}>{label}</span>
-      </div>
-      <p style={{ fontSize: isMobile ? "16px" : "20px", fontWeight:800, margin:0, lineHeight:1, color: isActive ? "#fff" : color }}>{count}</p>
+      <p style={{ fontSize: isMobile ? "20px" : "18px", fontWeight:800, margin:0, lineHeight:1, color }}>{count}</p>
+      <span style={{ fontSize: isMobile ? "11px" : "10px", fontWeight:700, color:  isMobile ? color:color, lineHeight:1.3 }}>{label}</span>
     </button>
   );
 }
@@ -210,7 +213,7 @@ function MiniStatusCellFlat({ label, value, color, isActive, showDivider, onClic
       }}
     >
       <span style={{ fontSize:"18px", fontWeight:800, color, lineHeight:1 }}>{value}</span>
-      <span style={{ fontSize:"9px", fontWeight:600, color: isActive ? color : "#94a3b8", textAlign:"center", lineHeight:1.25 }}>{label}</span>
+      <span style={{ fontSize:"9px", fontWeight:600, color, textAlign:"center", lineHeight:1.25 }}>{label}</span>
     </button>
   );
 }
@@ -395,10 +398,11 @@ export default function MonitoringAnomaliUsaha() {
     return [...namaSet].map(nama => {
       const list    = kecamatanMap[nama]||[];
       // Hitung jumlah yang TIDAK sesuai (perbaiki + belum)
-      const count = list.filter(r => !r.hasilKonfirmasiPML.startsWith("01")).length;
+      const count = list.filter(r => !r.hasilKonfirmasiPML.startsWith("01")).length - list.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length;
+      const sesuai = list.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
       const desaSet = new Set(list.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
       const slsSet  = new Set(list.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
-      return { kecamatan:nama, count, countDesa:desaSet.size, countSLS:slsSet.size };
+      return { kecamatan:nama, count,sesuai, countDesa:desaSet.size, countSLS:slsSet.size };
     })
     .filter(k => k.count>0 || KECAMATAN_ORDER.includes(k.kecamatan))
     .filter(k => search===""||k.kecamatan.toLowerCase().includes(search.toLowerCase()))
@@ -585,10 +589,10 @@ const filteredRows = useMemo(() => {
 
               {/* Kecamatan grid */}
               <div style={kecamatanGridStyle}>
-                {kecamatanList.map(({ kecamatan, count, countDesa, countSLS }) => (
+                {kecamatanList.map(({ kecamatan, count, sesuai }) => (
                   <KecamatanCard
                     key={kecamatan} kecamatan={kecamatan} count={count} maxCount={maxCount}
-                    countDesa={countDesa} countSLS={countSLS}
+                    countDesa={sesuai} 
                     isSelected={selectedKec===kecamatan}
                     onClick={()=>handleSelectKec(kecamatan)}
                   />
@@ -630,10 +634,11 @@ const filteredRows = useMemo(() => {
 
                     {/* ── 5 Status Mini Cards ── */}
                     <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fafafa", borderBottom:"1px solid #f1f5f9", overflowX: isMobile ? "auto" : "visible" }}>
-                      <p style={{ fontSize:"11px", fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.07em", margin:"0 0 10px 0" }}>
-                        Filter status
-                      </p>
-
+                      
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+                    <p style={{fontSize:"11px",fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.07em",margin:0}}>Filter berdasarkan status</p>
+                    {activeFilter && <button onClick={()=>setActiveFilter(null)} style={{fontSize:"11px",fontWeight:600,color:"#94a3b8",background:"none",border:"1.5px solid #e2e8f0",borderRadius:"8px",padding:"4px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:"4px"}}><svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>Hapus filter</button>}
+                  </div>
                       {isMobile ? (
                         <div style={{ display:"flex", gap:"8px" }}>
                           <MiniStatusCellFlat
@@ -657,7 +662,7 @@ const filteredRows = useMemo(() => {
                             onClick={()=>handleFilterCard("korwil_ditangani")}
                           />
                           <MiniStatusCellFlat
-                            label="Diperbaiki PCL" value={statusCounts.korwilDiperbaiki} color="#7c3aed"
+                            label="Sudah Diperbaiki PCL" value={statusCounts.korwilDiperbaiki} color="#7c3aed"
                             isActive={activeFilter==="korwil_diperbaiki"}
                             onClick={()=>handleFilterCard("korwil_diperbaiki")}
                           />
@@ -665,36 +670,36 @@ const filteredRows = useMemo(() => {
                       ) : (
                         <div style={{ display:"grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap:"10px" }}>
                           <MiniStatusCard
-                            label="Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
-                            color="#10b981" bg="#f0fdf4" dot="#10b981"
+                            label="Sudah Sesuai" count={statusCounts.sesuai} total={selectedRows.length}
+                            color="#10b981" bg="#f0fdf4"
                             isActive={activeFilter==="sesuai"}
                             onClick={()=>handleFilterCard("sesuai")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Perbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
-                            color="#f43f5e" bg="#fff1f2" dot="#f43f5e"
+                            label="Perlu Diperbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
+                            color="#f43f5e" bg="#fff1f2"
                             isActive={activeFilter==="perbaiki"}
                             onClick={()=>handleFilterCard("perbaiki")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Belum" count={statusCounts.belum} total={selectedRows.length}
-                            color="#64748b" bg="#f8fafc" dot="#94a3b8"
+                            label="Belum Dikonfirmasi" count={statusCounts.belum} total={selectedRows.length}
+                            color="#64748b" bg="#f8fafc"
                             isActive={activeFilter==="belum"}
                             onClick={()=>handleFilterCard("belum")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
                             label="Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
-                            color="#3b82f6" bg="#eff6ff" dot="#3b82f6"
+                            color="#3b82f6" bg="#eff6ff"
                             isActive={activeFilter==="korwil_ditangani"}
                             onClick={()=>handleFilterCard("korwil_ditangani")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Diperbaiki PCL" count={statusCounts.korwilDiperbaiki} total={selectedRows.length}
-                            color="#7c3aed" bg="#f5f3ff" dot="#7c3aed"
+                            label="Sudah Diperbaiki PCL" count={statusCounts.korwilDiperbaiki} total={selectedRows.length}
+                            color="#7c3aed" bg="#f5f3ff"
                             isActive={activeFilter==="korwil_diperbaiki"}
                             onClick={()=>handleFilterCard("korwil_diperbaiki")}
                             isMobile={isMobile}
@@ -702,15 +707,7 @@ const filteredRows = useMemo(() => {
                         </div>
                       )}
 
-                      {activeFilter && (
-                        <button
-                          onClick={()=>setActiveFilter(null)}
-                          style={{ marginTop:"10px", fontSize:"11px", fontWeight:600, color:"#94a3b8", background:"none", border:"1.5px solid #e2e8f0", borderRadius:"8px", padding:"4px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:"5px" }}
-                        >
-                          <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                          Hapus filter
-                        </button>
-                      )}
+                    
                     </div>
                     {/* ── Filter PML ── */}
 {pmlList.length > 0 && (

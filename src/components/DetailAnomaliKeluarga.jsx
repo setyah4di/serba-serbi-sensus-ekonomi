@@ -21,6 +21,21 @@ const OPSI_KORWIL = [
 // Nilai keterangan otomatis ketika PML/PPL memilih "02 Perlu diperbaiki"
 const KETERANGAN_OTOMATIS_02 = "Perlu di reject PML, lalu diperbaiki PCL, dan diapprove PML";
 
+// ── Menentukan opsi "Hasil Penanganan Anomali" yang tersedia,
+// berdasarkan nilai "Hasil Konfirmasi PML/PPL" saat ini.
+// - "01 Sudah Sesuai"      -> hanya opsi "01 Sudah Ditangani Korwil"
+// - "02 Perlu diperbaiki"  -> hanya opsi "02 Sudah Diperbaiki PCL & Diapprove PML"
+// - selain itu (belum dikonfirmasi) -> tampilkan semua opsi
+function getOpsiKorwilTersedia(hasilKonfirmasi) {
+  if (hasilKonfirmasi === "01 Sudah Sesuai") {
+    return [OPSI_KORWIL[0], OPSI_KORWIL[1]];
+  }
+  if (hasilKonfirmasi === "02 Perlu diperbaiki") {
+    return [OPSI_KORWIL[0], OPSI_KORWIL[2]];
+  }
+  return OPSI_KORWIL;
+}
+
 function IdSubSLS(row) {
   return row.subSLS ? `${row.namaDesa} - ${row.namaSLS}` : row.kodeSLS;
 }
@@ -51,6 +66,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
 
   const isBusy = phase !== "idle";
   const showFullForm = !isEmptyInitial;
+  const opsiKorwilTersedia = getOpsiKorwilTersedia(hasilKonfirmasi);
 
   const isDirty =
     hasilKonfirmasi !== (row.hasilKonfirmasiPML || "") ||
@@ -118,7 +134,17 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
   const handlePilihHasilKonfirmasi = (value) => {
     setHasilKonfirmasi(value);
 
-    if (!isEmptyInitial) return; // mode lengkap: biarkan user pakai tombol Simpan Perubahan
+    if (!isEmptyInitial) {
+      // Mode lengkap: biarkan user pakai tombol Simpan Perubahan.
+      // Tapi kalau nilai Hasil Penanganan Anomali yang sedang terpilih sudah
+      // tidak valid untuk pilihan baru ini, kosongkan supaya user memilih ulang
+      // dari opsi yang sesuai.
+      const opsiValid = getOpsiKorwilTersedia(value).some(o => o.value === hasilKorwil);
+      if (!opsiValid) {
+        setHasilKorwil("");
+      }
+      return;
+    }
 
     if (value === "01 Sudah Sesuai") {
       setSubKeterangan("");
@@ -227,7 +253,6 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
             <div className="flex items-center justify-between bg-orange-500 px-5 py-4 text-white">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-orange-100">Detail Keterangan</p>
-                <p className="text-sm font-semibold">Rincian Detail Keterangan</p>
               </div>
               <button
                 type="button"
@@ -380,7 +405,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
                         disabled={isBusy}
                         className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400"
                       >
-                        {OPSI_KORWIL.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {opsiKorwilTersedia.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                     </td>
                   </tr>
