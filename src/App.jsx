@@ -62,9 +62,9 @@ function RouteWrapper() {
 
   if (showSidebar) {
     return (
-      <div className="flex flex-1 min-h-screen">
+      <div className="flex flex-1 min-h-screen min-w-0">
         <Sidebar />
-        <main className="flex-1 pt-16 md:pt-0">
+        <main className="flex-1 min-w-0 pt-16 md:pt-0">
           <Routes>
             <Route path="/" element={<Beranda />} />
             <Route path="/registrasi" element={<Registrasi />} />
@@ -89,7 +89,7 @@ function RouteWrapper() {
   return (
     <>
       <Navbar />
-      <main className="pt-16 flex-grow">
+      <main className="pt-16 flex-grow min-w-0">
         <Routes>
           <Route path="/" element={<Beranda />} />
           <Route path="/registrasi" element={<Registrasi />} />

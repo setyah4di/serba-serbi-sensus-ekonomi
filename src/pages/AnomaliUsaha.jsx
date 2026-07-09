@@ -525,7 +525,7 @@ const filteredRows = useMemo(() => {
         </div>
       </header>
 
-      <main style={{ maxWidth:"1200px", margin:"0 auto", padding: isMobile ? "16px 12px 32px" : "28px 24px 48px" }}>
+      <main style={{ maxWidth:"1200px", width:"100%", margin:"0 auto", padding: isMobile ? "16px 12px 32px" : "28px 24px 48px" }}>
 
         {loading && (
           <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"80px 0", gap:"16px" }}>

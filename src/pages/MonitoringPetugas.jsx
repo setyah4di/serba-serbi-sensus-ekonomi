@@ -399,7 +399,7 @@ export default function MonitoringPetugas() {
   const handleDetail=(pcl)=>setModalPCL(pcl);
 
   return(
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans overflow-x-hidden">
 
       {/* Modal Detail PCL */}
       {modalPCL&&(
@@ -422,7 +422,7 @@ export default function MonitoringPetugas() {
       )}
 
       <header className="relative overflow-hidden" style={{background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)"}}>
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
+        <div className="relative z-10 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <h1 className="text-white text-2xl sm:text-3xl font-black leading-tight">Monitoring Petugas Pencacahan</h1>
@@ -440,7 +440,7 @@ export default function MonitoringPetugas() {
         <div className="absolute right-20 bottom-0 w-32 h-32 rounded-full bg-white opacity-5"/>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
         {loading&&(
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin"/>
@@ -480,14 +480,14 @@ export default function MonitoringPetugas() {
               </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-5">
-              <div className="lg:w-[55%] grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
+            <div className="flex flex-col lg:flex-row gap-5 w-full min-w-0">
+              <div className="w-full min-w-0 lg:w-[55%] grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
                 {kecamatanList.map(({kecamatan,avg,countPCL,countPML})=>(
                   <KecamatanCard key={kecamatan} kecamatan={kecamatan} avg={avg} countPCL={countPCL} countPML={countPML} isSelected={selectedKec===kecamatan} onClick={()=>handleSelectKec(kecamatan)}/>
                 ))}
               </div>
 
-              <div ref={detailRef} className="lg:w-[45%]">
+              <div ref={detailRef} className="w-full min-w-0 lg:w-[45%]">
                 {!selectedKec?(
                   <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-20 text-center px-8">
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
@@ -497,7 +497,7 @@ export default function MonitoringPetugas() {
                     <p className="text-gray-400 text-sm mt-1">Klik kartu kecamatan untuk melihat detail PML dan PCL.</p>
                   </div>
                 ):(
-                  <div className="sticky top-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="sticky top-6 w-full min-w-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-5" style={{background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)"}}>
                       <div className="flex items-start justify-between">
                         <div>

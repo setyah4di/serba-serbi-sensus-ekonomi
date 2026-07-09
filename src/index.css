@@ -4,6 +4,17 @@
 html {
   scroll-behavior: smooth;
 }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 /* src/index.css */
 
 /* Untuk menghindari scroll behavior yang tidak diinginkan pada pengguna yang memiliki preferensi mengurangi animasi */

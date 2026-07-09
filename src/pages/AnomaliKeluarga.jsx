@@ -500,7 +500,7 @@ const filteredRows = useMemo(() => {
   const computedLastUpdated = getLastUpdate();
   // ════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans overflow-x-hidden">
 
       {modalRow && (
         <DetailAnomaliKeluarga row={modalRow} onClose={() => setModalRow(null)} onSaved={handleSaved} />
@@ -531,7 +531,7 @@ const filteredRows = useMemo(() => {
       </header>
 
       {/* ── MAIN ── */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -632,7 +632,7 @@ const filteredRows = useMemo(() => {
               </div>
 
               {/* Kolom kanan: detail */}
-              <div ref={detailRef} className="lg:w-[45%]">
+              <div ref={detailRef} className="w-full min-w-0 lg:w-[45%]">
                 {!selectedKec ? (
                   <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-20 text-center px-8">
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
@@ -644,7 +644,7 @@ const filteredRows = useMemo(() => {
                     <p className="text-gray-400 text-sm mt-1">Klik kartu kecamatan untuk melihat daftar keluarga dengan anomali.</p>
                   </div>
                 ) : (
-                  <div className="sticky top-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="sticky top-6 w-full min-w-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
                     {/* Panel header */}
                     <div className="px-6 py-5" style={{ background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
