@@ -231,7 +231,7 @@ function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, col
       ${isActive ? sc.active : sc.base + " hover:brightness-95"}`}
   >
     <span className={`text-lg font-black leading-none ${sc.num}`}>{value}</span>
-    <span className={`text-[10px] sm:text-[10px] md:text-[11px] lg:text-[11px] xl:text-[11px] font-semibold text-center leading-tight ${sc.label}`}
+    <span className={`text-[9px] sm:text-[10px] md:text-[11px] lg:text-[11px] xl:text-[11px] font-semibold text-center leading-tight ${sc.label}`}
 >
   {label}
 </span>
