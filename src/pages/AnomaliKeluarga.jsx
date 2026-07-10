@@ -95,6 +95,35 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
+function filterBadgeInfo(key) {
+  switch (key) {
+    case "belum":
+      return { label: "Belum Dikonfirmasi", cls: "bg-gray-50 text-gray-600 ring-gray-200" };
+    case "sesuai":
+      return { label: "Belum Ditangani Korwil", cls: "bg-blue-50 text-blue-700 ring-blue-200" };
+    case "korwil_ditangani":
+      return { label: "Sudah Ditangani Korwil", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
+    case "perlu":
+      return { label: "Belum Diperbaiki PCL", cls: "bg-rose-50 text-rose-700 ring-rose-200" };
+    case "korwil_diperbaiki":
+      return { label: "Sudah Diperbaiki PCL", cls: "bg-purple-50 text-purple-700 ring-purple-200" };
+    default:
+      return null;
+  }
+}
+
+function computeRowFilterKey(row) {
+  const statusKey = getStatusKey(row);       // "sesuai" | "perlu" | "belum"
+  const korwilKey = getKorwilStatusKey(row);  // "korwil_ditangani" | "korwil_diperbaiki" | null
+
+  if (statusKey === "belum") return "belum";
+  if (statusKey === "sesuai") {
+    return korwilKey === "korwil_ditangani" ? "korwil_ditangani" : "sesuai";
+  }
+  // statusKey === "perlu"
+  return korwilKey === "korwil_diperbaiki" ? "korwil_diperbaiki" : "perlu";
+}
+
 // ── Media Query Hook ──
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(false);
@@ -241,6 +270,9 @@ function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, col
 
 // ── Baris anomali ──
 function AnomaliRow({ row, rank, onDetail }) {
+  const key   = computeRowFilterKey(row);
+  const badge = filterBadgeInfo(key);
+
   return (
     <div className="py-3 border-b border-gray-50 last:border-0">
       <div className="flex items-start gap-3">
@@ -271,8 +303,8 @@ function AnomaliRow({ row, rank, onDetail }) {
           <p className="text-xs text-gray-500 truncate mt-1">{row.namaAnomali}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 whitespace-nowrap ${statusBadge(row.hasilKonfirmasiPML)}`}>
-            {statusLabel(row.hasilKonfirmasiPML)}
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ring-1 whitespace-nowrap ${badge.cls}`}>
+            {badge.label}
           </span>
           <button
             onClick={() => onDetail(row)}
@@ -286,7 +318,6 @@ function AnomaliRow({ row, rank, onDetail }) {
     </div>
   );
 }
-
 // ══════════════════════════════════════════════════════════════════════════════
 // KOMPONEN UTAMA
 // ══════════════════════════════════════════════════════════════════════════════
@@ -783,13 +814,13 @@ const filteredRows = useMemo(() => {
                           </p>
                         </div>
                       ) : (
-                        filteredRows.map((r,i) => (
-                          <AnomaliRow
-                            key={`${r.kodeDesa}-${r.kodeSLS}-${r.namaKK}-${i}`}
-                            row={r} rank={i+1}
-                            onDetail={setModalRow}
-                          />
-                        ))
+                   filteredRows.map((r,i) => (
+                  <AnomaliRow
+                    key={`${r.kodeDesa}-${r.kodeSLS}-${r.namaKK}-${i}`}
+                    row={r} rank={i+1}
+                    onDetail={setModalRow}
+                  />
+                ))
                       )}
                     </div>
 
@@ -797,22 +828,26 @@ const filteredRows = useMemo(() => {
                     <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-100">
                       <div className="flex gap-2 text-xs text-gray-400 flex-wrap items-center">
                         <span className="font-semibold text-gray-600">
-{filteredRows.length}{(searchKK||statusFilter||pmlFilter) ? ` / ${selectedRows.length}` : ""} KK                        </span>
-{pmlFilter && (
-  <span className="text-blue-500 font-medium">· PML: {pmlFilter}</span>
-)}
-                        {statusFilter ? (
-                          <span className="text-orange-500 font-medium">· {filterLabel}</span>
-                        ) : (
-                          <>
-                            <span>·</span>
-                            <span className="text-emerald-600 font-medium">{statusCounts.sesuai} sesuai</span>
-                            <span>·</span>
-                            <span className="text-rose-400 font-medium">{statusCounts.perlu} perlu diperbaiki</span>
-                            <span>·</span>
-                            <span className="text-gray-400 font-medium">{statusCounts.belum} belum dikonfirmasi</span>
-                          </>
-                        )}
+                      {filteredRows.length}{(searchKK||statusFilter||pmlFilter) ? ` / ${selectedRows.length}` : ""} KK                        </span>
+                      {pmlFilter && (
+                        <span className="text-blue-500 font-medium">· PML: {pmlFilter}</span>
+                      )}
+                       {statusFilter ? (
+                    <span className="text-orange-500 font-medium">· {filterLabel}</span>
+                  ) : (
+                    <>
+                      <span>·</span>
+                      <span className="text-blue-500 font-medium">{filteredRows.filter(r => computeRowFilterKey(r)==="sesuai").length} belum ditangani korwil</span>
+                      <span>·</span>
+                      <span className="text-emerald-600 font-medium">{filteredRows.filter(r => computeRowFilterKey(r)==="korwil_ditangani").length} sudah ditangani korwil</span>
+                      <span>·</span>
+                      <span className="text-rose-400 font-medium">{filteredRows.filter(r => computeRowFilterKey(r)==="perlu").length} belum diperbaiki PCL</span>
+                      <span>·</span>
+                      <span className="text-purple-500 font-medium">{filteredRows.filter(r => computeRowFilterKey(r)==="korwil_diperbaiki").length} sudah diperbaiki PCL</span>
+                      <span>·</span>
+                      <span className="text-gray-400 font-medium">{filteredRows.filter(r => computeRowFilterKey(r)==="belum").length} belum dikonfirmasi</span>
+                    </>
+                  )}
                       </div>
                     </div>
                   </div>
@@ -830,3 +865,5 @@ const filteredRows = useMemo(() => {
     </div>
   );
 }
+
+

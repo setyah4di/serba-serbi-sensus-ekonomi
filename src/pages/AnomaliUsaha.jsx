@@ -76,6 +76,35 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
+function filterBadgeInfo(key) {
+  switch (key) {
+    case "belum":
+      return { bg: "#f1f5f9", text: "#475569", dot: "#94a3b8", label: "Belum Dikonfirmasi" };
+    case "sesuai":
+      return { bg: "#dbeafe", text: "#1e40af", dot: "#3b82f6", label: "Belum Ditangani Korwil" };
+    case "korwil_ditangani":
+      return { bg: "#d1fae5", text: "#065f46", dot: "#10b981", label: "Sudah Ditangani Korwil" };
+    case "perbaiki":
+      return { bg: "#ffe4e6", text: "#9f1239", dot: "#f43f5e", label: "Belum Diperbaiki PCL" };
+    case "korwil_diperbaiki":
+      return { bg: "#f5f3ff", text: "#6d28d9", dot: "#7c3aed", label: "Sudah Diperbaiki PCL" };
+    default:
+      return null;
+  }
+}
+
+function computeRowFilterKey(row) {
+  const statusKey = getStatusKey(row);       // "sesuai" | "perbaiki" | "belum"
+  const korwilKey = getKorwilStatusKey(row);  // "korwil_ditangani" | "korwil_diperbaiki" | null
+
+  if (statusKey === "belum") return "belum";
+  if (statusKey === "sesuai") {
+    return korwilKey === "korwil_ditangani" ? "korwil_ditangani" : "sesuai";
+  }
+  // statusKey === "perbaiki"
+  return korwilKey === "korwil_diperbaiki" ? "korwil_diperbaiki" : "perbaiki";
+}
+
 function getStatusKey(row) {
   const h = (row.hasilKonfirmasiPML || "").trim();
   if (h.startsWith("01")) return "sesuai";
@@ -220,7 +249,10 @@ function MiniStatusCellFlat({ label, value, color, isActive, showDivider, onClic
 
 // ── Anomali Row ──
 function AnomaliRow({ row, rank, onDetail }) {
-  const badge = statusBadgeStyle(row.hasilKonfirmasiPML);
+  const key   = computeRowFilterKey(row);
+  const badge = filterBadgeInfo(key);
+  const label = badge.label;
+
   return (
     <div style={{ padding:"14px 0", borderBottom:"1px solid #f8fafc" }}>
       <div style={{ display:"flex", alignItems:"flex-start", gap:"12px" }}>
@@ -245,7 +277,7 @@ function AnomaliRow({ row, rank, onDetail }) {
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px", flexShrink:0 }}>
           <span style={{ fontSize:"10px", fontWeight:700, padding:"3px 8px", borderRadius:"99px", background:badge.bg, color:badge.text, whiteSpace:"nowrap", display:"flex", alignItems:"center", gap:"4px" }}>
             <span style={{ width:"5px", height:"5px", borderRadius:"50%", background:badge.dot }}/>
-            {statusLabel(row.hasilKonfirmasiPML)}
+            {label}
           </span>
           <button
             onClick={() => onDetail(row)}
@@ -256,7 +288,6 @@ function AnomaliRow({ row, rank, onDetail }) {
     </div>
   );
 }
-
 // ── Custom hook untuk deteksi mobile ──
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(false);
@@ -811,7 +842,7 @@ const filteredRows = useMemo(() => {
                           </p>
                         </div>
                       ) : (
-                        filteredRows.map((r,i) => (
+                    filteredRows.map((r,i) => (
                           <AnomaliRow key={`${r.kodeDesa}-${r.kodeSLS}-${r.namaUsaha}-${i}`} row={r} rank={i+1} onDetail={setModalRow} />
                         ))
                       )}
@@ -828,12 +859,16 @@ const filteredRows = useMemo(() => {
     <span style={{ color:"#2563eb", fontWeight:600 }}>PML: {pmlFilter}</span>
   </>
 )}
-                        <span style={{ color:"#cbd5e1" }}>·</span>
-                        <span>{filteredRows.filter(r => getStatusKey(r)==="sesuai" && !(r.hasilKonfirmasiKorwil||"").trim()).length} sesuai</span>
-                        <span style={{ color:"#cbd5e1" }}>·</span>
-                        <span>{filteredRows.filter(r => getStatusKey(r)==="perbaiki" && !(r.hasilKonfirmasiKorwil||"").trim()).length} perbaiki</span>
-                        <span style={{ color:"#cbd5e1" }}>·</span>
-                        <span style={{ color:"#94a3b8", fontWeight:600 }}>{filteredRows.filter(r=>!r.hasilKonfirmasiPML.trim()).length} belum</span>
+                       <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#3b82f6", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="sesuai").length} belum ditangani korwil</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#10b981", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="korwil_ditangani").length} sudah ditangani korwil</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#f43f5e", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="perbaiki").length} belum diperbaiki PCL</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#7c3aed", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="korwil_diperbaiki").length} sudah diperbaiki PCL</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#94a3b8", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="belum").length} belum dikonfirmasi</span>
                       </div>
                     </div>
                   </div>
