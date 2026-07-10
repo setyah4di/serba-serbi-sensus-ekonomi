@@ -177,7 +177,7 @@ function KecamatanCard({ kecamatan, countBelumTuntas, countSesuai, maxCount, onC
       <div className="flex items-center justify-between mt-2.5 gap-2 flex-wrap">
         {/* Info sesuai */}
         <span className="text-xs text-gray-400">
-          <span className="font-semibold text-emerald-600">{countSesuai}</span> sesuai
+          <span className="font-semibold text-emerald-600">{countSesuai}</span> Belum Ditangani Korwil
         </span>
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${countBadge(countBelumTuntas)}`}>
           {countLabel(countBelumTuntas)}
@@ -392,12 +392,19 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
   // ── Statistik global (3 kartu utama) ──
   const globalStats = useMemo(() => {
   if (!rawRows.length) return null;
-  const sesuai = rawRows.filter(r => getStatusKey(r)==="sesuai").length;
-  const perlu  = rawRows.filter(r => getStatusKey(r)==="perlu").length;
-  const belum  = rawRows.filter(r => getStatusKey(r)==="belum").length;
-  const korwilDitangani  = rawRows.filter(r => getKorwilStatusKey(r)==="korwil_ditangani").length;   // ← BARU
-  const korwilDiperbaiki = rawRows.filter(r => getKorwilStatusKey(r)==="korwil_diperbaiki").length;  // ← BARU
-  return { total: rawRows.length, sesuai, perlu, belum, korwilDitangani, korwilDiperbaiki };
+  const sesuaiRaw = rawRows.filter(r => getStatusKey(r)==="sesuai").length;
+  const perluRaw  = rawRows.filter(r => getStatusKey(r)==="perlu").length;
+  const belum     = rawRows.filter(r => getStatusKey(r)==="belum").length;
+  const korwilDitangani  = rawRows.filter(r => getKorwilStatusKey(r)==="korwil_ditangani").length;
+  const korwilDiperbaiki = rawRows.filter(r => getKorwilStatusKey(r)==="korwil_diperbaiki").length;
+  return {
+    total: rawRows.length,
+    sesuai: sesuaiRaw - korwilDitangani,   // "Sudah Sesuai" − "Ditangani Korwil"
+    perlu:  perluRaw - korwilDiperbaiki,   // "Perlu Diperbaiki" − "Sudah Diperbaiki PCL"
+    belum,
+    korwilDitangani,
+    korwilDiperbaiki,
+  };
 }, [rawRows]);
 
   // ── Daftar kartu kecamatan ──
@@ -414,7 +421,7 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
         return {
           kecamatan: nama,
           countBelumTuntas: (perlu + belum) - diperbaiki,  // ← angka besar di kartu
-          countSesuai: sesuai,
+          countSesuai: sesuai - list.filter(r => getKorwilStatusKey(r)==="korwil_ditangani").length,  // ← sub-info di kartu
           countTotal:  list.length,
         };
       })
@@ -446,31 +453,51 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";  
   return [...set].sort((a, b) => a.localeCompare(b));
 }, [selectedRows]);
 
- const statusCounts = useMemo(() => ({
-  sesuai:  selectedRows.filter(r => getStatusKey(r)==="sesuai").length,
-  perlu:   selectedRows.filter(r => getStatusKey(r)==="perlu").length,
-  belum:   selectedRows.filter(r => getStatusKey(r)==="belum").length,
-  korwilDitangani:  selectedRows.filter(r => getKorwilStatusKey(r)==="korwil_ditangani").length,    // ← BARU
-  korwilDiperbaiki: selectedRows.filter(r => getKorwilStatusKey(r)==="korwil_diperbaiki").length,   // ← BARU
-}), [selectedRows]);
+const statusCounts = useMemo(() => {
+  const sesuaiRaw          = selectedRows.filter(r => getStatusKey(r) === "sesuai").length;
+  const perluRaw            = selectedRows.filter(r => getStatusKey(r) === "perlu").length;
+  const korwilDitangani    = selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+  const korwilDiperbaiki   = selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length;
+
+  return {
+    sesuai: sesuaiRaw - korwilDitangani,     // "Sudah Sesuai" − "Ditangani Korwil"
+    perlu:  perluRaw - korwilDiperbaiki,     // ← BARU: "Perlu Diperbaiki" − "Sudah Diperbaiki PCL"
+    belum:  selectedRows.filter(r => getStatusKey(r) === "belum").length,
+    korwilDitangani,
+    korwilDiperbaiki,
+  };
+}, [selectedRows]);
 
 const filteredRows = useMemo(() => {
   let result = selectedRows;
-  if (statusFilter === "sesuai" || statusFilter === "perlu" || statusFilter === "belum") {
-    result = result.filter(r => getStatusKey(r) === statusFilter);
-  } else if (statusFilter === "korwil_ditangani" || statusFilter === "korwil_diperbaiki") {   // ← BARU
+
+  if (statusFilter === "sesuai") {
+    // sesuai menurut PML, TAPI belum ditangani Korwil (kolom Korwil masih kosong)
+    result = result.filter(r =>
+      getStatusKey(r) === "sesuai" && !(r.hasilKonfirmasiKorwil || "").trim()
+    );
+  } else if (statusFilter === "perlu") {
+    // perlu diperbaiki menurut PML, TAPI belum ditangani/diperbaiki Korwil (kolom Korwil masih kosong)
+    result = result.filter(r =>
+      getStatusKey(r) === "perlu" && !(r.hasilKonfirmasiKorwil || "").trim()
+    );
+  } else if (statusFilter === "belum") {
+    result = result.filter(r => getStatusKey(r) === "belum");
+  } else if (statusFilter === "korwil_ditangani" || statusFilter === "korwil_diperbaiki") {
     result = result.filter(r => getKorwilStatusKey(r) === statusFilter);
   }
+
   if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);
+
   if (searchKK.trim()) {
     const q = searchKK.toLowerCase();
     result = result.filter(r =>
-      (r.namaKK      ||"").toLowerCase().includes(q) ||
-      (r.namaPetugas ||"").toLowerCase().includes(q)
+      (r.namaKK      || "").toLowerCase().includes(q) ||
+      (r.namaPetugas || "").toLowerCase().includes(q)
     );
   }
   return result;
-}, [selectedRows, statusFilter, pmlFilter, searchKK]); // ← tambahkan pmlFilter di dependency
+}, [selectedRows, statusFilter, pmlFilter, searchKK]);
 
   const handleSaved = (updatedRow) => {
     setRawRows(prev => prev.map(r => r.rowIndex===updatedRow.rowIndex ? updatedRow : r));
@@ -552,28 +579,28 @@ const filteredRows = useMemo(() => {
             {/* ── Stat Cards global ── */}
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
   <StatCard
-    label="Sudah Sesuai"
+    label="Sudah Sesuai Tapi Belum Ditangani Korwil"
     value={globalStats.sesuai}
     sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="✅"
-    accentColor="#0f766e"
-  />
-  <StatCard
-    label="Ditangani Korwil"
-    value={globalStats.korwilDitangani}
-    sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="🛡️"
     accentColor="#a855f7"
   />
   <StatCard
-    label="Perlu Diperbaiki"
+    label="Sudah Ditangani Korwil"
+    value={globalStats.korwilDitangani}
+    sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}% dari total`}
+    icon="✅"
+    accentColor="#0f766e"
+  />
+  <StatCard
+    label="Belum Diperbaiki PCL"
     value={globalStats.perlu}
     sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="❌"
     accentColor="#e11d48"
   />
   <StatCard
-    label="Diperbaiki PCL & Diapprove PML"
+    label="Sudah Diperbaiki PCL & Diapprove PML"
     value={globalStats.korwilDiperbaiki}
     sub={`${((globalStats.korwilDiperbaiki/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="🔧"
@@ -677,9 +704,9 @@ const filteredRows = useMemo(() => {
   </p>
   <div className="grid grid-cols-5 gap-1.5">
     <StatusFilterCard label="Belum Dikonfirmasi" value={statusCounts.belum}             activeKey="belum"             currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}             colorScheme="gray"    />
-    <StatusFilterCard label="Sudah Sesuai"       value={statusCounts.sesuai}            activeKey="sesuai"            currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")}            colorScheme="emerald" />
-    <StatusFilterCard label="Ditangani Korwil"   value={statusCounts.korwilDitangani}   activeKey="korwil_ditangani"  currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_ditangani")}  colorScheme="blue"    />
-    <StatusFilterCard label="Perlu Diperbaiki"   value={statusCounts.perlu}             activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
+    <StatusFilterCard label="Belum Ditangani Korwil"       value={statusCounts.sesuai}            activeKey="sesuai"            currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")}            colorScheme="blue" />
+    <StatusFilterCard label="Sudah Ditangani Korwil"   value={statusCounts.korwilDitangani}   activeKey="korwil_ditangani"  currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_ditangani")}  colorScheme="emerald"    />
+    <StatusFilterCard label="Belum Diperbaiki PCL"   value={statusCounts.perlu}             activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
     <StatusFilterCard label="Sudah Diperbaiki PCL"     value={statusCounts.korwilDiperbaiki}  activeKey="korwil_diperbaiki" currentFilter={statusFilter} onClick={() => handleStatusFilter("korwil_diperbaiki")} colorScheme="purple"  />
   </div>
 </div>
