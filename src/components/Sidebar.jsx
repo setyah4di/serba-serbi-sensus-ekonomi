@@ -61,6 +61,23 @@ const menuSections = [
       },
     ],
   },
+  {
+    sectionKey: "lainnya",
+    sectionLabel: "Lainnya",
+    items: [
+      {
+        key: "Reporta SE",
+        label: "Reporta SE",
+        icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M12 7v14m0-14a2 2 0 012-2h4a2 2 0 012 2v12a2 2 0 01-2 2h-4a2 2 0 01-2-2m0-12a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2h4a2 2 0 002-2M6 8h1m-1 3h1m-1 3h1" />
+      </svg>
+    ),
+        badge: null,
+      },
+    ],
+  },
 ];
 
 const pathMap = {
@@ -68,6 +85,7 @@ const pathMap = {
   "Monitoring PML": "/monitoring-pml",
   "Anomali Keluarga": "/anomali-keluarga",
   "Anomali Usaha": "/anomali-usaha",
+  "Reporta SE": "/reportase",
 };
 
 export default function Sidebar({ onMenuClick }) {
