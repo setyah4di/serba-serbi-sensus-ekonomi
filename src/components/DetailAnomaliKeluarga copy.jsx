@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
-// ── GANTI dengan URL deployment Apps Script kamu (lihat Code_AnomaliUsaha.gs) ──
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwivPWrIRB6IryEazxEo5TkT8KPIRKFSl3YqQ0C3elq4q4byTbBCZSMyNI-SkTWq5Fnxg/exec";
+// ── GANTI dengan URL deployment Apps Script kamu (lihat Code.gs) ──
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzx2b0fxAKYbBBedR_qgGUVcoFd1szuRH-oxClyqtX4yqFhnHy58Zi6wdZVQ1LErFFhXw/exec";
 
 const OPSI_HASIL_KONFIRMASI = [
   { value: "", label: "— Belum Dikonfirmasi —" },
@@ -9,36 +9,39 @@ const OPSI_HASIL_KONFIRMASI = [
   { value: "02 Perlu diperbaiki", label: "02 Perlu diperbaiki" },
 ];
 
-// Sekarang hanya ada SATU status penanganan oleh korwil, berlaku baik untuk
-// baris "01 Sudah Sesuai" maupun "02 Perlu diperbaiki".
+// Catatan: opsi di bawah adalah dugaan awal berdasarkan pola penamaan yang ada.
+// Sesuaikan label/value-nya dengan daftar validasi asli di kolom
+// "Hasil Konfirmasi Korwil" pada spreadsheet kalau berbeda.
 const OPSI_KORWIL = [
   { value: "", label: "— Belum Ditindaklanjuti —" },
   { value: "01 Sudah Ditangani Korwil", label: "01 Sudah Ditangani Korwil" },
+  { value: "02 Sudah Diperbaiki PCL & Diapprove PML", label: "02 Sudah Diperbaiki PCL & Diapprove PML" },
 ];
 
-// Teks judul & placeholder dialog keterangan, tergantung pilihan PML/PPL.
-function getKeteranganDialogText(value) {
-  if (value === "02 Perlu diperbaiki") {
-    return {
-      title: "Konfirmasi: Perlu Diperbaiki",
-      subtitle: "Tuliskan keterangan / alasan perlu diperbaiki",
-      placeholder: "Contoh: Data omzet tidak sesuai kondisi lapangan…",
-    };
+// Nilai keterangan otomatis ketika PML/PPL memilih "02 Perlu diperbaiki"
+const KETERANGAN_OTOMATIS_02 = "Perlu di reject PML, lalu diperbaiki PCL, dan diapprove PML";
+
+// ── Menentukan opsi "Hasil Penanganan Anomali" yang tersedia,
+// berdasarkan nilai "Hasil Konfirmasi PML/PPL" saat ini.
+// - "01 Sudah Sesuai"      -> hanya opsi "01 Sudah Ditangani Korwil"
+// - "02 Perlu diperbaiki"  -> hanya opsi "02 Sudah Diperbaiki PCL & Diapprove PML"
+// - selain itu (belum dikonfirmasi) -> tampilkan semua opsi
+function getOpsiKorwilTersedia(hasilKonfirmasi) {
+  if (hasilKonfirmasi === "01 Sudah Sesuai") {
+    return [OPSI_KORWIL[0], OPSI_KORWIL[1]];
   }
-  return {
-    title: "Konfirmasi: Sudah Sesuai",
-    subtitle: "Tuliskan keterangan / alasan sudah sesuai",
-    placeholder: "Contoh: Data usaha sudah sesuai kondisi lapangan…",
-  };
+  if (hasilKonfirmasi === "02 Perlu diperbaiki") {
+    return [OPSI_KORWIL[0], OPSI_KORWIL[2]];
+  }
+  return OPSI_KORWIL;
 }
 
-function idSubSLS(row) {
-  const kode = row.subSLS ? `${row.kodeSLS}-${row.subSLS}` : row.kodeSLS;
-  return row.namaSLS ? ` ${row.namaDesa} - ${row.namaSLS}` : kode;
+function IdSubSLS(row) {
+  return row.subSLS ? `${row.namaDesa} - ${row.namaSLS}` : row.kodeSLS;
 }
 
-// phase: "idle" | "asking_keterangan" | "saving" | "success"
-export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
+// phase: "idle" | "asking_keterangan" | "saving" | "success" | "notice02"
+export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
   const [hasilKonfirmasi, setHasilKonfirmasi] = useState(row?.hasilKonfirmasiPML || "");
   const [keterangan, setKeterangan] = useState(row?.keteranganKoreksi || "");
   const [hasilKorwil, setHasilKorwil] = useState(row?.hasilKonfirmasiKorwil || "");
@@ -63,6 +66,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
 
   const isBusy = phase !== "idle";
   const showFullForm = !isEmptyInitial;
+  const opsiKorwilTersedia = getOpsiKorwilTersedia(hasilKonfirmasi);
 
   const isDirty =
     hasilKonfirmasi !== (row.hasilKonfirmasiPML || "") ||
@@ -74,13 +78,13 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
   // (bukan dikirim string kosong), supaya Apps Script tidak menyentuh kolom
   // "Hasil Penanganan Korwil" sama sekali — menghindari bentrok dengan
   // data validation dropdown di kolom tersebut.
-  const persist = async (hk, ket, korwil, { successPhase = "success", closeDelay = 2000 } = {}) => {
+  const persist = async (hk, ket, korwil, { successPhase = "success", closeDelay = 2100 } = {}) => {
     setPhase("saving");
     setSaveError(null);
     try {
       const payload = {
         sheetRow: row.rowIndex,
-        namaUsaha: row.namaUsaha,
+        namaKK: row.namaKK,
         namaAnomali: row.namaAnomali,
         hasilKonfirmasi: hk,
         keterangan: ket,
@@ -110,6 +114,8 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
       });
 
       setPhase(successPhase);
+
+      // Tutup modal otomatis setelah animasi ditampilkan
       closeTimeoutRef.current = setTimeout(() => {
         onClose();
       }, closeDelay);
@@ -124,22 +130,27 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
     persist(hasilKonfirmasi, keterangan, hasilKorwil);
   };
 
-  // Dipicu saat memilih dropdown Hasil Konfirmasi PML/PPL dalam mode ringkas.
-  // Baik "01 Sudah Sesuai" maupun "02 Perlu diperbaiki" sama-sama membuka
-  // dialog untuk meminta keterangan/alasan dari user sebelum disimpan.
+  // Dipicu saat memilih dropdown Hasil Konfirmasi PML/PPL dalam mode ringkas
   const handlePilihHasilKonfirmasi = (value) => {
     setHasilKonfirmasi(value);
 
     if (!isEmptyInitial) {
       // Mode lengkap: biarkan user pakai tombol Simpan Perubahan.
+      // Tapi kalau nilai Hasil Penanganan Anomali yang sedang terpilih sudah
+      // tidak valid untuk pilihan baru ini, kosongkan supaya user memilih ulang
+      // dari opsi yang sesuai.
+      const opsiValid = getOpsiKorwilTersedia(value).some(o => o.value === hasilKorwil);
+      if (!opsiValid) {
+        setHasilKorwil("");
+      }
       return;
     }
 
-    if (value === "01 Sudah Sesuai" || value === "02 Perlu diperbaiki") {
+    if (value === "01 Sudah Sesuai") {
       setSubKeterangan("");
       setPhase("asking_keterangan");
-    } else {
-      setPhase("idle");
+    } else if (value === "02 Perlu diperbaiki") {
+      persist(value, KETERANGAN_OTOMATIS_02, undefined, { successPhase: "notice02", closeDelay: 4000 });
     }
   };
 
@@ -151,16 +162,14 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
 
   const handleSubmitKeterangan = () => {
     if (!subKeterangan.trim()) return;
-    persist(hasilKonfirmasi, subKeterangan.trim(), undefined, { successPhase: "success", closeDelay: 2100 });
+    persist("01 Sudah Sesuai", subKeterangan.trim(), undefined, { successPhase: "success", closeDelay: 2100 });
   };
-
-  const keteranganDialog = getKeteranganDialogText(hasilKonfirmasi);
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" onClick={isBusy ? undefined : onClose}>
 
-      {/* ── Overlay full-screen: loading → sukses ── */}
-      {(phase === "saving" || phase === "success") && (
+      {/* ── Overlay full-screen: loading → sukses / notice02 ── */}
+      {(phase === "saving" || phase === "success" || phase === "notice02") && (
         <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-5 bg-white/95 backdrop-blur-sm px-6 text-center">
           {phase === "saving" && (
             <div key="loading" className="flex flex-col items-center gap-5 animate-fadeIn">
@@ -180,7 +189,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                   <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" />
                 </span>
               </div>
-              <p className="text-sm text-gray-400">Mohon tunggu…</p>
+              <p className="text-sm text-gray-500">Mohon tunggu…</p>
             </div>
           )}
 
@@ -204,10 +213,31 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
               </div>
               <div>
                 <p className="text-lg font-bold text-gray-800">Berhasil disimpan!</p>
-                <p className="text-sm text-gray-400 mt-1">Perubahan telah tersimpan ke spreadsheet</p>
+                <p className="text-gray-500 mt-1">Perubahan telah tersimpan ke spreadsheet</p>
               </div>
               <div className="w-40 h-1 rounded-full bg-gray-100 overflow-hidden">
                 <div className="h-full bg-emerald-500 animate-toastProgress" />
+              </div>
+            </div>
+          )}
+
+          {phase === "notice02" && (
+            <div key="notice02" className="flex flex-col items-center gap-5 animate-successIn max-w-sm">
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-amber-400 animate-pingOnce" />
+                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-200">
+                  <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8v5" stroke="white" strokeWidth="2.6" strokeLinecap="round" />
+                    <circle cx="12" cy="16.3" r="1.15" fill="white" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-800">Perlu Diperbaiki</p>
+                <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{KETERANGAN_OTOMATIS_02}</p>
+              </div>
+              <div className="w-40 h-1 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full bg-amber-500 animate-toastProgress3" />
               </div>
             </div>
           )}
@@ -252,8 +282,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
         </div>
       )}
 
-      {/* ── Sub-dialog: minta keterangan/alasan, dipakai untuk "01 Sudah Sesuai"
-           maupun "02 Perlu diperbaiki" (teks judul menyesuaikan pilihan) ── */}
+      {/* ── Sub-dialog: minta keterangan/alasan ketika memilih "01 Sudah Sesuai" ── */}
       {phase === "asking_keterangan" && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4" onClick={handleBatalKeterangan}>
           <div
@@ -261,8 +290,8 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
             onClick={e => e.stopPropagation()}
           >
             <div className="px-5 py-4" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
-              <p className="text-white text-base font-bold">{keteranganDialog.title}</p>
-              <p className="text-orange-100 text-xs mt-0.5">{keteranganDialog.subtitle}</p>
+              <p className="text-white text-base font-bold">Konfirmasi: Sudah Sesuai</p>
+              <p className="text-orange-100 text-xs mt-0.5">Tuliskan keterangan / alasan sudah sesuai</p>
             </div>
             <div className="px-5 py-4">
               <textarea
@@ -270,7 +299,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                 value={subKeterangan}
                 onChange={e => setSubKeterangan(e.target.value)}
                 rows={3}
-                placeholder={keteranganDialog.placeholder}
+                placeholder="Contoh: Data keluarga sudah sesuai kondisi lapangan…"
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
               />
             </div>
@@ -295,8 +324,8 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
         <div className="px-6 py-5 flex-shrink-0" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-0.5">Detail Anomali Usaha</p>
-              <h2 className="text-white text-lg font-black leading-tight">{row.namaUsaha}</h2>
+              <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-0.5">Detail Anomali</p>
+              <h2 className="text-white text-lg font-black leading-tight">{row.namaKK}</h2>
               <p className="text-orange-100 text-xs mt-0.5">{row.namaDesa} · {row.namaKec}</p>
             </div>
             <button onClick={onClose} disabled={isBusy} className="text-orange-200 hover:text-white transition-colors mt-1 p-1 disabled:opacity-40 disabled:cursor-not-allowed">
@@ -310,11 +339,11 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
             <tbody>
               <tr className="border-b border-gray-100">
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 w-1/3 align-top">SLS</td>
-                <td className="px-3 py-2.5 text-gray-700">{idSubSLS(row)}</td>
+                <td className="px-3 py-2.5 text-gray-700">{IdSubSLS(row)}</td>
               </tr>
               <tr className="border-b border-gray-100">
-                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Nama Usaha</td>
-                <td className="px-3 py-2.5 text-gray-700">{row.namaUsaha}</td>
+                <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Nama KRT</td>
+                <td className="px-3 py-2.5 text-gray-700">{row.namaKK}</td>
               </tr>
               <tr className="border-b border-gray-100">
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Nama Anomali</td>
@@ -322,8 +351,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
               </tr>
               <tr className={showFullForm ? "border-b border-gray-100" : ""}>
                 <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan Anomali</td>
-                {/* whitespace-pre-line: menampilkan newline asli dari sel spreadsheet sebagai baris baru */}
-                <td className="px-3 py-2.5 text-gray-700 leading-relaxed whitespace-pre-line">{row.keteranganAnomali || "-"}</td>
+                <td className="px-3 py-2.5 text-gray-700 leading-relaxed">{row.keteranganAnomali || "-"}</td>
               </tr>
 
               <tr className={showFullForm ? "border-b border-gray-100" : ""}>
@@ -348,8 +376,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                   <tr className="border-b border-gray-100">
                     <td className="bg-gray-50 px-3 py-2.5 font-semibold text-gray-500 align-top">Keterangan</td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                      </div>
+                     
                       <textarea
                         value={keterangan}
                         onChange={e => setKeterangan(e.target.value)}
@@ -358,13 +385,15 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                         placeholder="Tulis keterangan koreksi…"
                         className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none disabled:bg-gray-50 disabled:text-gray-400"
                       />
-                       <button
+                       <div className="flex items-center justify-between gap-2">
+                        <button
                           type="button"
                           onClick={() => setIsDetailKeteranganOpen(true)}
                           className="rounded-full border border-orange-200 px-2.5 py-1 text-[11px] font-semibold text-orange-600 hover:bg-orange-50"
                         >
                           Detail Keterangan
                         </button>
+                      </div>
                     </td>
                   </tr>
                   <tr>
@@ -376,7 +405,7 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
                         disabled={isBusy}
                         className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400"
                       >
-                        {OPSI_KORWIL.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {opsiKorwilTersedia.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                     </td>
                   </tr>
@@ -434,6 +463,9 @@ export default function DetailAnomaliUsaha({ row, onClose, onSaved }) {
 
         @keyframes toastProgress{from{width:100%;}to{width:0%;}}
         .animate-toastProgress{animation:toastProgress 2s linear forwards;}
+
+        @keyframes toastProgress3{from{width:100%;}to{width:0%;}}
+        .animate-toastProgress3{animation:toastProgress3 3s linear forwards;}
 
         @keyframes drawCheck{to{stroke-dashoffset:0;}}
 

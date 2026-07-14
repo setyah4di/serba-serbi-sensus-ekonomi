@@ -76,35 +76,33 @@ function statusLabel(status) {
   return (status || "").trim() || "Belum Dikonfirmasi";
 }
 
-// ── Klasifikasi status baris ──
-// Dimensi 1 (Hasil Konfirmasi PML/PPL): "belum" | "sesuai" | "perbaiki"
-// Dimensi 2 (Hasil Penanganan Korwil) : hanya ada satu status final, yaitu
-// "korwil_ditangani". Kedua dimensi ini independen satu sama lain — baik
-// baris "sesuai" maupun "perbaiki" bisa berstatus "sudah ditangani korwil".
 function filterBadgeInfo(key) {
   switch (key) {
     case "belum":
       return { bg: "#f1f5f9", text: "#475569", dot: "#94a3b8", label: "Belum Dikonfirmasi" };
     case "sesuai":
-      return { bg: "#dbeafe", text: "#1e40af", dot: "#3b82f6", label: "Sesuai Kondisi Lapangan" };
-    case "perbaiki":
-      return { bg: "#ffe4e6", text: "#9f1239", dot: "#f43f5e", label: "Isian Perlu Diperbaiki" };
+      return { bg: "#dbeafe", text: "#1e40af", dot: "#3b82f6", label: "Belum Ditangani Korwil" };
     case "korwil_ditangani":
       return { bg: "#d1fae5", text: "#065f46", dot: "#10b981", label: "Sudah Ditangani Korwil" };
+    case "perbaiki":
+      return { bg: "#ffe4e6", text: "#9f1239", dot: "#f43f5e", label: "Belum Diperbaiki PCL" };
+    case "korwil_diperbaiki":
+      return { bg: "#f5f3ff", text: "#6d28d9", dot: "#7c3aed", label: "Sudah Diperbaiki PCL" };
     default:
       return null;
   }
 }
 
-// Menentukan badge yang tampil pada satu baris anomali. Status "sudah
-// ditangani korwil" diprioritaskan karena ia adalah status final/penutup,
-// terlepas dari apakah asalnya "sesuai" atau "perbaiki".
 function computeRowFilterKey(row) {
   const statusKey = getStatusKey(row);       // "sesuai" | "perbaiki" | "belum"
-  const korwilKey = getKorwilStatusKey(row);  // "korwil_ditangani" | null
+  const korwilKey = getKorwilStatusKey(row);  // "korwil_ditangani" | "korwil_diperbaiki" | null
 
-  if (korwilKey === "korwil_ditangani") return "korwil_ditangani";
-  return statusKey;
+  if (statusKey === "belum") return "belum";
+  if (statusKey === "sesuai") {
+    return korwilKey === "korwil_ditangani" ? "korwil_ditangani" : "sesuai";
+  }
+  // statusKey === "perbaiki"
+  return korwilKey === "korwil_diperbaiki" ? "korwil_diperbaiki" : "perbaiki";
 }
 
 function getStatusKey(row) {
@@ -117,6 +115,7 @@ function getStatusKey(row) {
 function getKorwilStatusKey(row) {
   const h = (row.hasilKonfirmasiKorwil || "").trim();
   if (h.startsWith("01")) return "korwil_ditangani";
+  if (h.startsWith("02")) return "korwil_diperbaiki";
   return null;
 }
 
@@ -135,7 +134,7 @@ function ProgressBar({ value, max, color }) {
   );
 }
 
-// ── Stat Card global (status anomali) ──
+// ── Stat Card global (diubah menjadi status anomali) ──
 function StatCard({ label, value, sub, icon, accentColor }) {
   return (
     <div style={{
@@ -158,8 +157,8 @@ function StatCard({ label, value, sub, icon, accentColor }) {
   );
 }
 
-// ── Kecamatan Card (angka besar = anomali yang belum ditangani korwil) ──
-function KecamatanCard({ kecamatan, count, maxCount, countKorwil, onClick, isSelected }) {
+// ── Kecamatan Card (angka = perbaiki + belum) ──
+function KecamatanCard({ kecamatan, count, maxCount, countDesa, countSLS, onClick, isSelected }) {
   const color = countColor(count);
   const badge = countBadgeStyle(count);
   const label = countLabel(count);
@@ -183,7 +182,7 @@ function KecamatanCard({ kecamatan, count, maxCount, countKorwil, onClick, isSel
         <ProgressBar value={count} max={maxCount} color={color} />
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"6px" }}>
           <div style={{ display:"flex", gap:"12px" }}>
-            {[["Sudah Ditangani Korwil", countKorwil]].map(([lbl, val]) => (
+            {[["Belum Ditangani Korwil", countDesa]].map(([lbl, val]) => (
               <span key={lbl} style={{ fontSize:"12px", color:"#94a3b8", display:"flex", alignItems:"center", gap:"4px" }}>
                 <span style={{ display:"inline-block", width:"6px", height:"6px", borderRadius:"50%", background:"#cbd5e1" }}/>
                 <b style={{ color:"#475569", fontWeight:600 }}>{val}</b> {lbl}
@@ -201,6 +200,9 @@ function KecamatanCard({ kecamatan, count, maxCount, countKorwil, onClick, isSel
 }
 
 // ── Mini Status Card ──
+// Layout: angka besar berwarna di atas (terpusat), label berwarna di bawahnya.
+// Kartu berbentuk pill dengan latar warna pastel sesuai status; saat aktif,
+// border warna solid dipertebal sebagai penanda filter yang sedang dipilih.
 function MiniStatusCard({ label, count, total, color, bg, isActive, onClick, isMobile }) {
   return (
     <button
@@ -223,7 +225,7 @@ function MiniStatusCard({ label, count, total, color, bg, isActive, onClick, isM
   );
 }
 
-// ── Mini Status Cell (mobile: flat) ──
+// ── Mini Status Cell (mobile: flat, satu panel, 5 kolom sederhana) ──
 function MiniStatusCellFlat({ label, value, color, isActive, showDivider, onClick }) {
   return (
     <button
@@ -311,7 +313,7 @@ export default function MonitoringAnomaliUsaha() {
   const [searchKK, setSearchKK]       = useState("");
   const [modalRow, setModalRow]       = useState(null);
   const [activeFilter, setActiveFilter] = useState(null);
-  const [pmlFilter, setPmlFilter] = useState(null);
+  const [pmlFilter, setPmlFilter] = useState(null);   // ← BARU
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
@@ -322,7 +324,7 @@ export default function MonitoringAnomaliUsaha() {
   if (tableRef.current) tableRef.current.scrollTop = 0;
   setSearchKK("");
   setActiveFilter(null);
-  setPmlFilter(null);
+  setPmlFilter(null);   // ← BARU
 }, [selectedKec]);
 
   const handleSelectKec = (kec) => {
@@ -347,8 +349,11 @@ export default function MonitoringAnomaliUsaha() {
   const getLastUpdate = () => {
     const now = new Date();
     const update = new Date(now);
+    // Cari Minggu minggu ini
     update.setDate(now.getDate() - now.getDay());
+    // Set jam update
     update.setHours(6, 0, 0, 0);
+    // Jika sekarang masih sebelum Minggu 06.00, mundur ke Minggu minggu lalu
     if (now < update) {
       update.setDate(update.getDate() - 7);
     }
@@ -408,33 +413,35 @@ export default function MonitoringAnomaliUsaha() {
     return m;
   }, [rawRows]);
 
-  // Status global untuk stat card dashboard.
-  // Sesuai / Perbaiki dihitung berdasarkan Hasil Konfirmasi PML/PPL saja,
-  // dan Sudah Ditangani Korwil dihitung terpisah (independen), karena
-  // sekarang hanya ada satu status final pada kolom Korwil.
-  const globalStatus = useMemo(() => {
-    const sesuai   = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
-    const perbaiki = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
-    const belum    = rawRows.filter(r => !r.hasilKonfirmasiPML.trim()).length;
-    const korwilDitangani = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+  // Hitung global status (untuk stat card)
+const globalStatus = useMemo(() => {
+  const sesuaiRaw   = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
+  const perbaikiRaw = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
+  const belum       = rawRows.filter(r => !r.hasilKonfirmasiPML.trim()).length;
+  const korwilDitangani  = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+  const korwilDiperbaiki = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length;
 
-    return { sesuai, perbaiki, belum, korwilDitangani, total: rawRows.length };
-  }, [rawRows]);
+  return {
+    sesuai:   sesuaiRaw - korwilDitangani,     // "Sudah Sesuai" − "Ditangani Korwil"
+    perbaiki: perbaikiRaw - korwilDiperbaiki,  // "Perlu Diperbaiki" − "Sudah Diperbaiki PCL"
+    belum,
+    korwilDitangani,
+    korwilDiperbaiki,
+    total: rawRows.length,
+  };
+}, [rawRows]);
 
-  // KecamatanList: angka besar (count) = jumlah anomali yang BELUM ditangani
-  // korwil (baik itu belum dikonfirmasi, Sesuai Kondisi Lapangan, maupun Isian Perlu Diperbaiki).
+  // KecamatanList dengan count = perbaiki + belum
   const kecamatanList = useMemo(() => {
     const namaSet = new Set([...KECAMATAN_ORDER, ...Object.keys(kecamatanMap)]);
     return [...namaSet].map(nama => {
-      const list = kecamatanMap[nama]||[];
-      const korwilDitangani = list.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
-      const sesuai = list.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
-      const perbaiki = list.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
-      const belum = list.filter(r => !r.hasilKonfirmasiPML.trim()).length;
-      const count = sesuai + perbaiki + belum;  // jumlah anomali yang BELUM ditangani korwil
+      const list    = kecamatanMap[nama]||[];
+      // Hitung jumlah yang TIDAK sesuai (perbaiki + belum)
+      const count = list.filter(r => !r.hasilKonfirmasiPML.startsWith("01")).length - list.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length;
+      const sesuai = list.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length - list.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
       const desaSet = new Set(list.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
       const slsSet  = new Set(list.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
-      return { kecamatan:nama, count, korwilDitangani, countDesa:desaSet.size, countSLS:slsSet.size };
+      return { kecamatan:nama, count,sesuai, countDesa:desaSet.size, countSLS:slsSet.size };
     })
     .filter(k => k.count>0 || KECAMATAN_ORDER.includes(k.kecamatan))
     .filter(k => search===""||k.kecamatan.toLowerCase().includes(search.toLowerCase()))
@@ -454,30 +461,40 @@ const pmlList = useMemo(() => {
   return [...set].sort((a, b) => a.localeCompare(b));
 }, [selectedRows]);
 
-  // 4 kategori status untuk detail kecamatan:
-  // Belum Dikonfirmasi, Sesuai Kondisi Lapangan, Isian Perlu Diperbaiki, Sudah Ditangani Korwil.
   const statusCounts = useMemo(() => {
-    const sesuai   = selectedRows.filter(r => getStatusKey(r) === "sesuai").length;
-    const perbaiki = selectedRows.filter(r => getStatusKey(r) === "perbaiki").length;
-    const belum    = selectedRows.filter(r => getStatusKey(r) === "belum").length;
-    const korwilDitangani = selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+  const sesuaiRaw         = selectedRows.filter(r => getStatusKey(r) === "sesuai").length;
+  const perbaikiRaw       = selectedRows.filter(r => getStatusKey(r) === "perbaiki").length;
+  const korwilDitangani   = selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+  const korwilDiperbaiki  = selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki").length;
 
-    return { sesuai, perbaiki, belum, korwilDitangani };
-  }, [selectedRows]);
+  return {
+    sesuai:   sesuaiRaw - korwilDitangani,     // "Sudah Sesuai" − "Ditangani Korwil"
+    perbaiki: perbaikiRaw - korwilDiperbaiki,  // "Perlu Diperbaiki" − "Sudah Diperbaiki PCL"
+    belum:    selectedRows.filter(r => getStatusKey(r) === "belum").length,
+    korwilDitangani,
+    korwilDiperbaiki,
+  };
+}, [selectedRows]);
 
 const filteredRows = useMemo(() => {
   let result = selectedRows;
 
   if (activeFilter === "sesuai") {
-    // Sesuai Kondisi Lapangan menurut PML, dan belum ditangani korwil
-    result = result.filter(r => getStatusKey(r) === "sesuai" && getKorwilStatusKey(r) !== "korwil_ditangani");
+    // sesuai menurut PML, TAPI belum ditangani Korwil (kolom Korwil masih kosong)
+    result = result.filter(r =>
+      getStatusKey(r) === "sesuai" && !(r.hasilKonfirmasiKorwil || "").trim()
+    );
   } else if (activeFilter === "perbaiki") {
-    // Isian Perlu Diperbaiki menurut PML, dan belum ditangani korwil
-    result = result.filter(r => getStatusKey(r) === "perbaiki" && getKorwilStatusKey(r) !== "korwil_ditangani");
+    // perlu diperbaiki menurut PML, TAPI belum ditangani/diperbaiki Korwil (kolom Korwil masih kosong)
+    result = result.filter(r =>
+      getStatusKey(r) === "perbaiki" && !(r.hasilKonfirmasiKorwil || "").trim()
+    );
   } else if (activeFilter === "belum") {
     result = result.filter(r => getStatusKey(r) === "belum");
   } else if (activeFilter === "korwil_ditangani") {
     result = result.filter(r => getKorwilStatusKey(r) === "korwil_ditangani");
+  } else if (activeFilter === "korwil_diperbaiki") {
+    result = result.filter(r => getKorwilStatusKey(r) === "korwil_diperbaiki");
   }
 
   if (pmlFilter) result = result.filter(r => r.namaPML === pmlFilter);
@@ -494,15 +511,17 @@ const filteredRows = useMemo(() => {
     setModalRow(updatedRow);
   };
 
-  const filterLabel = activeFilter === "sesuai" ? "Sesuai Kondisi Lapangan"
-    : activeFilter === "perbaiki" ? "Isian Perlu Diperbaiki"
+  const filterLabel = activeFilter === "sesuai" ? "Sudah Sesuai"
+    : activeFilter === "perbaiki" ? "Perlu Diperbaiki"
     : activeFilter === "belum" ? "Belum Dikonfirmasi"
-    : activeFilter === "korwil_ditangani" ? "Sudah Ditangani Korwil"
+    : activeFilter === "korwil_ditangani" ? "Ditangani Korwil"
+    : activeFilter === "korwil_diperbaiki" ? "Diperbaiki PCL & Diapprove PML"
     : null;
-  const filterColor = activeFilter === "sesuai" ? "#3b82f6"
+  const filterColor = activeFilter === "sesuai" ? "#10b981"
     : activeFilter === "perbaiki" ? "#f43f5e"
     : activeFilter === "belum" ? "#94a3b8"
-    : activeFilter === "korwil_ditangani" ? "#10b981"
+    : activeFilter === "korwil_ditangani" ? "#3b82f6"
+    : activeFilter === "korwil_diperbaiki" ? "#7c3aed"
     : null;
 
   // ── Styles responsif ──
@@ -533,7 +552,7 @@ const filteredRows = useMemo(() => {
 
   const statGridStyle = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(5, minmax(0, 1fr))",
+    gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))",
     gap: "14px",
     marginBottom: "28px",
   };
@@ -585,12 +604,13 @@ const filteredRows = useMemo(() => {
 
         {!loading && !error && globalStatus && (
           <>
-            {/* ── Stat Cards global (4 status + total) ── */}
+            {/* ── Stat Cards global ── */}
             <div style={statGridStyle}>
-              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
-              <StatCard label="Sesuai Kondisi Lapangan" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛡️" accentColor="#3b82f6"/>
-              <StatCard label="Isian Perlu Diperbaiki" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
+              <StatCard label="Sudah Sesuai Tapi Belum Ditangani Korwil" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛡️" accentColor="#3b82f6"/>
               <StatCard label="Sudah Ditangani Korwil" value={globalStatus.korwilDitangani} sub={`${((globalStatus.korwilDitangani/globalStatus.total)*100).toFixed(1)}% dari total`} icon="✅" accentColor="#10b981"/>
+              <StatCard label="Belum Diperbaiki PCL" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
+              <StatCard label="Sudah Diperbaiki PCL & Diapprove PML" value={globalStatus.korwilDiperbaiki} sub={`${((globalStatus.korwilDiperbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🔧" accentColor="#7c3aed"/>
+              <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
               <StatCard label="Total Anomali" value={globalStatus.total} sub="seluruh baris anomali" icon="📊" accentColor="#f97316"/>
             </div>
 
@@ -630,10 +650,10 @@ const filteredRows = useMemo(() => {
 
               {/* Kecamatan grid */}
               <div style={kecamatanGridStyle}>
-                {kecamatanList.map(({ kecamatan, count, korwilDitangani }) => (
+                {kecamatanList.map(({ kecamatan, count, sesuai }) => (
                   <KecamatanCard
                     key={kecamatan} kecamatan={kecamatan} count={count} maxCount={maxCount}
-                    countKorwil={korwilDitangani}
+                    countDesa={sesuai} 
                     isSelected={selectedKec===kecamatan}
                     onClick={()=>handleSelectKec(kecamatan)}
                   />
@@ -673,7 +693,7 @@ const filteredRows = useMemo(() => {
                       </div>
                     </div>
 
-                    {/* ── 4 Status Mini Cards ── */}
+                    {/* ── 5 Status Mini Cards ── */}
                     <div style={{ padding: isMobile ? "12px 14px" : "16px 18px", background:"#fafafa", borderBottom:"1px solid #f1f5f9", overflowX: isMobile ? "auto" : "visible" }}>
                       
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
@@ -688,23 +708,28 @@ const filteredRows = useMemo(() => {
                             onClick={()=>handleFilterCard("belum")}
                           />
                           <MiniStatusCellFlat
-                            label="Sesuai Kondisi Lapangan" value={statusCounts.sesuai} color="#3b82f6"
+                            label="Belum Ditangani Korwil" value={statusCounts.sesuai} color="#3b82f6"
                             isActive={activeFilter==="sesuai"}
                             onClick={()=>handleFilterCard("sesuai")}
                           />
-                          <MiniStatusCellFlat
-                            label="Isian Perlu Diperbaiki" value={statusCounts.perbaiki} color="#f43f5e"
-                            isActive={activeFilter==="perbaiki"}
-                            onClick={()=>handleFilterCard("perbaiki")}
-                          />
-                          <MiniStatusCellFlat
+                           <MiniStatusCellFlat
                             label="Sudah Ditangani Korwil" value={statusCounts.korwilDitangani} color="#10b981"
                             isActive={activeFilter==="korwil_ditangani"}
                             onClick={()=>handleFilterCard("korwil_ditangani")}
                           />
+                          <MiniStatusCellFlat
+                            label="Belum Diperbaiki PCL" value={statusCounts.perbaiki} color="#f43f5e"
+                            isActive={activeFilter==="perbaiki"}
+                            onClick={()=>handleFilterCard("perbaiki")}
+                          />
+                          <MiniStatusCellFlat
+                            label="Sudah Diperbaiki PCL" value={statusCounts.korwilDiperbaiki} color="#7c3aed"
+                            isActive={activeFilter==="korwil_diperbaiki"}
+                            onClick={()=>handleFilterCard("korwil_diperbaiki")}
+                          />
                         </div>
                       ) : (
-                        <div style={{ display:"grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap:"10px" }}>
+                        <div style={{ display:"grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap:"10px" }}>
                             <MiniStatusCard
                             label="Belum Dikonfirmasi" count={statusCounts.belum} total={selectedRows.length}
                             color="#64748b" bg="#f8fafc"
@@ -713,24 +738,31 @@ const filteredRows = useMemo(() => {
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Sesuai Kondisi Lapangan" count={statusCounts.sesuai} total={selectedRows.length}
-                            color="#3b82f6" bg="#eff6ff"
+                            label="Belum Ditangani Korwil" count={statusCounts.sesuai} total={selectedRows.length}
+                            color="#3b82f6" bg="#f0fdf4"
                             isActive={activeFilter==="sesuai"}
                             onClick={()=>handleFilterCard("sesuai")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Isian Perlu Diperbaiki" count={statusCounts.perbaiki} total={selectedRows.length}
+                            label="Sudah Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
+                            color="#10b981" bg="#eff6ff"
+                            isActive={activeFilter==="korwil_ditangani"}
+                            onClick={()=>handleFilterCard("korwil_ditangani")}
+                            isMobile={isMobile}
+                          />
+                          <MiniStatusCard
+                            label="Belum Diperbaiki PCL" count={statusCounts.perbaiki} total={selectedRows.length}
                             color="#f43f5e" bg="#fff1f2"
                             isActive={activeFilter==="perbaiki"}
                             onClick={()=>handleFilterCard("perbaiki")}
                             isMobile={isMobile}
                           />
                           <MiniStatusCard
-                            label="Sudah Ditangani Korwil" count={statusCounts.korwilDitangani} total={selectedRows.length}
-                            color="#10b981" bg="#f0fdf4"
-                            isActive={activeFilter==="korwil_ditangani"}
-                            onClick={()=>handleFilterCard("korwil_ditangani")}
+                            label="Sudah Diperbaiki PCL" count={statusCounts.korwilDiperbaiki} total={selectedRows.length}
+                            color="#7c3aed" bg="#f5f3ff"
+                            isActive={activeFilter==="korwil_diperbaiki"}
+                            onClick={()=>handleFilterCard("korwil_diperbaiki")}
                             isMobile={isMobile}
                           />
                         </div>
@@ -795,6 +827,9 @@ const filteredRows = useMemo(() => {
                             </button>
                           )}
                         </div>
+
+                        {/* Filter indicator */}
+                       
                       </div>
 
                       {filteredRows.length === 0 ? (
@@ -825,13 +860,15 @@ const filteredRows = useMemo(() => {
   </>
 )}
                        <span style={{ color:"#cbd5e1" }}>·</span>
-                      <span style={{ color:"#94a3b8", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="belum").length} belum dikonfirmasi</span>
-                      <span style={{ color:"#cbd5e1" }}>·</span>
-                      <span style={{ color:"#3b82f6", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="sesuai").length} Sesuai Kondisi Lapangan</span>
-                      <span style={{ color:"#cbd5e1" }}>·</span>
-                      <span style={{ color:"#f43f5e", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="perbaiki").length} Isian Perlu Diperbaiki</span>
+                      <span style={{ color:"#3b82f6", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="sesuai").length} belum ditangani korwil</span>
                       <span style={{ color:"#cbd5e1" }}>·</span>
                       <span style={{ color:"#10b981", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="korwil_ditangani").length} sudah ditangani korwil</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#f43f5e", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="perbaiki").length} belum diperbaiki PCL</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#7c3aed", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="korwil_diperbaiki").length} sudah diperbaiki PCL</span>
+                      <span style={{ color:"#cbd5e1" }}>·</span>
+                      <span style={{ color:"#94a3b8", fontWeight:600 }}>{filteredRows.filter(r => computeRowFilterKey(r)==="belum").length} belum dikonfirmasi</span>
                       </div>
                     </div>
                   </div>

@@ -9,38 +9,23 @@ const OPSI_HASIL_KONFIRMASI = [
   { value: "02 Perlu diperbaiki", label: "02 Perlu diperbaiki" },
 ];
 
-// Catatan: opsi di bawah adalah dugaan awal berdasarkan pola penamaan yang ada.
-// Sesuaikan label/value-nya dengan daftar validasi asli di kolom
-// "Hasil Konfirmasi Korwil" pada spreadsheet kalau berbeda.
+// Hasil Penanganan Anomali (Korwil) sekarang hanya punya SATU opsi tindak lanjut,
+// berlaku baik untuk hasil konfirmasi "01 Sudah Sesuai" maupun "02 Perlu diperbaiki".
 const OPSI_KORWIL = [
   { value: "", label: "— Belum Ditindaklanjuti —" },
   { value: "01 Sudah Ditangani Korwil", label: "01 Sudah Ditangani Korwil" },
-  { value: "02 Sudah Diperbaiki PCL & Diapprove PML", label: "02 Sudah Diperbaiki PCL & Diapprove PML" },
 ];
 
-// Nilai keterangan otomatis ketika PML/PPL memilih "02 Perlu diperbaiki"
-const KETERANGAN_OTOMATIS_02 = "Perlu di reject PML, lalu diperbaiki PCL, dan diapprove PML";
-
-// ── Menentukan opsi "Hasil Penanganan Anomali" yang tersedia,
-// berdasarkan nilai "Hasil Konfirmasi PML/PPL" saat ini.
-// - "01 Sudah Sesuai"      -> hanya opsi "01 Sudah Ditangani Korwil"
-// - "02 Perlu diperbaiki"  -> hanya opsi "02 Sudah Diperbaiki PCL & Diapprove PML"
-// - selain itu (belum dikonfirmasi) -> tampilkan semua opsi
-function getOpsiKorwilTersedia(hasilKonfirmasi) {
-  if (hasilKonfirmasi === "01 Sudah Sesuai") {
-    return [OPSI_KORWIL[0], OPSI_KORWIL[1]];
-  }
-  if (hasilKonfirmasi === "02 Perlu diperbaiki") {
-    return [OPSI_KORWIL[0], OPSI_KORWIL[2]];
-  }
-  return OPSI_KORWIL;
-}
+// Teks bantuan (default) yang otomatis diisikan ke kolom keterangan ketika
+// PML/PPL memilih "02 Perlu diperbaiki". Tetap bisa diubah/ditulis ulang oleh user
+// sebelum disimpan, karena alurnya sekarang sama seperti "01 Sudah Sesuai".
+const KETERANGAN_DEFAULT_02 = "";
 
 function IdSubSLS(row) {
   return row.subSLS ? `${row.namaDesa} - ${row.namaSLS}` : row.kodeSLS;
 }
 
-// phase: "idle" | "asking_keterangan" | "saving" | "success" | "notice02"
+// phase: "idle" | "asking_keterangan" | "saving" | "success"
 export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
   const [hasilKonfirmasi, setHasilKonfirmasi] = useState(row?.hasilKonfirmasiPML || "");
   const [keterangan, setKeterangan] = useState(row?.keteranganKoreksi || "");
@@ -48,6 +33,9 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
   const [phase, setPhase] = useState("idle");
   const [saveError, setSaveError] = useState(null);
   const [subKeterangan, setSubKeterangan] = useState("");
+  // Menyimpan pilihan "Hasil Konfirmasi PML/PPL" yang sedang diproses lewat
+  // dialog keterangan (bisa "01 Sudah Sesuai" atau "02 Perlu diperbaiki").
+  const [pendingHasil, setPendingHasil] = useState(null);
   const [isDetailKeteranganOpen, setIsDetailKeteranganOpen] = useState(false);
   const closeTimeoutRef = useRef(null);
 
@@ -66,7 +54,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
 
   const isBusy = phase !== "idle";
   const showFullForm = !isEmptyInitial;
-  const opsiKorwilTersedia = getOpsiKorwilTersedia(hasilKonfirmasi);
+  const isPerbaikan = pendingHasil === "02 Perlu diperbaiki";
 
   const isDirty =
     hasilKonfirmasi !== (row.hasilKonfirmasiPML || "") ||
@@ -130,46 +118,45 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
     persist(hasilKonfirmasi, keterangan, hasilKorwil);
   };
 
-  // Dipicu saat memilih dropdown Hasil Konfirmasi PML/PPL dalam mode ringkas
+  // Dipicu saat memilih dropdown Hasil Konfirmasi PML/PPL dalam mode ringkas.
+  // Baik "01 Sudah Sesuai" maupun "02 Perlu diperbaiki" sekarang memakai alur
+  // yang sama: buka dialog keterangan, user isi/edit teksnya, baru disimpan.
   const handlePilihHasilKonfirmasi = (value) => {
     setHasilKonfirmasi(value);
 
     if (!isEmptyInitial) {
       // Mode lengkap: biarkan user pakai tombol Simpan Perubahan.
-      // Tapi kalau nilai Hasil Penanganan Anomali yang sedang terpilih sudah
-      // tidak valid untuk pilihan baru ini, kosongkan supaya user memilih ulang
-      // dari opsi yang sesuai.
-      const opsiValid = getOpsiKorwilTersedia(value).some(o => o.value === hasilKorwil);
-      if (!opsiValid) {
-        setHasilKorwil("");
-      }
       return;
     }
 
     if (value === "01 Sudah Sesuai") {
+      setPendingHasil(value);
       setSubKeterangan("");
       setPhase("asking_keterangan");
     } else if (value === "02 Perlu diperbaiki") {
-      persist(value, KETERANGAN_OTOMATIS_02, undefined, { successPhase: "notice02", closeDelay: 4000 });
+      setPendingHasil(value);
+      setSubKeterangan(KETERANGAN_DEFAULT_02);
+      setPhase("asking_keterangan");
     }
   };
 
   const handleBatalKeterangan = () => {
     setHasilKonfirmasi("");
     setSubKeterangan("");
+    setPendingHasil(null);
     setPhase("idle");
   };
 
   const handleSubmitKeterangan = () => {
-    if (!subKeterangan.trim()) return;
-    persist("01 Sudah Sesuai", subKeterangan.trim(), undefined, { successPhase: "success", closeDelay: 2100 });
+    if (!subKeterangan.trim() || !pendingHasil) return;
+    persist(pendingHasil, subKeterangan.trim(), undefined, { successPhase: "success", closeDelay: 2100 });
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4" onClick={isBusy ? undefined : onClose}>
 
-      {/* ── Overlay full-screen: loading → sukses / notice02 ── */}
-      {(phase === "saving" || phase === "success" || phase === "notice02") && (
+      {/* ── Overlay full-screen: loading → sukses ── */}
+      {(phase === "saving" || phase === "success") && (
         <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-5 bg-white/95 backdrop-blur-sm px-6 text-center">
           {phase === "saving" && (
             <div key="loading" className="flex flex-col items-center gap-5 animate-fadeIn">
@@ -220,27 +207,6 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
               </div>
             </div>
           )}
-
-          {phase === "notice02" && (
-            <div key="notice02" className="flex flex-col items-center gap-5 animate-successIn max-w-sm">
-              <div className="relative w-24 h-24 flex items-center justify-center">
-                <span className="absolute inset-0 rounded-full bg-amber-400 animate-pingOnce" />
-                <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-200">
-                  <svg className="w-11 h-11" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 8v5" stroke="white" strokeWidth="2.6" strokeLinecap="round" />
-                    <circle cx="12" cy="16.3" r="1.15" fill="white" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-gray-800">Perlu Diperbaiki</p>
-                <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{KETERANGAN_OTOMATIS_02}</p>
-              </div>
-              <div className="w-40 h-1 rounded-full bg-gray-100 overflow-hidden">
-                <div className="h-full bg-amber-500 animate-toastProgress3" />
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -282,16 +248,28 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
         </div>
       )}
 
-      {/* ── Sub-dialog: minta keterangan/alasan ketika memilih "01 Sudah Sesuai" ── */}
+      {/* ── Sub-dialog: minta keterangan/alasan, dipakai untuk "01 Sudah Sesuai"
+           maupun "02 Perlu diperbaiki" (alurnya sama, hanya teks & warna beda) ── */}
       {phase === "asking_keterangan" && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/30 px-4" onClick={handleBatalKeterangan}>
           <div
             className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fadeIn"
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-5 py-4" style={{ background: "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
-              <p className="text-white text-base font-bold">Konfirmasi: Sudah Sesuai</p>
-              <p className="text-orange-100 text-xs mt-0.5">Tuliskan keterangan / alasan sudah sesuai</p>
+            <div
+              className="px-5 py-4"
+              style={{
+                background: isPerbaikan
+                  ? "linear-gradient(135deg,#fb923c 0%,#e11d48 100%)"
+                  : "linear-gradient(135deg,#F5A623 0%,#e8820a 100%)",
+              }}
+            >
+              <p className="text-white text-base font-bold">
+                {isPerbaikan ? "Konfirmasi: Perlu Diperbaiki" : "Konfirmasi: Sudah Sesuai"}
+              </p>
+              <p className="text-orange-100 mt-0.5">
+                {isPerbaikan ? "Tuliskan rincian yang perlu diperbaiki dan nilainya" : "Tuliskan keterangan / alasan sudah sesuai"}
+              </p>
             </div>
             <div className="px-5 py-4">
               <textarea
@@ -299,7 +277,11 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
                 value={subKeterangan}
                 onChange={e => setSubKeterangan(e.target.value)}
                 rows={3}
-                placeholder="Contoh: Data keluarga sudah sesuai kondisi lapangan…"
+                placeholder={
+                  isPerbaikan
+                    ? "r18a. pendapatan dari pekerjaan : 3.000.000 \nr16c. pengeluaran bukan makanan tahunan : 1.000.000"
+                    : "Tuliskan keterangan / alasan sudah sesuai"
+                }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
               />
             </div>
@@ -405,7 +387,7 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
                         disabled={isBusy}
                         className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400"
                       >
-                        {opsiKorwilTersedia.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        {OPSI_KORWIL.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
                     </td>
                   </tr>
@@ -463,9 +445,6 @@ export default function DetailAnomaliKeluarga({ row, onClose, onSaved }) {
 
         @keyframes toastProgress{from{width:100%;}to{width:0%;}}
         .animate-toastProgress{animation:toastProgress 2s linear forwards;}
-
-        @keyframes toastProgress3{from{width:100%;}to{width:0%;}}
-        .animate-toastProgress3{animation:toastProgress3 3s linear forwards;}
 
         @keyframes drawCheck{to{stroke-dashoffset:0;}}
 
