@@ -10,6 +10,7 @@ import reportaseImg6 from "../assets/image/reportase6.jpeg";
 import reportaseImg7 from "../assets/image/reportase7.jpg";
 import reportaseImg8 from "../assets/image/reportase8.jpg";
 import reportaseImg9 from "../assets/image/reportase9.jpg";
+import reportaseImg10 from "../assets/image/reportase10.jpg";
 
 // ── PDF Files ──
 import reportasePdf from "../assets/file/REPORTASEVOL1.pdf";
@@ -21,6 +22,7 @@ import reportasePd6 from "../assets/file/REPORTASEVOL6.pdf";
 import reportasePd7 from "../assets/file/REPORTASEVOL7.pdf";
 import reportasePd8 from "../assets/file/REPORTASEVOL8.pdf";
 import reportasePd9 from "../assets/file/REPORTASEVOL9.pdf";
+import reportasePd10 from "../assets/file/REPORTASEVOL10.pdf";
 
 function useScrollZoom(threshold = 0.15) {
   const ref = useRef(null);
@@ -167,6 +169,7 @@ export default function ReportaSE() {
     { vol: "Vol. 7", img: reportaseImg7, pdf: reportasePd7 },
     { vol: "Vol. 8", img: reportaseImg8, pdf: reportasePd8 },
     { vol: "Vol. 9", img: reportaseImg9, pdf: reportasePd9 },
+    { vol: "Vol. 10", img: reportaseImg10, pdf: reportasePd10 },
   ];
 
   return (
@@ -183,7 +186,7 @@ export default function ReportaSE() {
         }}
       >
         <span className="inline-block bg-orange-100 text-orange-600 text-xs font-extrabold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4">
-          Reporta-SE · Vol. 1 - 9
+          Reporta-SE · Vol. 1 - 10
         </span>
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 leading-tight">
           Reporta Sensus Ekonomi 2026
