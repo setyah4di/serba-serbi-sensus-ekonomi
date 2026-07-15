@@ -457,10 +457,14 @@ const pmlList = useMemo(() => {
   // 4 kategori status untuk detail kecamatan:
   // Belum Dikonfirmasi, Sesuai Kondisi Lapangan, Isian Perlu Diperbaiki, Sudah Ditangani Korwil.
   const statusCounts = useMemo(() => {
-    const sesuai   = selectedRows.filter(r => getStatusKey(r) === "sesuai").length;
-    const perbaiki = selectedRows.filter(r => getStatusKey(r) === "perbaiki").length;
-    const belum    = selectedRows.filter(r => getStatusKey(r) === "belum").length;
-    const korwilDitangani = selectedRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+    let sesuai = 0, perbaiki = 0, belum = 0, korwilDitangani = 0;
+    selectedRows.forEach(r => {
+      const key = computeRowFilterKey(r);
+      if (key === "sesuai") sesuai++;
+      else if (key === "perbaiki") perbaiki++;
+      else if (key === "belum") belum++;
+      else if (key === "korwil_ditangani") korwilDitangani++;
+    });
 
     return { sesuai, perbaiki, belum, korwilDitangani };
   }, [selectedRows]);
