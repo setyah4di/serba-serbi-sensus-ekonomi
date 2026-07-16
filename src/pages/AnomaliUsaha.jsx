@@ -120,6 +120,14 @@ function getKorwilStatusKey(row) {
   return null;
 }
 
+// ── Kunci unik satu "assignment" (usaha) ──
+// Satu usaha bisa punya lebih dari 1 baris anomali, jadi untuk menghitung
+// jumlah ASSIGNMENT usaha yang terkena anomali, baris dengan desa + SLS +
+// nama usaha yang sama hanya dihitung 1 kali.
+function getAssignmentKey(row) {
+  return `${row.namaDesa}||${row.namaSLS}||${row.namaUsaha}`;
+}
+
 // ── Progress Bar ──
 function ProgressBar({ value, max, color }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
@@ -418,7 +426,14 @@ export default function MonitoringAnomaliUsaha() {
     const belum    = rawRows.filter(r => !r.hasilKonfirmasiPML.trim()).length;
     const korwilDitangani = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
 
-    return { sesuai, perbaiki, belum, korwilDitangani, total: rawRows.length };
+    // Jumlah ASSIGNMENT (usaha) terkena anomali → dedup berdasarkan desa + SLS +
+    // nama usaha, supaya 1 usaha yang punya lebih dari 1 baris anomali cukup
+    // dihitung sekali.
+    const assignmentSet = new Set();
+    rawRows.forEach(r => assignmentSet.add(getAssignmentKey(r)));
+    const totalAssignmentAnomali = assignmentSet.size;
+
+    return { sesuai, perbaiki, belum, korwilDitangani, total: rawRows.length, totalAssignmentAnomali };
   }, [rawRows]);
 
   // KecamatanList: angka besar (count) = jumlah anomali yang BELUM ditangani
@@ -537,7 +552,7 @@ const filteredRows = useMemo(() => {
 
   const statGridStyle = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(5, minmax(0, 1fr))",
+    gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))",
     gap: "14px",
     marginBottom: "28px",
   };
@@ -589,12 +604,13 @@ const filteredRows = useMemo(() => {
 
         {!loading && !error && globalStatus && (
           <>
-            {/* ── Stat Cards global (4 status + total) ── */}
+            {/* ── Stat Cards global (assignment + 4 status + total) ── */}
             <div style={statGridStyle}>
               <StatCard label="Belum Dikonfirmasi" value={globalStatus.belum} sub={`${((globalStatus.belum/globalStatus.total)*100).toFixed(1)}% dari total`} icon="⏳" accentColor="#64748b"/>
               <StatCard label="Sesuai Kondisi Lapangan" value={globalStatus.sesuai} sub={`${((globalStatus.sesuai/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛡️" accentColor="#3b82f6"/>
               <StatCard label="Isian Perlu Diperbaiki" value={globalStatus.perbaiki} sub={`${((globalStatus.perbaiki/globalStatus.total)*100).toFixed(1)}% dari total`} icon="🛠️" accentColor="#f43f5e"/>
               <StatCard label="Sudah Ditangani Korwil" value={globalStatus.korwilDitangani} sub={`${((globalStatus.korwilDitangani/globalStatus.total)*100).toFixed(1)}% dari total`} icon="✅" accentColor="#10b981"/>
+              <StatCard label="Assignment Terkena Anomali" value={globalStatus.totalAssignmentAnomali} sub={`dari ${globalStatus.total} baris`} icon="🧾" accentColor="#7c3aed"/>
               <StatCard label="Total Anomali" value={globalStatus.total} sub="seluruh baris anomali" icon="📊" accentColor="#f97316"/>
             </div>
 

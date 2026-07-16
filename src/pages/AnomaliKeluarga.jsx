@@ -88,6 +88,14 @@ function computeRowFilterKey(row) {
   return getStatusKey(row); // "sesuai" | "perlu" | "belum"
 }
 
+// ── Kunci unik satu "assignment" (KK) ──
+// Satu assignment/KK bisa punya lebih dari 1 baris anomali (anomali berbeda-beda),
+// jadi untuk menghitung jumlah ASSIGNMENT yang terkena anomali, baris dengan
+// desa + SLS + nama KK yang sama hanya dihitung 1 kali.
+function getAssignmentKey(row) {
+  return `${row.namaDesa}||${row.namaSLS}||${row.namaKK}`;
+}
+
 // ── Helpers warna card kecamatan (berdasarkan jumlah BELUM TUNTAS) ──
 // "belum tuntas" = perlu + belum → makin banyak makin merah
 function countColor(v)    { if (v === 0) return "text-emerald-600"; if (v <= 50) return "text-blue-600"; if (v <= 100) return "text-amber-500"; return "text-rose-500"; }
@@ -420,7 +428,14 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";
   const perlu            = rawRows.filter(r => computeRowFilterKey(r) === "perlu").length;
   const belum           = rawRows.filter(r => computeRowFilterKey(r) === "belum").length;
   const korwilDitangani = rawRows.filter(r => computeRowFilterKey(r) === "korwil_ditangani").length;
-  return { total: rawRows.length, sesuai, perlu, belum, korwilDitangani };
+
+  // Jumlah ASSIGNMENT (KK) terkena anomali → dedup berdasarkan desa + SLS + nama KK,
+  // supaya 1 KK yang punya lebih dari 1 baris anomali cukup dihitung sekali.
+  const assignmentSet = new Set();
+  rawRows.forEach(r => assignmentSet.add(getAssignmentKey(r)));
+  const totalAssignmentAnomali = assignmentSet.size;
+
+  return { total: rawRows.length, sesuai, perlu, belum, korwilDitangani, totalAssignmentAnomali };
 }, [rawRows]);
 
   // ── Daftar kartu kecamatan ──
@@ -585,8 +600,9 @@ const filteredRows = useMemo(() => {
 
         {!loading && !error && globalStats && (
           <>
-            {/* ── Stat Cards global: 5 kartu (4 kategori status + total) ── */}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(5, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
+            {/* ── Stat Cards global: 6 kartu (assignment + 4 kategori status + total) ── */}
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
+ 
   <StatCard
     label="Belum Dikonfirmasi"
     value={globalStats.belum}
@@ -614,6 +630,13 @@ const filteredRows = useMemo(() => {
     sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}% dari total`}
     icon="🛡️"
     accentColor="#0f766e"
+  />
+   <StatCard
+    label="Assignment Terkena Anomali"
+    value={globalStats.totalAssignmentAnomali}
+    sub={`dari ${globalStats.total} baris `}
+    icon="🧾"
+    accentColor="#7c3aed"
   />
   <StatCard
     label="Total Anomali"
