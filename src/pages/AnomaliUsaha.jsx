@@ -446,7 +446,7 @@ export default function MonitoringAnomaliUsaha() {
       const sesuai = list.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
       const perbaiki = list.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
       const belum = list.filter(r => !r.hasilKonfirmasiPML.trim()).length;
-      const count = sesuai + perbaiki + belum;  // jumlah anomali yang BELUM ditangani korwil
+      const count = sesuai + perbaiki + belum - korwilDitangani;  // jumlah anomali yang BELUM ditangani korwil
       const desaSet = new Set(list.map(r=>`${r.kodeDesa}||${r.namaDesa}`));
       const slsSet  = new Set(list.map(r=>`${r.kodeDesa}||${r.kodeSLS}||${r.subSLS}`));
       return { kecamatan:nama, count, korwilDitangani, countDesa:desaSet.size, countSLS:slsSet.size };
