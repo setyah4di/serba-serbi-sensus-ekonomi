@@ -43,6 +43,62 @@ const MonitoringPml = () => {
     loadData();
   }, []);
 
+  // Normalisasi teks untuk pencocokan nama PML (biar tidak gagal cuma
+  // karena beda spasi ganda / huruf besar-kecil antar sheet)
+  const normalizeName = (str) =>
+    (str ?? "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+  // ===== Ambil data dari sheet "hasil gabungan" untuk detail per PCL =====
+  const fetchHasilGabungan = async () => {
+    const sheetId = "15LFgyVGKJ4Dd5-HBFk6HPrMn5j4vE43k";
+    // Dipanggil lewat GID (bukan nama sheet), supaya tidak gagal kalau nama
+    // tab-nya beda spasi/underscore/huruf besar-kecil dengan yang diketik di kode.
+    // GID diambil dari URL: .../edit?gid=1176424983#gid=1176424983
+    const gid = "1176424983";
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?gid=${gid}`;
+
+    const res = await axios.get(url);
+    let text = res.data;
+    text = text.substring(47, text.length - 2);
+    const json = JSON.parse(text);
+    const rows = json.table?.rows ?? [];
+
+    const toNumber = (v) => {
+      if (typeof v === "number") return v;
+      if (typeof v === "string") {
+        const cleaned = v.replace(/[^0-9.-]/g, "");
+        return parseFloat(cleaned) || 0;
+      }
+      return Number(v) || 0;
+    };
+
+    // Urutan kolom sesuai sheet "hasil_gabungan":
+    // A Nama PML | B email PML | C Nama PPL | D email PPL | E total_assignment
+    // F kode_id | G approved | H submitted | I draft | J rejected | K open
+    // L kecamatan | M progress
+    return rows
+      .map((row) => {
+        const c = row.c || [];
+        return {
+          namaPml: (c[0]?.v ?? "").toString().trim(),
+          namaPpl: (c[2]?.v ?? "").toString().trim(),
+          totalAssignment: toNumber(c[4]?.v),
+          kodeId: c[5]?.v ?? "",
+          approved: toNumber(c[6]?.v),
+          submitted: toNumber(c[7]?.v),
+          draft: toNumber(c[8]?.v),
+          rejected: toNumber(c[9]?.v),
+          open: toNumber(c[10]?.v),
+          kecamatan: (c[11]?.v ?? "").toString().trim(),
+        };
+      })
+      .filter((r) => r.namaPml && r.namaPpl);
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -99,6 +155,35 @@ const MonitoringPml = () => {
         });
       });
 
+      // ── Ambil data "hasil_gabungan" untuk menghitung Rata-rata PML versi baru ──
+      // Rata-rata PML sekarang TIDAK lagi diambil dari rata-rata progress PCL,
+      // melainkan dihitung dari akumulasi seluruh assignment PCL di bawah PML
+      // tersebut dengan rumus:
+      // ((approved + rejected) / (approved + submitted + rejected)) * 100
+      let hasilGabunganData = [];
+      try {
+        hasilGabunganData = await fetchHasilGabungan();
+        setHasilGabunganRaw(hasilGabunganData);
+        setHasilGabunganLoaded(true);
+      } catch (errGabungan) {
+        console.error(
+          "Gagal memuat data hasil_gabungan untuk rata-rata PML:",
+          errGabungan
+        );
+      }
+
+      // Agregasi approved/submitted/rejected per PML (gabungan semua PCL-nya)
+      const pmlAggMap = {};
+      hasilGabunganData.forEach((r) => {
+        const key = normalizeName(r.namaPml);
+        if (!pmlAggMap[key]) {
+          pmlAggMap[key] = { approved: 0, submitted: 0, rejected: 0 };
+        }
+        pmlAggMap[key].approved += r.approved;
+        pmlAggMap[key].submitted += r.submitted;
+        pmlAggMap[key].rejected += r.rejected;
+      });
+
       const kecamatanGroup = {};
       parsed.forEach((item) => {
         const kec = item.namaKecamatan;
@@ -127,9 +212,19 @@ const MonitoringPml = () => {
           pmlData.forEach((pml) => {
             const max = Math.max(...pml.progressList);
             const min = Math.min(...pml.progressList);
+
+            // Rata-rata PML (kolom "PML"): dihitung dari data hasil_gabungan,
+            // bukan lagi rata-rata progress PCL.
+            const agg = pmlAggMap[normalizeName(pml.pml)] || {
+              approved: 0,
+              submitted: 0,
+              rejected: 0,
+            };
+            const denom = agg.approved + agg.submitted + agg.rejected;
             const avg =
-              pml.progressList.reduce((a, b) => a + b, 0) /
-              pml.progressList.length;
+              denom > 0
+                ? (((agg.approved + agg.rejected) / denom) * 100).toFixed(2)
+                : "0.00";
 
             result.push({
               type: "pml",
@@ -138,7 +233,7 @@ const MonitoringPml = () => {
               jumlahPpl: pml.progressList.length,
               max: max.toFixed(2),
               min: min.toFixed(2),
-              avg: avg.toFixed(2),
+              avg,
             });
           });
 
@@ -156,62 +251,6 @@ const MonitoringPml = () => {
       setLoading(false);
     }
   };
-
-  // ===== Ambil data dari sheet "hasil gabungan" untuk detail per PCL =====
-  const fetchHasilGabungan = async () => {
-    const sheetId = "15LFgyVGKJ4Dd5-HBFk6HPrMn5j4vE43k";
-    // Dipanggil lewat GID (bukan nama sheet), supaya tidak gagal kalau nama
-    // tab-nya beda spasi/underscore/huruf besar-kecil dengan yang diketik di kode.
-    // GID diambil dari URL: .../edit?gid=1176424983#gid=1176424983
-    const gid = "1176424983";
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?gid=${gid}`;
-
-    const res = await axios.get(url);
-    let text = res.data;
-    text = text.substring(47, text.length - 2);
-    const json = JSON.parse(text);
-    const rows = json.table?.rows ?? [];
-
-    const toNumber = (v) => {
-      if (typeof v === "number") return v;
-      if (typeof v === "string") {
-        const cleaned = v.replace(/[^0-9.-]/g, "");
-        return parseFloat(cleaned) || 0;
-      }
-      return Number(v) || 0;
-    };
-
-    // Urutan kolom sesuai sheet "hasil_gabungan":
-    // A Nama PML | B email PML | C Nama PPL | D email PPL | E total_assignment
-    // F kode_id | G approved | H submitted | I draft | J rejected | K open
-    // L kecamatan | M progress
-    return rows
-      .map((row) => {
-        const c = row.c || [];
-        return {
-          namaPml: (c[0]?.v ?? "").toString().trim(),
-          namaPpl: (c[2]?.v ?? "").toString().trim(),
-          totalAssignment: toNumber(c[4]?.v),
-          kodeId: c[5]?.v ?? "",
-          approved: toNumber(c[6]?.v),
-          submitted: toNumber(c[7]?.v),
-          draft: toNumber(c[8]?.v),
-          rejected: toNumber(c[9]?.v),
-          open: toNumber(c[10]?.v),
-          kecamatan: (c[11]?.v ?? "").toString().trim(),
-        };
-      })
-      .filter((r) => r.namaPml && r.namaPpl);
-  };
-
-  // Normalisasi teks untuk pencocokan nama PML (biar tidak gagal cuma
-  // karena beda spasi ganda / huruf besar-kecil antar sheet)
-  const normalizeName = (str) =>
-    (str ?? "")
-      .toString()
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, " ");
 
   // ===== Handler klik tombol "Detail" pada baris PML =====
   const handleShowDetail = async (pmlName, kecamatanLabel) => {
@@ -490,15 +529,15 @@ const MonitoringPml = () => {
 
   <tr className="bg-orange-700 text-white">
     <th className="w-[12%] border border-orange-500">
-      MAX
+      MAX PCL
     </th>
 
     <th className="w-[12%] border border-orange-500">
-      MIN
+      MIN PCL
     </th>
 
     <th className="w-[12%] border border-orange-500">
-      RATA-RATA
+      PML
     </th>
   </tr>
 </thead>

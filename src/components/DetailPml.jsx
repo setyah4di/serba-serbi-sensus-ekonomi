@@ -22,7 +22,7 @@ const DetailPml = ({ data, onClose }) => {
   // Progress PML = (Approved + Submitted) / Total Assignment
   const progress =
     totalAssignment > 0
-      ? (((approved + submitted) / totalAssignment) * 100).toFixed(2)
+      ? (((approved + rejected) / (approved + submitted + rejected )) * 100).toFixed(2)
       : "0.00";
 
   return (
