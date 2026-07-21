@@ -79,17 +79,23 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
   const totalDraft      = detailRows.reduce((s,r)=>s+r.draft,0);
   const totalRejected   = detailRows.reduce((s,r)=>s+r.rejected,0);
   const totalOpen       = detailRows.reduce((s,r)=>s+r.open,0);
+  const totalNotFound   = detailRows.reduce((s,r)=>s+(r.not_found||0),0);
   const progress = pcl.progress;
 
   const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
 
-  const statItems = [
+  // Baris 1: 3 card utama
+  const statItemsRow1 = [
     {label:"Total Assignment",value:totalAssignment,icon:"📋",bg:"bg-gray-100 text-gray-700"},
     {label:"Approved",        value:totalApproved,  icon:"✅",bg:"bg-emerald-50 text-emerald-700"},
     {label:"Submitted",       value:totalSubmitted, icon:"📤",bg:"bg-blue-50 text-blue-700"},
+  ];
+  // Baris 2: 4 card status lainnya
+  const statItemsRow2 = [
     {label:"Draft",           value:totalDraft,     icon:"📝",bg:"bg-amber-50 text-amber-700"},
     {label:"Rejected",        value:totalRejected,  icon:"❌",bg:"bg-rose-50 text-rose-700"},
     {label:"Open",            value:totalOpen,      icon:"🔓",bg:"bg-purple-50 text-purple-700"},
+    {label:"Tidak Ditemukan", value:totalNotFound,  icon:"🔎",bg:"bg-slate-100 text-slate-700"},
   ];
 
   return (
@@ -125,8 +131,18 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-2.5 mb-5">
-                {statItems.map(({label,value,icon,bg})=>(
+              {/* Baris 1: Total Assignment, Approved, Submitted */}
+              <div className="grid grid-cols-3 gap-2.5 mb-2.5">
+                {statItemsRow1.map(({label,value,icon,bg})=>(
+                  <div key={label} className={`rounded-xl p-3 ${bg}`}>
+                    <p className="text-[11px] opacity-60 font-medium leading-tight mb-1">{icon} {label}</p>
+                    <p className="text-2xl font-black">{value.toLocaleString("id-ID")}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Baris 2: Draft, Rejected, Open, Tidak Ditemukan */}
+              <div className="grid grid-cols-4 gap-2.5 mb-5">
+                {statItemsRow2.map(({label,value,icon,bg})=>(
                   <div key={label} className={`rounded-xl p-3 ${bg}`}>
                     <p className="text-[11px] opacity-60 font-medium leading-tight mb-1">{icon} {label}</p>
                     <p className="text-2xl font-black">{value.toLocaleString("id-ID")}</p>
@@ -147,6 +163,7 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
                           <th className="text-right px-3 py-2 font-semibold text-amber-500">📝</th>
                           <th className="text-right px-3 py-2 font-semibold text-rose-500">❌</th>
                           <th className="text-right px-3 py-2 font-semibold text-purple-500">🔓</th>
+                          <th className="text-right px-3 py-2 font-semibold text-slate-500">🔎</th>
                         </tr></thead>
                         <tbody>
                           {detailRows.map((r,i)=>(
@@ -158,6 +175,7 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
                               <td className="px-3 py-2 text-right text-amber-600 font-medium">{r.draft}</td>
                               <td className="px-3 py-2 text-right text-rose-500 font-medium">{r.rejected}</td>
                               <td className="px-3 py-2 text-right text-purple-600 font-medium">{r.open}</td>
+                              <td className="px-3 py-2 text-right text-slate-600 font-medium">{r.not_found||0}</td>
                             </tr>
                           ))}
                         </tbody>

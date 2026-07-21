@@ -193,7 +193,7 @@ export default function MonitoringPetugas() {
 
   // ── Load rekap ──
   useEffect(()=>{
-    fetch(CSV_REKAP).then(r=>{if(!r.ok)throw new Error("Gagal mengambil data.");return r.text();})
+    fetch(`${CSV_REKAP}&t=${Date.now()}`, { cache: "no-store" }).then(r=>{if(!r.ok)throw new Error("Gagal mengambil data.");return r.text();})
     .then(text=>{
       const parsed=parseCSV(text);
       let lastKec=null,lastPML="";
@@ -209,14 +209,22 @@ export default function MonitoringPetugas() {
 
   // ── Load gabungan ──
   useEffect(()=>{
-    fetch(CSV_GABUNGAN).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
+    // cache-busting: hindari data lama tersangkut di cache browser/CDN
+    const urlGabungan = `${CSV_GABUNGAN}&t=${Date.now()}`;
+    fetch(urlGabungan, { cache: "no-store" }).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
       const parsed=parseCSV(text);
       if(parsed.length<2){setLoadingGab(false);return;}
       const header=parsed[0].map(h=>h.toLowerCase().replace(/\s+/g," ").trim());
+      // versi header yang dinormalisasi (buang semua spasi/underscore/simbol) — lebih tahan terhadap variasi penulisan
+      const headerNorm=parsed[0].map(h=>h.toLowerCase().replace(/[^a-z0-9]/g,""));
       const fc=(...kws)=>{for(const k of kws){const i=header.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
+      const fcNorm=(...kws)=>{for(const k of kws){const i=headerNorm.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
       const iNamaPML=fc("nama pml"),iEmailPML=fc("email pml"),iNamaPCL=fc("nama ppl","nama pcl"),
             iEmailPCL=fc("email ppl","email pcl"),iTotal=fc("total_ass","total"),iKodeId=fc("kode_id","kode"),
             iApproved=fc("approv"),iSubmit=fc("submit"),iDraft=fc("draft"),iReject=fc("reject"),iOpen=fc("open");
+      // Kolom "Tidak Ditemukan" — coba cari lewat nama header (versi normalisasi lebih robust), fallback ke kolom Y (index 24)
+      const iNotFoundByName=fcNorm("tidakditemukan","tdkditemukan","notfound");
+      const iNotFound=iNotFoundByName>=0?iNotFoundByName:24;
       const data=parsed.slice(1).map(cols=>{
         const namaPCL=iNamaPCL>=0?(cols[iNamaPCL]||"").trim():"";
         const emailPCL=iEmailPCL>=0?(cols[iEmailPCL]||"").trim():"";
@@ -224,7 +232,8 @@ export default function MonitoringPetugas() {
         return{namaPML:iNamaPML>=0?(cols[iNamaPML]||"").trim():"",emailPML:iEmailPML>=0?(cols[iEmailPML]||"").trim():"",
           namaPCL,emailPCL,total_assignment:iTotal>=0?parseNum(cols[iTotal]):0,kode_id:iKodeId>=0?(cols[iKodeId]||"").trim():"",
           approved:iApproved>=0?parseNum(cols[iApproved]):0,submitted:iSubmit>=0?parseNum(cols[iSubmit]):0,
-          draft:iDraft>=0?parseNum(cols[iDraft]):0,rejected:iReject>=0?parseNum(cols[iReject]):0,open:iOpen>=0?parseNum(cols[iOpen]):0};
+          draft:iDraft>=0?parseNum(cols[iDraft]):0,rejected:iReject>=0?parseNum(cols[iReject]):0,open:iOpen>=0?parseNum(cols[iOpen]):0,
+          not_found:iNotFound>=0?parseNum(cols[iNotFound]):0};
       }).filter(Boolean);
       setGabunganRows(data);setLoadingGab(false);
     }).catch(()=>setLoadingGab(false));
@@ -232,7 +241,7 @@ export default function MonitoringPetugas() {
 
   // ── Load per hari ──
   useEffect(()=>{
-    fetch(CSV_PERHARI).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
+    fetch(`${CSV_PERHARI}&t=${Date.now()}`, { cache: "no-store" }).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
       const parsed=parseCSV(text);
       if(parsed.length<3){setLoadingChart(false);return;}
       const headerRow = parsed[1];
