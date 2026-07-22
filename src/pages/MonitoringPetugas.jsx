@@ -157,8 +157,10 @@ function hitungHariSensus() {
   const TODAY = new Date(); // atau: new Date() untuk real-time
   const diffMs   = TODAY - START;
   const hariKe   = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // hari ke-1 = tgl 15
-  const totalHari = Math.floor((END - START) / (1000 * 60 * 60 * 24)) + 1;
-  const target    = parseFloat(((hariKe - 1) * 1.4).toFixed(1));
+  // const totalHari = Math.floor((END - START)  / (1000 * 60 * 60 * 24)) + 1;
+  const totalHari = 78-hariKe; // total hari tersisa dari hari ke-1 sampai tgl 31 Agustus
+  
+  const target    = parseFloat(((hariKe - 1) * 1.5).toFixed(1));
   return { hariKe, totalHari, target };
 }
 const { hariKe: HARI_KE, totalHari: TOTAL_HARI, target: TARGET_PROGRESS } = hitungHariSensus();
@@ -469,8 +471,21 @@ export default function MonitoringPetugas() {
   <StatCard label="Total Petugas PML"   value={globalStats.totalPML}           sub="pengawas lapangan"      icon="👨‍💼" variant="gray"   />
   <StatCard label="Total Petugas PCL"   value={globalStats.totalPCL}           sub="pencacah lapangan"      icon="🧑‍🏭" variant="orange" />
   <StatCard label="Rata-rata Progress"  value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL"           icon="📊" variant="blue"   />
-  <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,4`} icon="🎯" variant="purple" />
-  <StatCard label="Hari Pelaksanaan"    value={`${HARI_KE} / ${TOTAL_HARI}`}   sub="15 Jun – 31 Agt 2026"  icon="📅" variant="sky"    />
+  <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,5`} icon="🎯" variant="purple" />
+<StatCard
+  label="Hari Pelaksanaan"
+  value={
+    <>
+      <span className="text-3xl font-bold">{TOTAL_HARI}</span>
+      <span className="ml-1 text-sm font-semibold text-sky-600">
+        hari tersisa
+      </span>
+    </>
+  }
+  sub="15 Jun – 31 Agt 2026"
+  icon="📅"
+  variant="sky"
+/>
   <StatCard label="Progress = 100%"     value={globalStats.done100}            sub="PCL sudah selesai"      icon="✅" variant="green"  />
 </div>
 

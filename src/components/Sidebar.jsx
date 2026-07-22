@@ -61,6 +61,24 @@ const menuSections = [
       },
     ],
   },
+    {
+    sectionKey: "tidak ditemukan",
+    sectionLabel: "Tidak Ditemukan",
+    items: [
+      {
+        key: "prelist tidak ditemukan",
+        label: "Prelist Tidak Ditemukan",
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+          </svg>
+        ),
+        badge: null,
+      },
+    
+    ],
+  },
   {
     sectionKey: "lainnya",
     sectionLabel: "Lainnya",
@@ -86,6 +104,7 @@ const pathMap = {
   "Anomali Keluarga": "/anomali-keluarga",
   "Anomali Usaha": "/anomali-usaha",
   "Reporta SE": "/reportase",
+  "prelist tidak ditemukan": "/prelist-tidak-ditemukan",
 };
 
 export default function Sidebar({ onMenuClick }) {

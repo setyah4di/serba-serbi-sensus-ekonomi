@@ -57,6 +57,7 @@ function RouteWrapper() {
     "/anomali-keluarga",
     "/anomali-usaha",
     "/reportase",
+    "/prelist-tidak-ditemukan",
   ];
 
   const showSidebar = sidebarPages.includes(pathname);
@@ -79,6 +80,7 @@ function RouteWrapper() {
             <Route path="/monitoring-pml" element={<MonitoringPml />} />
             <Route path="/anomali-keluarga" element={<MonitoringAnomaliKeluarga />} />
             <Route path="/anomali-usaha" element={<MonitoringAnomaliUsaha />} />
+            <Route path="/prelist-tidak-ditemukan" element={<MonitoringAnomaliKeluarga />} />
             <Route path="/reportase" element={<ReportaSE />} />
             <Route path="/ngibar" element={<Ngibar />} />
             <Route path="/reporta-se" element={<ReportaSE />} />
