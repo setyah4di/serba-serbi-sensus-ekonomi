@@ -23,6 +23,7 @@ import MonitoringPetugas from "./pages/MonitoringPetugas";
 import MonitoringPml from "./pages/MonitoringPml";
 import MonitoringAnomaliKeluarga from "./pages/AnomaliKeluarga";
 import MonitoringAnomaliUsaha from "./pages/AnomaliUsaha";
+import HasilNgibar from "./pages/HasilNgibar";
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -58,6 +59,7 @@ function RouteWrapper() {
     "/anomali-usaha",
     "/reportase",
     "/prelist-tidak-ditemukan",
+    "/hasil-ngibar",
   ];
 
   const showSidebar = sidebarPages.includes(pathname);
@@ -81,6 +83,7 @@ function RouteWrapper() {
             <Route path="/anomali-keluarga" element={<MonitoringAnomaliKeluarga />} />
             <Route path="/anomali-usaha" element={<MonitoringAnomaliUsaha />} />
             <Route path="/prelist-tidak-ditemukan" element={<MonitoringAnomaliKeluarga />} />
+            <Route path="/hasil-ngibar" element={<HasilNgibar />} />
             <Route path="/reportase" element={<ReportaSE />} />
             <Route path="/ngibar" element={<Ngibar />} />
             <Route path="/reporta-se" element={<ReportaSE />} />
