@@ -29,7 +29,7 @@ const MENUS = [
     bg: "from-blue-50 to-white",
     border: "border-blue-100",
     textColor: "text-blue-700",
-    url: "https://drive.google.com/file/d/109QG-1yxBGHxMAPce1VwsanOG7VSk6Gx/view",
+    url: "https://drive.google.com/file/d/1AyJFo4PUJNi8iCO_0XbXI4h1OV9KGFgd/view",
   },
   {
     id: "kuesioner",
