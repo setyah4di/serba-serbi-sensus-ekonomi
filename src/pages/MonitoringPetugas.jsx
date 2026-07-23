@@ -470,7 +470,7 @@ export default function MonitoringPetugas() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
   <StatCard label="Total Petugas PML"   value={globalStats.totalPML}           sub="pengawas lapangan"      icon="👨‍💼" variant="gray"   />
   <StatCard label="Total Petugas PCL"   value={globalStats.totalPCL}           sub="pencacah lapangan"      icon="🧑‍🏭" variant="orange" />
-  <StatCard label="Rata-rata Progress"  value={`${globalStats.avg.toFixed(1)}%`} sub="seluruh PCL"           icon="📊" variant="blue"   />
+  <StatCard label="Rata-rata Progress"  value={`${globalStats.avg.toFixed(2)}%`} sub="seluruh PCL"           icon="📊" variant="blue"   />
   <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,5`} icon="🎯" variant="purple" />
 <StatCard
   label="Hari Pelaksanaan"
