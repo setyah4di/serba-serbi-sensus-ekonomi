@@ -160,7 +160,7 @@ function hitungHariSensus() {
   // const totalHari = Math.floor((END - START)  / (1000 * 60 * 60 * 24)) + 1;
   const totalHari = 78-hariKe; // total hari tersisa dari hari ke-1 sampai tgl 31 Agustus
   
-  const target    = parseFloat(((hariKe - 1) * 1.5).toFixed(1));
+  const target    = parseFloat(((hariKe - 1) * 1.5625).toFixed(1));
   return { hariKe, totalHari, target };
 }
 const { hariKe: HARI_KE, totalHari: TOTAL_HARI, target: TARGET_PROGRESS } = hitungHariSensus();
@@ -442,7 +442,7 @@ export default function MonitoringPetugas() {
             {lastUpdated&&(
               <div className="text-right">
                 <p className="text-orange-100">Data diperbarui pada</p>
-                <p className="text-orange-100">{lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} Pukul 07.00 WIB</p>
+                <p className="text-orange-100">{lastUpdated.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"})} Pukul 08.00 WIB</p>
               </div>
             )}
           </div>
@@ -471,7 +471,7 @@ export default function MonitoringPetugas() {
   <StatCard label="Total Petugas PML"   value={globalStats.totalPML}           sub="pengawas lapangan"      icon="👨‍💼" variant="gray"   />
   <StatCard label="Total Petugas PCL"   value={globalStats.totalPCL}           sub="pencacah lapangan"      icon="🧑‍🏭" variant="orange" />
   <StatCard label="Rata-rata Progress"  value={`${globalStats.avg.toFixed(2)}%`} sub="seluruh PCL"           icon="📊" variant="blue"   />
-  <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,5`} icon="🎯" variant="purple" />
+  <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,5625`} icon="🎯" variant="purple" />
 <StatCard
   label="Hari Pelaksanaan"
   value={
