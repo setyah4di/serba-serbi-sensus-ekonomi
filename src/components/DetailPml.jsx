@@ -117,7 +117,7 @@ const DetailPml = ({ data, onClose }) => {
                     const pclProgress =
                       pcl.totalAssignment > 0
                         ? (
-                            ((pcl.approved + pcl.submitted) /
+                            ((pcl.approved + pcl.submitted + pcl.rejected) /
                               pcl.totalAssignment) *
                             100
                           ).toFixed(2)
@@ -179,7 +179,7 @@ const DetailPml = ({ data, onClose }) => {
               const pclProgress =
                 pcl.totalAssignment > 0
                   ? (
-                      ((pcl.approved + pcl.submitted) / pcl.totalAssignment) *
+                      ((pcl.approved + pcl.submitted + pcl.rejected) / pcl.totalAssignment) *
                       100
                     ).toFixed(2)
                   : "0.00";
