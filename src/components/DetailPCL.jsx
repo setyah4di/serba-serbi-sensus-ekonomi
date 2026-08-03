@@ -65,6 +65,15 @@ function TrendChart({ chartData, loading }) {
   );
 }
 
+// ── Helper: warna badge untuk status (Rendah/Sedang/Tinggi, dsb) ──
+function statusBadgeStyle(status){
+  const s=(status||"").toLowerCase();
+  if(s.includes("tinggi")) return "bg-emerald-100 text-emerald-700";
+  if(s.includes("sedang")) return "bg-amber-100 text-amber-700";
+  if(s.includes("rendah")) return "bg-rose-100 text-rose-700";
+  return "bg-gray-100 text-gray-600";
+}
+
 // ── Modal Detail PCL ──
 // Props:
 //   pcl          : object  — data PCL yang dipilih (namaPCL, emailPCL, namaPML, emailPML, progress)
@@ -82,6 +91,18 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
   const totalNotFound   = detailRows.reduce((s,r)=>s+(r.not_found||0),0);
   const progress = pcl.progress;
 
+  // ── Progress & Status dari kolom AA (Progress) & AB (Status) spreadsheet ──
+  // Dijumlahkan (bukan dirata-rata) agar konsisten dengan card lain yang juga menampilkan total seluruh SLS
+  const totalProgressAA = detailRows.reduce((s,r)=>s+(r.progress_aa||0),0);
+  // ambil status (AB) yang paling sering muncul di antara baris detail
+  const statusCounts = {};
+  detailRows.forEach(r=>{
+    const st=(r.status_ab||"").trim();
+    if(!st) return;
+    statusCounts[st]=(statusCounts[st]||0)+1;
+  });
+  const statusAB = Object.keys(statusCounts).sort((a,b)=>statusCounts[b]-statusCounts[a])[0] || "-";
+
   const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
 
   // Baris 1: 3 card utama
@@ -89,11 +110,11 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
     {label:"Total Assignment",value:totalAssignment,icon:"📋",bg:"bg-gray-100 text-gray-700"},
     {label:"Approved",        value:totalApproved,  icon:"✅",bg:"bg-emerald-50 text-emerald-700"},
     {label:"Submitted",       value:totalSubmitted, icon:"📤",bg:"bg-blue-50 text-blue-700"},
+    {label:"Rejected",        value:totalRejected,  icon:"❌",bg:"bg-rose-50 text-rose-700"},
   ];
   // Baris 2: 4 card status lainnya
   const statItemsRow2 = [
     {label:"Draft",           value:totalDraft,     icon:"📝",bg:"bg-amber-50 text-amber-700"},
-    {label:"Rejected",        value:totalRejected,  icon:"❌",bg:"bg-rose-50 text-rose-700"},
     {label:"Open",            value:totalOpen,      icon:"🔓",bg:"bg-purple-50 text-purple-700"},
     {label:"Tidak Ditemukan", value:totalNotFound,  icon:"🔎",bg:"bg-slate-100 text-slate-700"},
   ];
@@ -131,8 +152,8 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
             </div>
           ) : (
             <>
-              {/* Baris 1: Total Assignment, Approved, Submitted */}
-              <div className="grid grid-cols-3 gap-2.5 mb-2.5">
+              {/* Baris 1: Total Assignment, Approved, Submitted, Rejected */}
+              <div className="grid grid-cols-4 gap-2.5 mb-2.5">
                 {statItemsRow1.map(({label,value,icon,bg})=>(
                   <div key={label} className={`rounded-xl p-3 ${bg}`}>
                     <p className="text-[11px] opacity-60 font-medium leading-tight mb-1">{icon} {label}</p>
@@ -140,7 +161,7 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
                   </div>
                 ))}
               </div>
-              {/* Baris 2: Draft, Rejected, Open, Tidak Ditemukan */}
+              {/* Baris 2: Draft, Open, Tidak Ditemukan, Progress+Status (AA & AB) */}
               <div className="grid grid-cols-4 gap-2.5 mb-5">
                 {statItemsRow2.map(({label,value,icon,bg})=>(
                   <div key={label} className={`rounded-xl p-3 ${bg}`}>
@@ -148,6 +169,14 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
                     <p className="text-2xl font-black">{value.toLocaleString("id-ID")}</p>
                   </div>
                 ))}
+                {/* Card gabungan Progress (AA) + Status (AB) — status ditampilkan tepat di bawah angka */}
+                <div className="rounded-xl p-3 bg-orange-100 text-orange-700">
+                  <p className="text-[11px] opacity-60 font-medium leading-tight mb-1">🔃 Progress</p>
+                  <p className="text-2xl font-black">{totalProgressAA}</p>
+                  <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadgeStyle(statusAB)}`}>
+                    {statusAB}
+                  </span>
+                </div>
               </div>
               {detailRows.length>1&&(
                 <div>
@@ -164,6 +193,7 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
                           <th className="text-right px-3 py-2 font-semibold text-rose-500">❌</th>
                           <th className="text-right px-3 py-2 font-semibold text-purple-500">🔓</th>
                           <th className="text-right px-3 py-2 font-semibold text-slate-500">🔎</th>
+                          <th className="text-right px-3 py-2 font-semibold text-orange-500">🔃</th>
                         </tr></thead>
                         <tbody>
                           {detailRows.map((r,i)=>(
@@ -176,6 +206,10 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, on
                               <td className="px-3 py-2 text-right text-rose-500 font-medium">{r.rejected}</td>
                               <td className="px-3 py-2 text-right text-purple-600 font-medium">{r.open}</td>
                               <td className="px-3 py-2 text-right text-slate-600 font-medium">{r.not_found||0}</td>
+                              <td className="px-3 py-2 text-right text-orange-600 font-medium">
+                                {(r.progress_aa||0)}
+                                {/* {r.status_ab && <span className={`ml-1.5 inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusBadgeStyle(r.status_ab)}`}>{r.status_ab}</span>} */}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

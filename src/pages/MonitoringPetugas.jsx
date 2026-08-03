@@ -227,6 +227,11 @@ export default function MonitoringPetugas() {
       // Kolom "Tidak Ditemukan" — coba cari lewat nama header (versi normalisasi lebih robust), fallback ke kolom Y (index 24)
       const iNotFoundByName=fcNorm("tidakditemukan","tdkditemukan","notfound");
       const iNotFound=iNotFoundByName>=0?iNotFoundByName:24;
+      // Kolom "Progress" (AA) dan "Status" (AB) selalu terletak tepat 2 & 3 kolom setelah "Tidak Ditemukan"
+      // (urutan sheet: ... Tidak Ditemukan, Desa, Progress, Status). Diambil relatif terhadap iNotFound
+      // agar tidak salah tangkap kolom lain yang kebetulan juga mengandung kata "progress"/"status".
+      const iProgressAA=iNotFound+2;
+      const iStatusAB=iNotFound+3;
       const data=parsed.slice(1).map(cols=>{
         const namaPCL=iNamaPCL>=0?(cols[iNamaPCL]||"").trim():"";
         const emailPCL=iEmailPCL>=0?(cols[iEmailPCL]||"").trim():"";
@@ -235,7 +240,9 @@ export default function MonitoringPetugas() {
           namaPCL,emailPCL,total_assignment:iTotal>=0?parseNum(cols[iTotal]):0,kode_id:iKodeId>=0?(cols[iKodeId]||"").trim():"",
           approved:iApproved>=0?parseNum(cols[iApproved]):0,submitted:iSubmit>=0?parseNum(cols[iSubmit]):0,
           draft:iDraft>=0?parseNum(cols[iDraft]):0,rejected:iReject>=0?parseNum(cols[iReject]):0,open:iOpen>=0?parseNum(cols[iOpen]):0,
-          not_found:iNotFound>=0?parseNum(cols[iNotFound]):0};
+          not_found:iNotFound>=0?parseNum(cols[iNotFound]):0,
+          progress_aa:iProgressAA>=0?parseProgress(cols[iProgressAA]):0,
+          status_ab:iStatusAB>=0?(cols[iStatusAB]||"").trim():""};
       }).filter(Boolean);
       setGabunganRows(data);setLoadingGab(false);
     }).catch(()=>setLoadingGab(false));
