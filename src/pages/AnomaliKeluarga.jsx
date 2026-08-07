@@ -128,45 +128,38 @@ function filterBadgeInfo(key) {
   }
 }
 
-// ── Media Query Hook ──
-function useMediaQuery(query) {
-  const [matches, setMatches] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    if (media.matches !== matches) setMatches(media.matches);
-    const listener = () => setMatches(media.matches);
-    window.addEventListener("resize", listener);
-    return () => window.removeEventListener("resize", listener);
-  }, [matches, query]);
-  return matches;
-}
-
 // ── Stat Card global ──
+// Padding & ukuran font mengikuti breakpoint agar tetap nyaman dibaca di tablet
+// (bukan hanya melompat dari 2 kolom "mobile" langsung ke 6 kolom "desktop").
 function StatCard({ label, value, sub, icon, accentColor }) {
   return (
-    <div style={{
-      background: `linear-gradient(135deg, ${accentColor}08 0%, ${accentColor}02 100%)`,
-      borderRadius:"18px", padding:"18px 16px 14px",
-      border:`2px solid ${accentColor}30`,
-      display:"flex", flexDirection:"column", justifyContent:"space-between",
-      minHeight:"120px", position:"relative", overflow:"hidden",
-      boxShadow: `0 4px 12px ${accentColor}08`,
-      transition: "all 0.3s ease",
-    }}>
+    <div
+      className="relative flex flex-col justify-between overflow-hidden rounded-[18px] p-3.5 sm:p-4 min-h-[104px] sm:min-h-[120px] transition-all duration-300"
+      style={{
+        background: `linear-gradient(135deg, ${accentColor}08 0%, ${accentColor}02 100%)`,
+        border: `2px solid ${accentColor}30`,
+        boxShadow: `0 4px 12px ${accentColor}08`,
+      }}
+    >
       {/* Decorative elements - top left gradient circle */}
       <div style={{ position:"absolute", top:"-30px", left:"-30px", width:"80px", height:"80px", borderRadius:"50%", background:`${accentColor}12`, filter:"blur(8px)", pointerEvents:"none" }}/>
       {/* Decorative elements - bottom right accent */}
       <div style={{ position:"absolute", bottom:"-25px", right:"-25px", width:"65px", height:"65px", borderRadius:"50%", background:`${accentColor}08`, pointerEvents:"none" }}/>
       {/* Top accent line */}
       <div style={{ position:"absolute", top:0, left:0, right:0, height:"3px", background:`linear-gradient(90deg, ${accentColor}00, ${accentColor}60, ${accentColor}00)`, pointerEvents:"none" }}/>
-      
-      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:"8px", position:"relative", zIndex:1 }}>
-        <p style={{ fontSize:"10px", fontWeight:700, color:accentColor, textTransform:"uppercase", letterSpacing:"0.08em", margin:0, opacity:0.8 }}>{label}</p>
-        <div style={{ width:"36px", height:"36px", borderRadius:"12px", background:`linear-gradient(135deg, ${accentColor}25, ${accentColor}15)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:"18px", border:`1.5px solid ${accentColor}35` }}>{icon}</div>
+
+      <div className="relative z-10 flex items-start justify-between gap-2">
+        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider m-0 opacity-80" style={{ color: accentColor }}>{label}</p>
+        <div
+          className="flex-shrink-0 flex items-center justify-center rounded-xl w-8 h-8 sm:w-9 sm:h-9 text-base sm:text-lg"
+          style={{ background:`linear-gradient(135deg, ${accentColor}25, ${accentColor}15)`, border:`1.5px solid ${accentColor}35` }}
+        >
+          {icon}
+        </div>
       </div>
-      <div style={{ position:"relative", zIndex:1 }}>
-        <p style={{ fontSize:"32px", fontWeight:800, color:accentColor, margin:0, lineHeight:1, marginBottom:"4px" }}>{value}</p>
-        {sub && <p style={{ fontSize:"12px", color:"#64748b", margin:0, fontWeight:500 }}>{sub}</p>}
+      <div className="relative z-10">
+        <p className="font-extrabold m-0 mb-1 leading-none text-2xl sm:text-3xl" style={{ color: accentColor }}>{value}</p>
+        {sub && <p className="text-[11px] sm:text-xs text-slate-500 m-0 font-medium truncate">{sub}</p>}
       </div>
     </div>
   );
@@ -191,18 +184,18 @@ function KecamatanCard({ kecamatan, countBelumTuntas, countSesuai, maxCount, onC
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-2xl border-2 p-5 transition-all duration-200
+      className={`w-full text-left rounded-2xl border-2 p-4 sm:p-5 transition-all duration-200
         ${isSelected
           ? "border-orange-400 bg-orange-50 shadow-md shadow-orange-100"
           : "border-gray-100 bg-white hover:border-orange-200 hover:shadow-sm"}`}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-2 gap-2">
         <div className="flex-1 min-w-0 pr-2">
           <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">Kecamatan</p>
-          <p className="text-base font-bold text-gray-800 leading-tight">{kecamatan}</p>
+          <p className="text-sm sm:text-base font-bold text-gray-800 leading-tight break-words">{kecamatan}</p>
         </div>
         {/* Angka menonjol = belum tuntas */}
-        <span className={`text-2xl font-black flex-shrink-0 ${textColor}`}>{countBelumTuntas}</span>
+        <span className={`text-xl sm:text-2xl font-black flex-shrink-0 ${textColor}`}>{countBelumTuntas}</span>
       </div>
 
       <ProgressBar value={countBelumTuntas} max={maxCount} color={barColor} />
@@ -212,7 +205,7 @@ function KecamatanCard({ kecamatan, countBelumTuntas, countSesuai, maxCount, onC
         <span className="text-xs text-gray-400">
           <span className="font-semibold text-emerald-600">{countSesuai}</span> Sudah Ditangani Korwil
         </span>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 ${countBadge(countBelumTuntas)}`}>
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ring-1 whitespace-nowrap ${countBadge(countBelumTuntas)}`}>
           {countLabel(countBelumTuntas)}
         </span>
       </div>
@@ -257,8 +250,8 @@ function StatusFilterCard({ label, value, activeKey, currentFilter, onClick, col
       transition-all duration-200 select-none
       ${isActive ? sc.active : sc.base + " hover:brightness-95"}`}
   >
-    <span className={`text-lg font-black leading-none ${sc.num}`}>{value}</span>
-    <span className={`text-[9px] sm:text-[10px] md:text-[11px] lg:text-[11px] xl:text-[11px] font-semibold text-center leading-tight ${sc.label}`}
+    <span className={`text-base sm:text-lg font-black leading-none ${sc.num}`}>{value}</span>
+    <span className={`text-[9px] sm:text-[10px] md:text-[11px] font-semibold text-center leading-tight ${sc.label}`}
 >
   {label}
 </span>
@@ -280,21 +273,21 @@ function AnomaliRow({ row, rank, onDetail }) {
           <p className="text-xs text-gray-400 truncate mt-0.5">
             {row.namaDesa} - {row.namaSLS}
           </p>
-          {/* Desktop */}
-          <p className="hidden sm:block text-xs text-gray-400 truncate mt-0.5">
+          {/* PML / PPL: baris berdampingan hanya di layar lebar (md+), agar di tablet sempit tidak terpotong */}
+          <p className="hidden md:block text-xs text-gray-400 truncate mt-0.5">
             <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded mr-1">PML</span>
             {row.namaPML || "-"}
             <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 mr-1">PPL</span>
             {row.namaPetugas || "-"}
           </p>
-          {/* Mobile */}
-          <div className="block sm:hidden text-xs text-gray-400 mt-0.5 space-y-1">
-            <div className="flex items-center gap-1">
-              <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded">PML</span>
+          {/* Mobile & tablet: PML/PPL ditumpuk agar tidak terpotong */}
+          <div className="block md:hidden text-xs text-gray-400 mt-0.5 space-y-1">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="inline-block bg-orange-50 text-orange-500 text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">PML</span>
               <span className="truncate">{row.namaPML || "-"}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded">PPL</span>
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="inline-block bg-blue-50 text-blue-500 text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0">PPL</span>
               <span className="truncate">{row.namaPetugas || "-"}</span>
             </div>
           </div>
@@ -331,8 +324,6 @@ export default function MonitoringAnomali() {
   const [modalRow, setModalRow]         = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const [pmlFilter, setPmlFilter] = useState(null);
-
-  const isMobile = useMediaQuery("(max-width: 640px)");
 
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
@@ -559,11 +550,11 @@ const filteredRows = useMemo(() => {
 
       {/* ── HEADER ── */}
       <header className="relative overflow-hidden" style={{ background:"linear-gradient(135deg,#fb923c 0%,#f97316 45%,#ea580c 100%)" }}>
-        <div className="relative z-10 max-w-6xl mx-auto px-6 py-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="text-white text-2xl sm:text-3xl font-black leading-tight">Monitoring Anomali Keluarga</h1>
-              <p className="text-orange-100 mt-1">Sensus Ekonomi 2026</p>
+              <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-black leading-tight">Monitoring Anomali Keluarga</h1>
+              <p className="text-orange-100 mt-1 text-sm sm:text-base">Sensus Ekonomi 2026</p>
             </div>
             {computedLastUpdated && (
               <div className="rounded-xl px-4 py-2.5 bg-white/15 border border-white/20 self-start sm:self-auto">
@@ -582,7 +573,7 @@ const filteredRows = useMemo(() => {
       </header>
 
       {/* ── MAIN ── */}
-      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
+      <main className="max-w-6xl mx-auto w-full px-4 sm:px-6 md:px-6 py-6 sm:py-8">
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -600,51 +591,53 @@ const filteredRows = useMemo(() => {
 
         {!loading && !error && globalStats && (
           <>
-            {/* ── Stat Cards global: 6 kartu (assignment + 4 kategori status + total) ── */}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(6, minmax(0, 1fr))", gap: "14px", marginBottom: "28px" }}>
- 
-  <StatCard
-    label="Belum Dikonfirmasi"
-    value={globalStats.belum}
-    sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="⏳"
-    accentColor="#f59e0b"
-  />
-  <StatCard
-    label="Sesuai Kondisi Lapangan"
-    value={globalStats.sesuai}
-    sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="✅"
-    accentColor="#2563eb"
-  />
-  <StatCard
-    label="Isian Perlu Diperbaiki"
-    value={globalStats.perlu}
-    sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="❌"
-    accentColor="#e11d48"
-  />
-  <StatCard
-    label="Sudah Ditangani Korwil"
-    value={globalStats.korwilDitangani}
-    sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}% dari total`}
-    icon="🛡️"
-    accentColor="#0f766e"
-  />
-   <StatCard
-    label="Assignment Terkena Anomali"
-    value={globalStats.totalAssignmentAnomali}
-    sub={`dari ${globalStats.total} baris `}
-    icon="🧾"
-    accentColor="#7c3aed"
-  />
-  <StatCard
-    label="Total Anomali"
-    value={globalStats.total}
-    sub="seluruh baris anomali"
-    icon="📊"
-    accentColor="#06b6d4"
-  />
+            {/* ── Stat Cards global: 6 kartu (assignment + 4 kategori status + total) ──
+                2 kolom di HP, 3 kolom di tablet (potret & lanskap), 6 kolom di layar lebar (lg+).
+                Pakai kelas Tailwind responsif murni supaya breakpoint tablet ikut ter-cover,
+                bukan hanya satu ambang batas 640px. */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5 mb-6 sm:mb-7">
+              <StatCard
+                label="Belum Dikonfirmasi"
+                value={globalStats.belum}
+                sub={`${((globalStats.belum/globalStats.total)*100).toFixed(1)}% dari total`}
+                icon="⏳"
+                accentColor="#f59e0b"
+              />
+              <StatCard
+                label="Sesuai Kondisi Lapangan"
+                value={globalStats.sesuai}
+                sub={`${((globalStats.sesuai/globalStats.total)*100).toFixed(1)}% dari total`}
+                icon="✅"
+                accentColor="#2563eb"
+              />
+              <StatCard
+                label="Isian Perlu Diperbaiki"
+                value={globalStats.perlu}
+                sub={`${((globalStats.perlu/globalStats.total)*100).toFixed(1)}% dari total`}
+                icon="❌"
+                accentColor="#e11d48"
+              />
+              <StatCard
+                label="Sudah Ditangani Korwil"
+                value={globalStats.korwilDitangani}
+                sub={`${((globalStats.korwilDitangani/globalStats.total)*100).toFixed(1)}% dari total`}
+                icon="🛡️"
+                accentColor="#0f766e"
+              />
+              <StatCard
+                label="Assignment Terkena Anomali"
+                value={globalStats.totalAssignmentAnomali}
+                sub={`dari ${globalStats.total} baris `}
+                icon="🧾"
+                accentColor="#7c3aed"
+              />
+              <StatCard
+                label="Total Anomali"
+                value={globalStats.total}
+                sub="seluruh baris anomali"
+                icon="📊"
+                accentColor="#06b6d4"
+              />
             </div>
 
             {/* ── Filter & sort kecamatan ── */}
@@ -668,8 +661,11 @@ const filteredRows = useMemo(() => {
             {/* ── Layout dua kolom ── */}
             <div className="flex flex-col lg:flex-row gap-5">
 
-              {/* Kolom kiri: kartu kecamatan */}
-              <div className="lg:w-[55%] grid sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
+              {/* Kolom kiri: kartu kecamatan
+                  1 kolom di HP kecil, 2 kolom mulai dari tablet (sm), tetap 2 kolom di layar
+                  lebar (xl) — hanya menyempit jadi 1 kolom saat kolom kiri berbagi ruang
+                  dengan panel detail (lg, sebelum xl). */}
+              <div className="lg:w-[55%] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start">
                 {kecamatanList.map(({ kecamatan, countBelumTuntas, countSesuai }) => (
                   <KecamatanCard
                     key={kecamatan}
@@ -686,7 +682,7 @@ const filteredRows = useMemo(() => {
               {/* Kolom kanan: detail */}
               <div ref={detailRef} className="w-full min-w-0 lg:w-[45%]">
                 {!selectedKec ? (
-                  <div className="sticky top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-20 text-center px-8">
+                  <div className="lg:sticky lg:top-6 rounded-2xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center py-16 sm:py-20 text-center px-6 sm:px-8">
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
                       <svg className="w-7 h-7 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -696,16 +692,16 @@ const filteredRows = useMemo(() => {
                     <p className="text-gray-400 text-sm mt-1">Klik kartu kecamatan untuk melihat daftar keluarga dengan anomali.</p>
                   </div>
                 ) : (
-                  <div className="sticky top-6 w-full min-w-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="lg:sticky lg:top-6 w-full min-w-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
                     {/* Panel header */}
-                    <div className="px-6 py-5" style={{ background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
-                      <div className="flex items-start justify-between">
-                        <div>
+                    <div className="px-5 sm:px-6 py-4 sm:py-5" style={{ background:"linear-gradient(135deg,#F5A623 0%,#e8820a 100%)" }}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
                           <p className="text-orange-100 text-xs font-semibold uppercase tracking-widest mb-0.5">Kecamatan</p>
-                          <h2 className="text-white text-xl font-black">{selectedKec}</h2>
+                          <h2 className="text-white text-lg sm:text-xl font-black break-words">{selectedKec}</h2>
                         </div>
-                        <button onClick={() => setSelectedKec(null)} className="text-orange-200 hover:text-white transition-colors mt-1 p-1">
+                        <button onClick={() => setSelectedKec(null)} className="text-orange-200 hover:text-white transition-colors mt-1 p-1 flex-shrink-0">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
                           </svg>
@@ -718,7 +714,7 @@ const filteredRows = useMemo(() => {
                     </div>
 
                     {/* ── 4 Status Filter Card ── */}
-                    <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
+                    <div className="px-4 sm:px-5 py-4 border-b border-gray-100 bg-gray-50">
   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
     Filter berdasarkan status
     {statusFilter && (
@@ -727,7 +723,7 @@ const filteredRows = useMemo(() => {
       </button>
     )}
   </p>
-  <div className="grid grid-cols-4 gap-1.5">
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
     <StatusFilterCard label="Belum Dikonfirmasi"     value={statusCounts.belum}           activeKey="belum"             currentFilter={statusFilter} onClick={() => handleStatusFilter("belum")}             colorScheme="gray"    />
     <StatusFilterCard label="Sesuai Kondisi Lapangan"           value={statusCounts.sesuai}          activeKey="sesuai"            currentFilter={statusFilter} onClick={() => handleStatusFilter("sesuai")}            colorScheme="blue"    />
     <StatusFilterCard label="Isian Perlu Diperbaiki"       value={statusCounts.perlu}           activeKey="perlu"             currentFilter={statusFilter} onClick={() => handleStatusFilter("perlu")}             colorScheme="rose"    />
@@ -736,7 +732,7 @@ const filteredRows = useMemo(() => {
 </div>
 {/* ── Filter PML ── */}
 {pmlList.length > 0 && (
-  <div className="px-5 py-4 border-b border-gray-100">
+  <div className="px-4 sm:px-5 py-4 border-b border-gray-100">
     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
       Filter berdasarkan PML
       {pmlFilter && (
@@ -771,7 +767,7 @@ const filteredRows = useMemo(() => {
   </div>
 )}
                     {/* Daftar KK */}
-                    <div ref={tableRef} className="px-6 max-h-[460px] overflow-y-auto">
+                    <div ref={tableRef} className="px-4 sm:px-6 max-h-[420px] sm:max-h-[460px] overflow-y-auto">
                       <div className="sticky top-0 bg-white pt-2 pb-1 z-10">
                        
                         <div className="relative mb-2">
@@ -818,7 +814,7 @@ const filteredRows = useMemo(() => {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-3.5 bg-gray-50 border-t border-gray-100">
+                    <div className="px-4 sm:px-6 py-3.5 bg-gray-50 border-t border-gray-100">
                       <div className="flex gap-2 text-xs text-gray-400 flex-wrap items-center">
                         <span className="font-semibold text-gray-600">
                       {filteredRows.length}{(searchKK||statusFilter||pmlFilter) ? ` / ${selectedRows.length}` : ""} KK                        </span>
