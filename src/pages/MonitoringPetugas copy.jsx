@@ -227,6 +227,11 @@ export default function MonitoringPetugas() {
       // Kolom "Tidak Ditemukan" — coba cari lewat nama header (versi normalisasi lebih robust), fallback ke kolom Y (index 24)
       const iNotFoundByName=fcNorm("tidakditemukan","tdkditemukan","notfound");
       const iNotFound=iNotFoundByName>=0?iNotFoundByName:24;
+      // Kolom "Progress" (AA) dan "Status" (AB) selalu terletak tepat 2 & 3 kolom setelah "Tidak Ditemukan"
+      // (urutan sheet: ... Tidak Ditemukan, Desa, Progress, Status). Diambil relatif terhadap iNotFound
+      // agar tidak salah tangkap kolom lain yang kebetulan juga mengandung kata "progress"/"status".
+      const iProgressAA=iNotFound+2;
+      const iStatusAB=iNotFound+3;
       const data=parsed.slice(1).map(cols=>{
         const namaPCL=iNamaPCL>=0?(cols[iNamaPCL]||"").trim():"";
         const emailPCL=iEmailPCL>=0?(cols[iEmailPCL]||"").trim():"";
@@ -235,7 +240,9 @@ export default function MonitoringPetugas() {
           namaPCL,emailPCL,total_assignment:iTotal>=0?parseNum(cols[iTotal]):0,kode_id:iKodeId>=0?(cols[iKodeId]||"").trim():"",
           approved:iApproved>=0?parseNum(cols[iApproved]):0,submitted:iSubmit>=0?parseNum(cols[iSubmit]):0,
           draft:iDraft>=0?parseNum(cols[iDraft]):0,rejected:iReject>=0?parseNum(cols[iReject]):0,open:iOpen>=0?parseNum(cols[iOpen]):0,
-          not_found:iNotFound>=0?parseNum(cols[iNotFound]):0};
+          not_found:iNotFound>=0?parseNum(cols[iNotFound]):0,
+          progress_aa:iProgressAA>=0?parseProgress(cols[iProgressAA]):0,
+          status_ab:iStatusAB>=0?(cols[iStatusAB]||"").trim():""};
       }).filter(Boolean);
       setGabunganRows(data);setLoadingGab(false);
     }).catch(()=>setLoadingGab(false));
@@ -339,9 +346,8 @@ export default function MonitoringPetugas() {
     return {...r, namaPML, namaPCL};
   }),[rows, gabunganRows, gabunganByNamaPmlNamaPCL, gabunganByEmailPCL, gabunganByNamaPCL]);
 
-  // ── Cari deret data harian (semua tanggal) untuk seorang PCL di perHariRaw ──
-  const findPclDailySeries = (pcl) => {
-    if(!perHariRaw || !pcl) return null;
+  const buildChartData = (pcl) => {
+    if(!perHariRaw || !pcl) return [];
     const { dates, dataMap } = perHariRaw;
     const kec     = (pcl.kecamatan||"").trim();
     const namaPML = (pcl.namaPML  ||"").trim();
@@ -360,41 +366,15 @@ export default function MonitoringPetugas() {
     ];
     let matchKey = null;
     for(const k of candidates){ if(k && dataMap[k]){ matchKey=k; break; } }
-    if(!matchKey) return null;
-    return { dates, pclData: dataMap[matchKey] };
-  };
-
-  // ── Data grafik: hanya 7 hari terakhir ──
-  const buildChartData = (pcl) => {
-    const series = findPclDailySeries(pcl);
-    if(!series) return [];
-    const { dates, pclData } = series;
-    const last7 = dates.slice(-7);
-    return last7.map(({iso,label})=>({
+    if(!matchKey) return [];
+    const pclData = dataMap[matchKey];
+    return dates.map(({iso,label})=>({
       label,
       Approved:  pclData["Approved"]?.[iso]  ?? 0,
       Draft:     pclData["Draft"]?.[iso]     ?? 0,
       Rejected:  pclData["Rejected"]?.[iso]  ?? 0,
       Submitted: pclData["Submitted"]?.[iso] ?? 0,
     }));
-  };
-
-  // ── Progress harian: selisih (approved+draft+rejected+submitted) hari ini vs hari sebelumnya ──
-  const computeDailyProgress = (pcl) => {
-    const series = findPclDailySeries(pcl);
-    if(!series) return 0;
-    const { dates, pclData } = series;
-    if(dates.length===0) return 0;
-    const sumAt = (iso) =>
-      (pclData["Approved"]?.[iso]  ?? 0) +
-      (pclData["Draft"]?.[iso]     ?? 0) +
-      (pclData["Rejected"]?.[iso]  ?? 0) +
-      (pclData["Submitted"]?.[iso] ?? 0);
-    const today     = dates[dates.length-1];
-    const yesterday = dates.length>1 ? dates[dates.length-2] : null;
-    const todayTotal     = sumAt(today.iso);
-    const yesterdayTotal = yesterday ? sumAt(yesterday.iso) : 0;
-    return todayTotal - yesterdayTotal;
   };
 
   const kecamatanMap=useMemo(()=>{const m={};enrichedRows.forEach(r=>{if(!m[r.kecamatan])m[r.kecamatan]=[];m[r.kecamatan].push(r);});return m;},[enrichedRows]);
@@ -446,7 +426,6 @@ export default function MonitoringPetugas() {
           detailRows={findDetailRows(modalPCL)}
           chartData={buildChartData(modalPCL)}
           loadingChart={loadingChart}
-          dailyProgress={computeDailyProgress(modalPCL)}
           onClose={()=>setModalPCL(null)}
         />
       )}

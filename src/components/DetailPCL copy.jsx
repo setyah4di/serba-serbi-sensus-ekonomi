@@ -65,7 +65,7 @@ function TrendChart({ chartData, loading }) {
   );
 }
 
-// ── Helper: warna badge untuk status (Rendah/Sedang/Tinggi) ──
+// ── Helper: warna badge untuk status (Rendah/Sedang/Tinggi, dsb) ──
 function statusBadgeStyle(status){
   const s=(status||"").toLowerCase();
   if(s.includes("tinggi")) return "bg-emerald-100 text-emerald-700";
@@ -74,25 +74,14 @@ function statusBadgeStyle(status){
   return "bg-gray-100 text-gray-600";
 }
 
-// ── Status progress harian berdasarkan selisih (approved+draft+rejected+submitted) hari ini vs kemarin ──
-// progress <= 7  => Rendah
-// progress <= 14 => Sedang
-// progress >= 15 => Tinggi
-function dailyProgressStatus(v){
-  if(v<=7) return "Rendah";
-  if(v<=14) return "Sedang";
-  return "Tinggi";
-}
-
 // ── Modal Detail PCL ──
 // Props:
-//   pcl           : object  — data PCL yang dipilih (namaPCL, emailPCL, namaPML, emailPML, progress)
-//   detailRows    : array   — hasil findDetailRows(pcl)
-//   chartData     : array   — hasil buildChartData(pcl), 7 hari terakhir
-//   loadingChart  : boolean — apakah data chart masih dimuat
-//   dailyProgress : number  — selisih (approved+draft+rejected+submitted) hari ini vs hari sebelumnya
-//   onClose       : func    — callback untuk menutup modal
-export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, dailyProgress = 0, onClose }) {
+//   pcl          : object  — data PCL yang dipilih (namaPCL, emailPCL, namaPML, emailPML, progress)
+//   detailRows   : array   — hasil findDetailRows(pcl)
+//   chartData    : array   — hasil buildChartData(pcl)
+//   loadingChart : boolean — apakah data chart masih dimuat
+//   onClose      : func    — callback untuk menutup modal
+export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, onClose }) {
   const totalAssignment = detailRows.reduce((s,r)=>s+r.total_assignment,0);
   const totalApproved   = detailRows.reduce((s,r)=>s+r.approved,0);
   const totalSubmitted  = detailRows.reduce((s,r)=>s+r.submitted,0);
@@ -102,8 +91,17 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, da
   const totalNotFound   = detailRows.reduce((s,r)=>s+(r.not_found||0),0);
   const progress = pcl.progress;
 
-  // ── Status progress harian dihitung dari dailyProgress (bukan lagi dari kolom AB) ──
-  const statusHarian = dailyProgressStatus(dailyProgress);
+  // ── Progress & Status dari kolom AA (Progress) & AB (Status) spreadsheet ──
+  // Dijumlahkan (bukan dirata-rata) agar konsisten dengan card lain yang juga menampilkan total seluruh SLS
+  const totalProgressAA = detailRows.reduce((s,r)=>s+(r.progress_aa||0),0);
+  // ambil status (AB) yang paling sering muncul di antara baris detail
+  const statusCounts = {};
+  detailRows.forEach(r=>{
+    const st=(r.status_ab||"").trim();
+    if(!st) return;
+    statusCounts[st]=(statusCounts[st]||0)+1;
+  });
+  const statusAB = Object.keys(statusCounts).sort((a,b)=>statusCounts[b]-statusCounts[a])[0] || "-";
 
   const handleBackdrop = (e) => { if(e.target===e.currentTarget) onClose(); };
 
@@ -163,7 +161,7 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, da
                   </div>
                 ))}
               </div>
-              {/* Baris 2: Draft, Open, Tidak Ditemukan, Progress Harian (selisih hari ini vs kemarin) */}
+              {/* Baris 2: Draft, Open, Tidak Ditemukan, Progress+Status (AA & AB) */}
               <div className="grid grid-cols-4 gap-2.5 mb-5">
                 {statItemsRow2.map(({label,value,icon,bg})=>(
                   <div key={label} className={`rounded-xl p-3 ${bg}`}>
@@ -171,12 +169,12 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, da
                     <p className="text-2xl font-black">{value.toLocaleString("id-ID")}</p>
                   </div>
                 ))}
-                {/* Card Progress harian — selisih total (approved+draft+rejected+submitted) hari ini vs kemarin */}
+                {/* Card gabungan Progress (AA) + Status (AB) — status ditampilkan tepat di bawah angka */}
                 <div className="rounded-xl p-3 bg-orange-100 text-orange-700">
                   <p className="text-[11px] opacity-60 font-medium leading-tight mb-1">🔃 Progress</p>
-                  <p className="text-2xl font-black">{dailyProgress}</p>
-                  <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadgeStyle(statusHarian)}`}>
-                    {statusHarian}
+                  <p className="text-2xl font-black">{totalProgressAA}</p>
+                  <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadgeStyle(statusAB)}`}>
+                    {statusAB}
                   </span>
                 </div>
               </div>
@@ -195,6 +193,7 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, da
                           <th className="text-right px-3 py-2 font-semibold text-rose-500">❌</th>
                           <th className="text-right px-3 py-2 font-semibold text-purple-500">🔓</th>
                           <th className="text-right px-3 py-2 font-semibold text-slate-500">🔎</th>
+                          <th className="text-right px-3 py-2 font-semibold text-orange-500">🔃</th>
                         </tr></thead>
                         <tbody>
                           {detailRows.map((r,i)=>(
@@ -207,6 +206,10 @@ export default function DetailPCL({ pcl, detailRows, chartData, loadingChart, da
                               <td className="px-3 py-2 text-right text-rose-500 font-medium">{r.rejected}</td>
                               <td className="px-3 py-2 text-right text-purple-600 font-medium">{r.open}</td>
                               <td className="px-3 py-2 text-right text-slate-600 font-medium">{r.not_found||0}</td>
+                              <td className="px-3 py-2 text-right text-orange-600 font-medium">
+                                {(r.progress_aa||0)}
+                                {/* {r.status_ab && <span className={`ml-1.5 inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full ${statusBadgeStyle(r.status_ab)}`}>{r.status_ab}</span>} */}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
