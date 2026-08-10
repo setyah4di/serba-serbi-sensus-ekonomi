@@ -3,7 +3,8 @@ import DetailAnomaliKeluarga from "../components/DetailAnomaliKeluarga";
 
 // ── Konfigurasi Spreadsheet ──
 const SPREADSHEET_ID = "1NrrW4Yd6JTzZisJ_qMaX0HxW8tuF9aEEVp_eNWflTbU";
-const GID_ANOMALI    = "2062667195";
+// const GID_ANOMALI    = "2062667195";
+const GID_ANOMALI    = "153843335";
 const CSV_ANOMALI = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_ANOMALI}`;
 
 const KECAMATAN_ORDER = [
@@ -366,18 +367,18 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";
         
       parsed.slice(1).forEach((cols, idx) => {
   const sheetRow = idx + 2;
-  const kodeKec     = (cols[0]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
-  const namaKec     = (cols[1]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
-  const kodeDesa    = (cols[2]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
-  const namaDesa    = (cols[3]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
-  const kodeSLS     = (cols[4]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
-  const subSLS      = (cols[5]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
-  const namaSLS     = (cols[6]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;
-  const namaPML     = (cols[7]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
-  const namaPetugas = (cols[8]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
+  const kodeKec     = (cols[8]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
+  const namaKec     = (cols[9]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
+  const kodeDesa    = (cols[10]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
+  const namaDesa    = (cols[11]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
+  const kodeSLS     = (cols[12]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
+  const subSLS      = (cols[13]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
+  const namaSLS     = (cols[24]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;
+  const namaPML     = (cols[0]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
+  const namaPetugas = (cols[1]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
 
-  const namaKK      = (cols[9] ||"").trim();
-  const namaAnomali = (cols[10]||"").trim();
+  const namaKK      = (cols[3] ||"").trim();
+  const namaAnomali = (cols[15]||"").trim();
   if (!namaKK || !namaAnomali) return;
 
   data.push({
@@ -388,11 +389,11 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";
     namaSLS: lastNamaSLS,
     namaPML: lastPML, namaPetugas: lastPetugas,
     namaKK, namaAnomali,
-    keteranganAnomali:     (cols[11]||"").trim(),
-    linkFasih:             (cols[12]||"").trim(),
-    hasilKonfirmasiPML:    (cols[14]||"").trim(),
-    keteranganKoreksi:     (cols[15]||"").trim(),
-    hasilKonfirmasiKorwil: (cols[16]||"").trim(),
+    keteranganAnomali:     (cols[16]||"").trim(),
+    linkFasih:             (cols[20]||"").trim(),
+    hasilKonfirmasiPML:    (cols[21]||"").trim(),
+    keteranganKoreksi:     (cols[22]||"").trim(),
+    hasilKonfirmasiKorwil: (cols[23]||"").trim(),
   });
 });
         setRawRows(data);

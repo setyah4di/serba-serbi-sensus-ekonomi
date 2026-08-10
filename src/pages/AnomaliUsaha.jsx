@@ -3,7 +3,7 @@ import DetailAnomaliUsaha from "../components/DetailAnomaliUsaha";
 
 // ── Konfigurasi Spreadsheet ──
 const SPREADSHEET_ID = "1lUDHElN9DJtMLvsQRYjbO2-N0GMh_8UYUO4uIftmiR8";
-const GID_ANOMALI    = "649978969";
+const GID_ANOMALI    = "720757482";
 const CSV_ANOMALI = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_ANOMALI}`;
 
 const KECAMATAN_ORDER = [
@@ -372,36 +372,36 @@ export default function MonitoringAnomaliUsaha() {
         let lastKodeKec="",lastNamaKec="",lastKodeDesa="",lastNamaDesa="",lastPML="",lastPetugas="",lastKodeSLS="",lastSubSLS="",lastNamaSLS="";
         const data = [];
         parsed.slice(1).forEach((cols, idx) => {
-          while (cols.length < 17) cols.push("");
+          while (cols.length < 29) cols.push("");
           if (isSubtotalRow(cols)) return;
-          const rawKodeKec = (cols[0]||"").trim();
+          const rawKodeKec = (cols[9]||"").trim();
           if (isKodeKec(rawKodeKec)) { lastKodeKec=rawKodeKec; if(KODE_KEC_MAP[rawKodeKec])lastNamaKec=KODE_KEC_MAP[rawKodeKec]; }
-          const rawNamaKec = (cols[1]||"").trim().toUpperCase();
+          const rawNamaKec = (cols[10]||"").trim().toUpperCase();
           if (isNamaKec(rawNamaKec)) lastNamaKec=rawNamaKec;
-          const rawKodeDesa = (cols[2]||"").trim();
+          const rawKodeDesa = (cols[11]||"").trim();
           if (/^\d{7,10}$/.test(rawKodeDesa)) lastKodeDesa=rawKodeDesa;
-          const rawNamaDesa = (cols[3]||"").trim();
+          const rawNamaDesa = (cols[12]||"").trim();
           if (rawNamaDesa && !/^\d+$/.test(rawNamaDesa) && !isSubtotalRow([rawNamaDesa])) lastNamaDesa=rawNamaDesa;
-          const rawPML = (cols[4]||"").trim();
+          const rawPML = (cols[1]||"").trim();
           if (rawPML && !isSubtotalRow([rawPML])) lastPML=rawPML;
-          const rawPetugas = (cols[5]||"").trim();
+          const rawPetugas = (cols[0]||"").trim();
           if (rawPetugas && !isSubtotalRow([rawPetugas])) lastPetugas=rawPetugas;
-          const rawKodeSLS = (cols[6]||"").trim();
+          const rawKodeSLS = (cols[13]||"").trim();
           if (/^\d{4}$/.test(rawKodeSLS)) lastKodeSLS=rawKodeSLS;
-          const rawSubSLS = (cols[7]||"").trim();
+          const rawSubSLS = (cols[14]||"").trim();
           if (/^\d{2}$/.test(rawSubSLS)) lastSubSLS=rawSubSLS;
-          const rawNamaSLS = (cols[8]||"").trim();
+          const rawNamaSLS = (cols[26]||"").trim();
           if (rawNamaSLS && !isSubtotalRow([rawNamaSLS])) lastNamaSLS=rawNamaSLS;
-          const namaUsaha   = (cols[9]||"").trim();
-          const namaAnomali = (cols[10]||"").trim();
+          const namaUsaha   = (cols[4]||"").trim();
+          const namaAnomali = (cols[16]||"").trim();
           if (!namaUsaha || !namaAnomali || !lastNamaKec) return;
           data.push({
             rowIndex:idx+2, kodeKec:lastKodeKec, namaKec:lastNamaKec, kodeDesa:lastKodeDesa,
             namaDesa:lastNamaDesa, namaPML:lastPML, namaPetugas:lastPetugas, kodeSLS:lastKodeSLS,
             subSLS:lastSubSLS, namaSLS:lastNamaSLS, namaKK:namaUsaha, namaUsaha, namaAnomali,
-            keteranganAnomali:(cols[11]||"").trim(), linkFasih:(cols[12]||"").trim(),
-            hasilKonfirmasiPML:(cols[14]||"").trim(), keteranganKoreksi:(cols[15]||"").trim(),
-            hasilKonfirmasiKorwil:(cols[16]||"").trim(),
+            keteranganAnomali:(cols[17]||"").trim(), linkFasih:(cols[21]||"").trim(),
+            hasilKonfirmasiPML:(cols[22]||"").trim(), keteranganKoreksi:(cols[23]||"").trim(),
+            hasilKonfirmasiKorwil:(cols[24]||"").trim(),
           });
         });
         setRawRows(data); setLastUpdated(getLastUpdate()); setLoading(false);
@@ -420,21 +420,23 @@ export default function MonitoringAnomaliUsaha() {
   // Sesuai / Perbaiki dihitung berdasarkan Hasil Konfirmasi PML/PPL saja,
   // dan Sudah Ditangani Korwil dihitung terpisah (independen), karena
   // sekarang hanya ada satu status final pada kolom Korwil.
-  const globalStatus = useMemo(() => {
-    const sesuai   = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("01")).length;
-    const perbaiki = rawRows.filter(r => r.hasilKonfirmasiPML.startsWith("02")).length;
-    const belum    = rawRows.filter(r => !r.hasilKonfirmasiPML.trim()).length;
-    const korwilDitangani = rawRows.filter(r => getKorwilStatusKey(r) === "korwil_ditangani").length;
+const globalStatus = useMemo(() => {
+    let sesuai = 0, perbaiki = 0, belum = 0, korwilDitangani = 0;
 
-    // Jumlah ASSIGNMENT (usaha) terkena anomali → dedup berdasarkan desa + SLS +
-    // nama usaha, supaya 1 usaha yang punya lebih dari 1 baris anomali cukup
-    // dihitung sekali.
+    rawRows.forEach(r => {
+      const key = computeRowFilterKey(r);
+      if (key === "sesuai") sesuai++;
+      else if (key === "perbaiki") perbaiki++;
+      else if (key === "belum") belum++;
+      else if (key === "korwil_ditangani") korwilDitangani++;
+    });
+
     const assignmentSet = new Set();
     rawRows.forEach(r => assignmentSet.add(getAssignmentKey(r)));
     const totalAssignmentAnomali = assignmentSet.size;
 
     return { sesuai, perbaiki, belum, korwilDitangani, total: rawRows.length, totalAssignmentAnomali };
-  }, [rawRows]);
+}, [rawRows]);
 
   // KecamatanList: angka besar (count) = jumlah anomali yang BELUM ditangani
   // korwil (baik itu belum dikonfirmasi, Sesuai Kondisi Lapangan, maupun Isian Perlu Diperbaiki).
