@@ -372,36 +372,36 @@ export default function MonitoringAnomaliUsaha() {
         let lastKodeKec="",lastNamaKec="",lastKodeDesa="",lastNamaDesa="",lastPML="",lastPetugas="",lastKodeSLS="",lastSubSLS="",lastNamaSLS="";
         const data = [];
         parsed.slice(1).forEach((cols, idx) => {
-          while (cols.length < 29) cols.push("");
+          while (cols.length < 31) cols.push("");
           if (isSubtotalRow(cols)) return;
-          const rawKodeKec = (cols[9]||"").trim();
+          const rawKodeKec = (cols[11]||"").trim();
           if (isKodeKec(rawKodeKec)) { lastKodeKec=rawKodeKec; if(KODE_KEC_MAP[rawKodeKec])lastNamaKec=KODE_KEC_MAP[rawKodeKec]; }
-          const rawNamaKec = (cols[10]||"").trim().toUpperCase();
+          const rawNamaKec = (cols[12]||"").trim().toUpperCase();
           if (isNamaKec(rawNamaKec)) lastNamaKec=rawNamaKec;
-          const rawKodeDesa = (cols[11]||"").trim();
+          const rawKodeDesa = (cols[13]||"").trim();
           if (/^\d{7,10}$/.test(rawKodeDesa)) lastKodeDesa=rawKodeDesa;
-          const rawNamaDesa = (cols[12]||"").trim();
+          const rawNamaDesa = (cols[14]||"").trim();
           if (rawNamaDesa && !/^\d+$/.test(rawNamaDesa) && !isSubtotalRow([rawNamaDesa])) lastNamaDesa=rawNamaDesa;
           const rawPML = (cols[1]||"").trim();
           if (rawPML && !isSubtotalRow([rawPML])) lastPML=rawPML;
           const rawPetugas = (cols[0]||"").trim();
           if (rawPetugas && !isSubtotalRow([rawPetugas])) lastPetugas=rawPetugas;
-          const rawKodeSLS = (cols[13]||"").trim();
+          const rawKodeSLS = (cols[15]||"").trim();
           if (/^\d{4}$/.test(rawKodeSLS)) lastKodeSLS=rawKodeSLS;
-          const rawSubSLS = (cols[14]||"").trim();
+          const rawSubSLS = (cols[16]||"").trim();
           if (/^\d{2}$/.test(rawSubSLS)) lastSubSLS=rawSubSLS;
-          const rawNamaSLS = (cols[26]||"").trim();
+          const rawNamaSLS = (cols[28]||"").trim();
           if (rawNamaSLS && !isSubtotalRow([rawNamaSLS])) lastNamaSLS=rawNamaSLS;
-          const namaUsaha   = (cols[4]||"").trim();
-          const namaAnomali = (cols[16]||"").trim();
+          const namaUsaha   = (cols[6]||"").trim();
+          const namaAnomali = (cols[18]||"").trim();
           if (!namaUsaha || !namaAnomali || !lastNamaKec) return;
           data.push({
             rowIndex:idx+2, kodeKec:lastKodeKec, namaKec:lastNamaKec, kodeDesa:lastKodeDesa,
             namaDesa:lastNamaDesa, namaPML:lastPML, namaPetugas:lastPetugas, kodeSLS:lastKodeSLS,
             subSLS:lastSubSLS, namaSLS:lastNamaSLS, namaKK:namaUsaha, namaUsaha, namaAnomali,
-            keteranganAnomali:(cols[17]||"").trim(), linkFasih:(cols[21]||"").trim(),
-            hasilKonfirmasiPML:(cols[22]||"").trim(), keteranganKoreksi:(cols[23]||"").trim(),
-            hasilKonfirmasiKorwil:(cols[24]||"").trim(),
+            keteranganAnomali:(cols[19]||"").trim(), linkFasih:(cols[23]||"").trim(),
+            hasilKonfirmasiPML:(cols[24]||"").trim(), keteranganKoreksi:(cols[25]||"").trim(),
+            hasilKonfirmasiKorwil:(cols[26]||"").trim(),
           });
         });
         setRawRows(data); setLastUpdated(getLastUpdate()); setLoading(false);

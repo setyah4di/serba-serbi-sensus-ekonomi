@@ -367,18 +367,18 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";
         
       parsed.slice(1).forEach((cols, idx) => {
   const sheetRow = idx + 2;
-  const kodeKec     = (cols[8]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
-  const namaKec     = (cols[9]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
-  const kodeDesa    = (cols[10]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
-  const namaDesa    = (cols[11]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
-  const kodeSLS     = (cols[12]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
-  const subSLS      = (cols[13]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
-  const namaSLS     = (cols[24]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;
+  const kodeKec     = (cols[10]||"").trim(); if (kodeKec     && !isTotalMarker(kodeKec))     lastKodeKec  = kodeKec;
+  const namaKec     = (cols[11]||"").trim(); if (namaKec     && !isTotalMarker(namaKec))     lastNamaKec  = namaKec;
+  const kodeDesa    = (cols[12]||"").trim(); if (kodeDesa    && !isTotalMarker(kodeDesa))    lastKodeDesa = kodeDesa;
+  const namaDesa    = (cols[13]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
+  const kodeSLS     = (cols[14]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
+  const subSLS      = (cols[15]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
+  const namaSLS     = (cols[26]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;
   const namaPML     = (cols[0]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
   const namaPetugas = (cols[1]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
 
-  const namaKK      = (cols[3] ||"").trim();
-  const namaAnomali = (cols[15]||"").trim();
+  const namaKK      = (cols[5] ||"").trim();
+  const namaAnomali = (cols[17]||"").trim();
   if (!namaKK || !namaAnomali) return;
 
   data.push({
@@ -389,11 +389,11 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";
     namaSLS: lastNamaSLS,
     namaPML: lastPML, namaPetugas: lastPetugas,
     namaKK, namaAnomali,
-    keteranganAnomali:     (cols[16]||"").trim(),
-    linkFasih:             (cols[20]||"").trim(),
-    hasilKonfirmasiPML:    (cols[21]||"").trim(),
-    keteranganKoreksi:     (cols[22]||"").trim(),
-    hasilKonfirmasiKorwil: (cols[23]||"").trim(),
+    keteranganAnomali:     (cols[18]||"").trim(),
+    linkFasih:             (cols[22]||"").trim(),
+    hasilKonfirmasiPML:    (cols[23]||"").trim(),
+    keteranganKoreksi:     (cols[24]||"").trim(),
+    hasilKonfirmasiKorwil: (cols[25]||"").trim(),
   });
 });
         setRawRows(data);
