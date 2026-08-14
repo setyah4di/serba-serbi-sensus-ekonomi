@@ -242,41 +242,36 @@ export default function MonitoringPetugas() {
   },[]);
 
   // ── Load per hari ──
-  useEffect(()=>{
-    fetch(`${CSV_PERHARI}&t=${Date.now()}`, { cache: "no-store" }).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
-      const parsed=parseCSV(text);
-      if(parsed.length<3){setLoadingChart(false);return;}
-      const headerRow = parsed[1];
-      const dateStartIdx = 4;
-      const dates = [];
-      for(let i = dateStartIdx; i < headerRow.length; i++){
-        const d = parseDate(headerRow[i]);
-        if(d) dates.push({ idx: i, iso: d, label: fmtDate(d) });
-      }
-      let lastKec="", lastPML="", lastPCL="";
-      const dataMap = {};
-      for(let r=3; r<parsed.length; r++){
-        const cols = parsed[r];
-        const kecRaw = (cols[0]||"").trim();
-        const pmlRaw = (cols[1]||"").trim();
-        const pclRaw = (cols[2]||"").trim();
-        const status  = (cols[3]||"").trim();
-        if(kecRaw && kecRaw!=="-") lastKec=kecRaw;
-        if(pmlRaw && pmlRaw!=="-") lastPML=pmlRaw;
-        if(pclRaw && pclRaw!=="-") lastPCL=pclRaw;
-        if(!lastPCL) continue;
-        const statusNorm = status.charAt(0).toUpperCase()+status.slice(1).toLowerCase();
-        if(!["Approved","Draft","Rejected","Submitted"].includes(statusNorm)) continue;
-        const compKey = `${lastKec.toLowerCase()}||${lastPML.toLowerCase()}||${lastPCL.toLowerCase()}`;
-        if(!dataMap[compKey]) dataMap[compKey]={};
-        if(!dataMap[compKey][statusNorm]) dataMap[compKey][statusNorm]={};
-        dates.forEach(({idx,iso})=>{ dataMap[compKey][statusNorm][iso] = parseNum(cols[idx]); });
-      }
-      setPerHariRaw({ dates, dataMap });
-      setLoadingChart(false);
-    }).catch(()=>setLoadingChart(false));
-  },[]);
-
+useEffect(()=>{
+  fetch(`${CSV_PERHARI}&t=${Date.now()}`, { cache: "no-store" }).then(r=>r.ok?r.text():Promise.reject()).then(text=>{
+    const parsed=parseCSV(text);
+    if(parsed.length<2){setLoadingChart(false);return;}
+    const headerRow = parsed[0];       // header ada di baris pertama
+    const dateStartIdx = 2;            // tanggal mulai dari kolom C (index 2)
+    const dates = [];
+    for(let i = dateStartIdx; i < headerRow.length; i++){
+      const d = parseDate(headerRow[i]);
+      if(d) dates.push({ idx: i, iso: d, label: fmtDate(d) });
+    }
+    let lastPCL = "";
+    const dataMap = {};
+    for(let r=1; r<parsed.length; r++){   // data mulai baris ke-2 (index 1)
+      const cols = parsed[r];
+      const pclRaw  = (cols[0]||"").trim();
+      const status  = (cols[1]||"").trim();
+      if(pclRaw) lastPCL = pclRaw;        // fill-down nama PCL
+      if(!lastPCL) continue;
+      const statusNorm = status.charAt(0).toUpperCase()+status.slice(1).toLowerCase();
+      if(!["Approved","Draft","Rejected","Submitted"].includes(statusNorm)) continue;
+      const compKey = lastPCL.toLowerCase().trim();   // key cuma nama PCL
+      if(!dataMap[compKey]) dataMap[compKey]={};
+      if(!dataMap[compKey][statusNorm]) dataMap[compKey][statusNorm]={};
+      dates.forEach(({idx,iso})=>{ dataMap[compKey][statusNorm][iso] = parseNum(cols[idx]); });
+    }
+    setPerHariRaw({ dates, dataMap });
+    setLoadingChart(false);
+  }).catch(()=>setLoadingChart(false));
+},[]);
   const makeCompKey = (kec="", pml="", pcl="") =>
     `${kec.toLowerCase().trim()}||${pml.toLowerCase().trim()}||${pcl.toLowerCase().trim()}`;
 
@@ -340,30 +335,24 @@ export default function MonitoringPetugas() {
   }),[rows, gabunganRows, gabunganByNamaPmlNamaPCL, gabunganByEmailPCL, gabunganByNamaPCL]);
 
   // ── Cari deret data harian (semua tanggal) untuk seorang PCL di perHariRaw ──
-  const findPclDailySeries = (pcl) => {
-    if(!perHariRaw || !pcl) return null;
-    const { dates, dataMap } = perHariRaw;
-    const kec     = (pcl.kecamatan||"").trim();
-    const namaPML = (pcl.namaPML  ||"").trim();
-    const namaPCL = (pcl.namaPCL  ||pcl.emailPCL||"").trim();
-    const candidates = [
-      makeCompKey(kec, namaPML, namaPCL),
-      ...Object.keys(dataMap).filter(k => {
-        const parts = k.split("||");
-        if(parts.length!==3) return false;
-        const kPML = parts[1], kPCL = parts[2];
-        if(kPCL !== namaPCL.toLowerCase().trim()) return false;
-        const pmlLow = namaPML.toLowerCase().trim();
-        return kPML === pmlLow || (pmlLow && kPML.includes(pmlLow.split(" ")[0].toLowerCase()));
-      }),
-      ...Object.keys(dataMap).filter(k=>k.endsWith(`||${namaPCL.toLowerCase().trim()}`)),
-    ];
-    let matchKey = null;
-    for(const k of candidates){ if(k && dataMap[k]){ matchKey=k; break; } }
-    if(!matchKey) return null;
-    return { dates, pclData: dataMap[matchKey] };
-  };
+// punya kolom kecamatan/PML terpisah.
+const findPclDailySeries = (pcl) => {
+  if(!perHariRaw || !pcl) return null;
+  const { dates, dataMap } = perHariRaw;
+  const namaPCL = (pcl.namaPCL || pcl.emailPCL || "").trim().toLowerCase();
+  if(!namaPCL) return null;
 
+  // 1) cocok persis
+  if(dataMap[namaPCL]) return { dates, pclData: dataMap[namaPCL] };
+
+  // 2) fallback: cocok sebagian (mis. beda spasi/gelar), pakai kata pertama nama
+  const firstWord = namaPCL.split(" ")[0];
+  const matchKey = Object.keys(dataMap).find(k =>
+    k === namaPCL || k.startsWith(firstWord) || k.includes(firstWord)
+  );
+  if(!matchKey) return null;
+  return { dates, pclData: dataMap[matchKey] };
+};
   // ── Data grafik: hanya 7 hari terakhir ──
   const buildChartData = (pcl) => {
     const series = findPclDailySeries(pcl);
