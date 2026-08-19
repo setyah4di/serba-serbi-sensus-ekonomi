@@ -163,7 +163,7 @@ function hitungHariSensus() {
   const target    = parseFloat(((hariKe - 1) * 1.5625).toFixed(1));
   return { hariKe, totalHari, target };
 }
-const { hariKe: HARI_KE, totalHari: TOTAL_HARI, target: TARGET_PROGRESS } = hitungHariSensus();
+const { hariKe: HARI_KE, totalHari: TOTAL_HARI, target: 100 } = hitungHariSensus();
 
 // ── Komponen Utama ──
 export default function MonitoringPetugas() {
@@ -488,7 +488,7 @@ const findPclDailySeries = (pcl) => {
   <StatCard label="Total Petugas PML"   value={globalStats.totalPML}           sub="pengawas lapangan"      icon="👨‍💼" variant="gray"   />
   <StatCard label="Total Petugas PCL"   value={globalStats.totalPCL}           sub="pencacah lapangan"      icon="🧑‍🏭" variant="orange" />
   <StatCard label="Rata-rata Progress"  value={`${globalStats.avg.toFixed(2)}%`} sub="seluruh PCL"           icon="📊" variant="blue"   />
-  <StatCard label="Target Progress"     value={`${TARGET_PROGRESS}%`}          sub={`Hari ke-${HARI_KE-1} × 1,5625`} icon="🎯" variant="purple" />
+  <StatCard label="Target Progress"     value={`${100}%`}          sub={`Hari ke-${HARI_KE-1} × 1,5625`} icon="🎯" variant="purple" />
 <StatCard
   label="Hari Pelaksanaan"
   value={
