@@ -62,6 +62,26 @@ const menuSections = [
     ],
   },
   {
+    sectionKey: "eksplorasi-data",
+    sectionLabel: "Eksplorasi Data",
+    items: [
+      {
+        key: "Eksplorasi Data",
+        label: "Pengecekan Eksplorasi",
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Magnifying glass (pengecekan) + chart bars (eksplorasi data) */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M7.5 10.5v1.5m2-3v3m2-1.5v1.5" />
+          </svg>
+        ),
+        badge: null,
+      },
+    ],
+  },
+  {
     sectionKey: "keberadaan-um",
     sectionLabel: "Usaha Menengah",
     items: [
@@ -70,8 +90,9 @@ const menuSections = [
         label: "Keberadaan UM",
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Building / office (mewakili Usaha Menengah / enterprise) */}
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+              d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M5 21V11m8 10V9a1 1 0 011-1h4a1 1 0 011 1v12M8 8h.01M8 12h.01M8 16h.01M15 12h.01M15 16h.01" />
           </svg>
         ),
         badge: null,
@@ -142,6 +163,7 @@ const pathMap = {
   "prelist tidak ditemukan": "/prelist-tidak-ditemukan",
   "hasil ngibar": "/hasil-ngibar",
   "Usaha Menengah": "/keberadaan-um",
+  "Eksplorasi Data": "/eksplorasi-data",
 };
 
 export default function Sidebar({ onMenuClick }) {

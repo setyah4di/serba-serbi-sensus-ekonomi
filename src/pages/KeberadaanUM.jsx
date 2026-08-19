@@ -19,6 +19,7 @@ const KECAMATAN_ORDER = [
 const OPSI_KONFIRMASI = [
   { value: "01 Usaha Tutup", label: "01 Usaha Tutup" },
   { value: "02 Bukan di wilayah ini", label: "02 Bukan di wilayah ini" },
+  { value: "03 Lainnya", label: "03 Lainnya" },
 ];
 
 // ── Parser CSV (menangani newline & koma di dalam tanda kutip) ──
@@ -96,6 +97,7 @@ function konfirmasiBadge(v) {
   const s = (v || "").trim();
   if (s.startsWith("01")) return "bg-slate-50 text-slate-700 ring-slate-200";
   if (s.startsWith("02")) return "bg-rose-50 text-rose-700 ring-rose-200";
+  if (s.startsWith("03")) return "bg-violet-50 text-violet-700 ring-violet-200";
   return "bg-gray-50 text-gray-400 ring-gray-200";
 }
 
@@ -258,7 +260,7 @@ function DetailPrelistUM({ row, onClose, onSaved }) {
   const [errorMsg, setErrorMsg] = useState("");
   const closeTimeoutRef = useRef(null);
 
-  const perluAlamat = hasilKonfirmasi.startsWith("02");
+const perluAlamat = hasilKonfirmasi.startsWith("02") || hasilKonfirmasi.startsWith("03");
   const isBusy = phase !== "idle";
 
   useEffect(() => {
@@ -443,14 +445,14 @@ function DetailPrelistUM({ row, onClose, onSaved }) {
           {perluAlamat && (
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                Alamat yang Benar
+                Keterangan
               </label>
               <textarea
                 value={alamatBenar}
                 onChange={e => setAlamatBenar(e.target.value)}
                 rows={3}
                 disabled={isBusy}
-                placeholder="Tuliskan alamat usaha yang sebenarnya…"
+                placeholder="Tuliskan Keterangan Kondisi Usaha. Contoh:Duplikat …"
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none disabled:text-gray-400"
               />
             </div>
