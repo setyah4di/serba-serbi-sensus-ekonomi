@@ -27,6 +27,7 @@ import PrelistTidakDitemukan from "./pages/PrelistTidakDitemukan";
 import HasilNgibar from "./pages/HasilNgibar";
 import KeberadaanUM from "./pages/KeberadaanUM";
 import KeberadaanKeluargaKhusus from "./pages/KeberadaanKeluargaKhusus";
+import KeberadaanBumdes from "./pages/KeberadaanBumdes";
 import EksplorasiData from "./pages/EksplorasiData";
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -67,6 +68,7 @@ function RouteWrapper() {
     "/hasil-ngibar",
     "/eksplorasi-data",
     "/keberadaan-keluarga-khusus",
+    "/keberadaan-bumdes",
   ];
 
   const showSidebar = sidebarPages.includes(pathname);
@@ -92,6 +94,7 @@ function RouteWrapper() {
             <Route path="/prelist-tidak-ditemukan" element={<PrelistTidakDitemukan />} />
             <Route path="/keberadaan-um" element={<KeberadaanUM />} />
             <Route path="/keberadaan-keluarga-khusus" element={<KeberadaanKeluargaKhusus />} />
+            <Route path="/keberadaan-bumdes" element={<KeberadaanBumdes />} />
             <Route path="/eksplorasi-data" element={<EksplorasiData />} />
             <Route path="/hasil-ngibar" element={<HasilNgibar />} />
             <Route path="/reportase" element={<ReportaSE />} />
