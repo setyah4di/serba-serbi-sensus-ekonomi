@@ -29,6 +29,7 @@ export default defineConfig({
         name: 'Serba Serbi SE',
         short_name: 'SerbaSerbi',
         description: 'Aplikasi Monitoring Sensus Ekonomi',
+        start_url: '/monitoring-petugas', // <-- TAMBAHKAN BARIS INI
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
