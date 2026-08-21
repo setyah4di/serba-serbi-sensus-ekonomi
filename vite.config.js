@@ -26,9 +26,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Bagian includeAssets dihapus karena tidak ada robots.txt dan favicon.svg
       manifest: {
-        name: 'Aplikasi Keberadaan Bumdes',
-        short_name: 'BumdesApp',
-        description: 'Aplikasi data Keberadaan Bumdes',
+        name: 'Serba Serbi SE',
+        short_name: 'SerbaSerbi',
+        description: 'Aplikasi Monitoring Sensus Ekonomi',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
