@@ -83,11 +83,23 @@ const menuSections = [
   },
   {
     sectionKey: "keberadaan-um",
-    sectionLabel: "Usaha Menengah",
+    sectionLabel: "Konfirmasi Keberadaan",
     items: [
       {
         key: "Usaha Menengah",
-        label: "Keberadaan UM",
+        label: "Usaha Menengah",
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Building / office (mewakili Usaha Menengah / enterprise) */}
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M5 21V11m8 10V9a1 1 0 011-1h4a1 1 0 011 1v12M8 8h.01M8 12h.01M8 16h.01M15 12h.01M15 16h.01" />
+          </svg>
+        ),
+        badge: null,
+      },
+      {
+        key: "Keluarga Khusus",
+        label: "Keluarga Khusus ",
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {/* Building / office (mewakili Usaha Menengah / enterprise) */}
@@ -164,6 +176,7 @@ const pathMap = {
   "hasil ngibar": "/hasil-ngibar",
   "Usaha Menengah": "/keberadaan-um",
   "Eksplorasi Data": "/eksplorasi-data",
+  "Keluarga Khusus": "/keberadaan-keluarga-khusus",
 };
 
 export default function Sidebar({ onMenuClick }) {
