@@ -11,11 +11,12 @@ const menuSections = [
         key: "Monitoring Kecamatan",
         label: "Monitoring Kecamatan",
         icon: (
+          // Peta (wilayah/kecamatan)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              d="M9 4.5L4 6.5v13l5-2 6 2 5-2v-13l-5 2-6-2z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              d="M9 4.5v13.5M15 6.5V20" />
           </svg>
         ),
         badge: null,
@@ -24,9 +25,13 @@ const menuSections = [
         key: "Monitoring PML",
         label: "Monitoring PML",
         icon: (
+          // User-check (petugas pemeriksa/supervisor)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" strokeWidth={1.8} />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M17 11l2 2 4-4" />
           </svg>
         ),
         badge: null,
@@ -41,9 +46,10 @@ const menuSections = [
         key: "Anomali Keluarga",
         label: "Anomali Keluarga",
         icon: (
+          // Rumah (keluarga/household)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1h-2z" />
+              d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
           </svg>
         ),
         badge: null,
@@ -52,9 +58,14 @@ const menuSections = [
         key: "Anomali Usaha",
         label: "Anomali Usaha",
         icon: (
+          // Koper/briefcase + tanda seru (anomali usaha)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              d="M3 7h18v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M12 11v3m0 3h.01" />
           </svg>
         ),
         badge: null,
@@ -89,10 +100,10 @@ const menuSections = [
         key: "Usaha Menengah",
         label: "Usaha Menengah",
         icon: (
+          // Toko/storefront (usaha menengah)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {/* Building / office (mewakili Usaha Menengah / enterprise) */}
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M5 21V11m8 10V9a1 1 0 011-1h4a1 1 0 011 1v12M8 8h.01M8 12h.01M8 16h.01M15 12h.01M15 16h.01" />
+              d="M3 9l1.5-5h15L21 9M3 9v10a1 1 0 001 1h16a1 1 0 001-1V9M3 9a2 2 0 002 2h2a2 2 0 002-2M9 9a2 2 0 002 2h2a2 2 0 002-2M15 9a2 2 0 002 2h2a2 2 0 002-2M9 20v-5a1 1 0 011-1h4a1 1 0 011 1v5" />
           </svg>
         ),
         badge: null,
@@ -101,10 +112,12 @@ const menuSections = [
         key: "Keluarga Khusus",
         label: "Keluarga Khusus ",
         icon: (
+          // Dua orang (keluarga khusus)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {/* Building / office (mewakili Usaha Menengah / enterprise) */}
+            <circle cx="8" cy="8" r="3" strokeWidth={1.8} />
+            <circle cx="16" cy="8" r="3" strokeWidth={1.8} />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M5 21V11m8 10V9a1 1 0 011-1h4a1 1 0 011 1v12M8 8h.01M8 12h.01M8 16h.01M15 12h.01M15 16h.01" />
+              d="M2 20v-1a5 5 0 015-5h2a5 5 0 015 5v1M12 20v-1a5 5 0 015-5h0a5 5 0 015 5v1" />
           </svg>
         ),
         badge: null,
@@ -113,10 +126,10 @@ const menuSections = [
         key: "Bumdes",
         label: "Bumdes",
         icon: (
+          // Gedung berpilar (institusi desa / Bumdes)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {/* Building / office (mewakili Usaha Menengah / enterprise) */}
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M3 21h18M5 21V6a1 1 0 011-1h6a1 1 0 011 1v15M5 21V11m8 10V9a1 1 0 011-1h4a1 1 0 011 1v12M8 8h.01M8 12h.01M8 16h.01M15 12h.01M15 16h.01" />
+              d="M3 21h18M4 21V10l8-6 8 6v11M9 21v-6h6v6M6 10v3m4-3v3m4-3v3m4-3v3" />
           </svg>
         ),
         badge: null,
@@ -150,9 +163,12 @@ const menuSections = [
         key: "hasil ngibar",
         label: "Hasil Ngibar",
         icon: (
+          // Bendera (berkibar/ngibar)
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              d="M5 3v18" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M5 4h11l-2 3.5L16 11H5" />
           </svg>
         ),
         badge: null,
