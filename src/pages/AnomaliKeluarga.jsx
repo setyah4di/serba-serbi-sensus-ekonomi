@@ -373,7 +373,7 @@ let lastKodeSLS="", lastSubSLS="", lastNamaSLS="", lastPML="", lastPetugas="";
   const namaDesa    = (cols[13]||"").trim(); if (namaDesa    && !isTotalMarker(namaDesa))    lastNamaDesa = namaDesa;
   const kodeSLS     = (cols[14]||"").trim(); if (kodeSLS     && !isTotalMarker(kodeSLS))     lastKodeSLS  = kodeSLS;
   const subSLS      = (cols[15]||"").trim(); if (subSLS      && !isTotalMarker(subSLS))      lastSubSLS   = subSLS;
-  const namaSLS     = (cols[26]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;
+  const namaSLS     = (cols[27]||"").trim(); if (namaSLS     && !isTotalMarker(namaSLS))     lastNamaSLS  = namaSLS;
   const namaPML     = (cols[0]||"").trim(); if (namaPML     && !isTotalMarker(namaPML))     lastPML      = namaPML;
   const namaPetugas = (cols[1]||"").trim(); if (namaPetugas && !isTotalMarker(namaPetugas)) lastPetugas  = namaPetugas;
 
