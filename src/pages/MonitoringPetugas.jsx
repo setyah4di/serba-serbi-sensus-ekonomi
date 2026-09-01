@@ -158,7 +158,7 @@ function hitungHariSensus() {
   const diffMs   = TODAY - START;
   const hariKe   = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // hari ke-1 = tgl 15
   // const totalHari = Math.floor((END - START)  / (1000 * 60 * 60 * 24)) + 1;
-  const totalHari = 78-hariKe; // total hari tersisa dari hari ke-1 sampai tgl 31 Agustus
+  const totalHari = 93-hariKe; // total hari tersisa dari hari ke-1 sampai tgl 31 Agustus
   
   const target    = parseFloat(((hariKe - 1) * 1.5625).toFixed(1));
   return { hariKe, totalHari, target };
@@ -499,7 +499,7 @@ const findPclDailySeries = (pcl) => {
       </span>
     </>
   }
-  sub="15 Jun – 31 Agt 2026"
+  sub="15 Jun – 15 Sept 2026"
   icon="📅"
   variant="sky"
 />
