@@ -496,7 +496,13 @@ const filteredRows = useMemo(() => {
     // Isian Perlu Diperbaiki menurut PML, dan belum ditangani korwil
     result = result.filter(r => getStatusKey(r) === "perbaiki" && getKorwilStatusKey(r) !== "korwil_ditangani");
   } else if (activeFilter === "belum") {
-    result = result.filter(r => getStatusKey(r) === "belum");
+    // Benar-benar belum dikonfirmasi PML/PPL, dan belum ditangani korwil.
+    // Tanpa syarat korwil ini, baris yang PML-nya kosong tapi korwil-nya
+    // sudah "01" (ditangani) ikut lolos filter "belum" — padahal badge-nya
+    // akan tampil "Sudah Ditangani Korwil" (lihat computeRowFilterKey),
+    // sehingga daftar tidak sinkron dengan angka pada kartu "Belum
+    // Dikonfirmasi" (yang sudah benar mengecualikan baris tsb).
+    result = result.filter(r => getStatusKey(r) === "belum" && getKorwilStatusKey(r) !== "korwil_ditangani");
   } else if (activeFilter === "korwil_ditangani") {
     result = result.filter(r => getKorwilStatusKey(r) === "korwil_ditangani");
   }
