@@ -24,6 +24,7 @@ const COL = {
   alamat: 13,
   idsbr: 14,
   jenisPrelist: 17,
+  keberadaan: 24,
 };
 
 function parseCSV(text) {
@@ -154,6 +155,7 @@ function AssignmentCard({ item, rank }) {
     { label: "Alamat", value: item.alamat },
     { label: "IDSBR", value: item.idsbr },
     { label: "Jenis Prelist", value: item.jenisPrelist },
+    { label: "Keberadaan", value: item.keberadaan },
   ];
   return (
     <div className="py-4 border-b border-gray-50 last:border-0">
@@ -190,6 +192,7 @@ export default function MonitoringPetugas() {
 
   const [searchSls, setSearchSls]     = useState("");        // cari RT/SLS
   const [selectedSlsKey, setSelectedSlsKey] = useState(null); // level 3: grup RT/SLS terpilih
+  const [keberadaanFilter, setKeberadaanFilter] = useState(""); // filter keberadaan pada level assignment
 
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
@@ -209,6 +212,7 @@ export default function MonitoringPetugas() {
           alamat:         (cols[COL.alamat] || "").trim(),
           idsbr:          (cols[COL.idsbr] || "").trim(),
           jenisPrelist:   (cols[COL.jenisPrelist] || "").trim(),
+          keberadaan:     (cols[COL.keberadaan] || "").trim(),
         })).filter(r => r.kecamatan && r.desa);
         setRows(data);
         setLastUpdated(new Date());
@@ -220,7 +224,7 @@ export default function MonitoringPetugas() {
   // ── Reset saat ganti kecamatan / desa / grup RT-SLS ──
   useEffect(() => { setSelectedDesa(null); setSearchDesa(""); if (tableRef.current) tableRef.current.scrollTop = 0; }, [selectedKec]);
   useEffect(() => { setSearchSls(""); setSelectedSlsKey(null); if (tableRef.current) tableRef.current.scrollTop = 0; }, [selectedDesa]);
-  useEffect(() => { if (tableRef.current) tableRef.current.scrollTop = 0; }, [selectedSlsKey]);
+  useEffect(() => { setKeberadaanFilter(""); if (tableRef.current) tableRef.current.scrollTop = 0; }, [selectedSlsKey]);
 
   const handleSelectKec = (kec) => {
     const next = selectedKec === kec ? null : kec;
@@ -286,6 +290,25 @@ export default function MonitoringPetugas() {
   const selectedSlsGroup = useMemo(() =>
     slsGroupAgg.find(g => g.key === selectedSlsKey) || null
   , [slsGroupAgg, selectedSlsKey]);
+
+  // ── Opsi filter Keberadaan (kolom Y) untuk grup assignment terpilih ──
+  const keberadaanOptions = useMemo(() => {
+    if (!selectedSlsGroup) return [];
+    const map = new Map();
+    selectedSlsGroup.items.forEach(it => {
+      const val = it.keberadaan || "-";
+      map.set(val, (map.get(val) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([value, total]) => ({ value, total }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [selectedSlsGroup]);
+
+  const filteredAssignmentItems = useMemo(() => {
+    if (!selectedSlsGroup) return [];
+    if (!keberadaanFilter) return selectedSlsGroup.items;
+    return selectedSlsGroup.items.filter(it => (it.keberadaan || "-") === keberadaanFilter);
+  }, [selectedSlsGroup, keberadaanFilter]);
 
   // ── Judul & total pada header panel, tergantung level ──
   const panelLevel = selectedSlsGroup ? 3 : selectedDesa ? 2 : 1;
@@ -456,21 +479,40 @@ export default function MonitoringPetugas() {
                       {panelLevel === 3 && selectedSlsGroup && (
                         <>
                           <div className="sticky top-0 bg-white pt-2 pb-2 z-10">
+                            <div className="relative mb-2">
+                              <select
+                                value={keberadaanFilter}
+                                onChange={e => setKeberadaanFilter(e.target.value)}
+                                className="w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300 appearance-none"
+                              >
+                                <option value="">Semua Keberadaan ({selectedSlsGroup.items.length})</option>
+                                {keberadaanOptions.map(o => (
+                                  <option key={o.value} value={o.value}>{o.value} ({o.total})</option>
+                                ))}
+                              </select>
+                              <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
                             <div className="flex items-center gap-3 py-2 border-b border-gray-100">
                               <span className="text-xs text-gray-400 w-6 text-center">#</span>
                               <span className="text-xs text-gray-400 flex-1">Nama Assignment</span>
                             </div>
                           </div>
-                          {selectedSlsGroup.items.map((item, i) => (
-                            <AssignmentCard key={`${item.namaAssignment}-${i}`} item={item} rank={i + 1} />
-                          ))}
+                          {filteredAssignmentItems.length === 0 ? (
+                            <p className="text-gray-400 text-sm text-center py-8">Tidak ada assignment dengan keberadaan tersebut.</p>
+                          ) : (
+                            filteredAssignmentItems.map((item, i) => (
+                              <AssignmentCard key={`${item.namaAssignment}-${i}`} item={item} rank={i + 1} />
+                            ))
+                          )}
                         </>
                       )}
                     </div>
 
                     <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                       <span className="text-xs font-semibold text-gray-600">
-                        {panelLevel === 3 ? `${selectedSlsGroup.items.length} data assignment`
+                        {panelLevel === 3 ? `${filteredAssignmentItems.length}${keberadaanFilter ? ` / ${selectedSlsGroup.items.length}` : ""} data assignment`
                           : panelLevel === 2 ? `${slsGroupList.length} RT / SLS unik`
                           : `${desaList.length} desa`}
                       </span>
