@@ -93,6 +93,23 @@ function KecamatanCard({ kecamatan, total, belum, onClick, isSelected }) {
   );
 }
 
+function FilterCard({ label, count, color, isActive, onClick }) {
+  const styles = {
+    emerald: { bg: isActive ? "bg-emerald-500" : "bg-emerald-50", text: isActive ? "text-white" : "text-emerald-700", sub: isActive ? "text-emerald-100" : "text-emerald-500" },
+    amber:   { bg: isActive ? "bg-amber-500" : "bg-amber-50",   text: isActive ? "text-white" : "text-amber-700",   sub: isActive ? "text-amber-100" : "text-amber-500" },
+  };
+  const s = styles[color];
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-1 text-left rounded-xl p-3 border-2 transition-all duration-150 ${isActive ? "border-transparent shadow-sm" : "border-transparent hover:opacity-90"} ${s.bg}`}
+    >
+      <p className={`text-2xl font-black leading-none ${s.text}`}>{count}</p>
+      <p className={`text-[11px] font-semibold mt-1 leading-tight ${s.sub}`}>{label}</p>
+    </button>
+  );
+}
+
 function SlsEntryRow({ item, rank, onDetail }) {
   const verified = (item.keterangan || "").trim() !== "";
   return (
@@ -142,6 +159,7 @@ export default function MuatanSlsKurang20() {
 
   const [searchEntry, setSearchEntry] = useState("");
   const [selectedRowKey, setSelectedRowKey] = useState(null);
+  const [filterKeterangan, setFilterKeterangan] = useState(null); // null = tampilkan semua
 
   const [keteranganDraft, setKeteranganDraft] = useState("");
 
@@ -154,58 +172,60 @@ export default function MuatanSlsKurang20() {
   const tableRef  = useRef(null);
 
   function findColIndex(header, ...possibleNames) {
-  const normalized = header.map(h => h.trim().toLowerCase());
-  for (const name of possibleNames) {
-    const idx = normalized.indexOf(name.trim().toLowerCase());
-    if (idx !== -1) return idx;
+    const normalized = header.map(h => h.trim().toLowerCase());
+    for (const name of possibleNames) {
+      const idx = normalized.indexOf(name.trim().toLowerCase());
+      if (idx !== -1) return idx;
+    }
+    return -1;
   }
-  return -1;
-}
 
-const loadData = () => {
-  setLoading(true);
-  fetch(`${CSV_DATA}&t=${Date.now()}`, { cache: "no-store" })
-    .then(r => { if (!r.ok) throw new Error("Gagal mengambil data."); return r.text(); })
-    .then(text => {
-      const parsed = parseCSV(text);
-      const header = parsed[0];
+  const loadData = () => {
+    setLoading(true);
+    fetch(`${CSV_DATA}&t=${Date.now()}`, { cache: "no-store" })
+      .then(r => { if (!r.ok) throw new Error("Gagal mengambil data."); return r.text(); })
+      .then(text => {
+        const parsed = parseCSV(text);
+        const header = parsed[0];
 
-      // Cari index kolom Nama PPL & Nama PML berdasarkan nama header (bukan posisi tetap)
-      const idxNamaPPL = findColIndex(header, "Nama PPL");
-      const idxNamaPML = findColIndex(header, "Nama PML");
+        // Cari index kolom Nama PPL & Nama PML berdasarkan nama header (bukan posisi tetap)
+        const idxNamaPPL = findColIndex(header, "Nama PPL");
+        const idxNamaPML = findColIndex(header, "Nama PML");
 
-      // Debug: cek di console browser kalau masih '-'
-      console.log("Header row:", header);
-      console.log("idxNamaPPL:", idxNamaPPL, "idxNamaPML:", idxNamaPML);
+        const data = parsed.slice(1).map((cols, i) => ({
+          rowNumber:       i + 2,
+          kecamatan:       (cols[COL.kecamatan] || "").trim(),
+          kelurahan:       (cols[COL.kelurahan] || "").trim(),
+          sls:             (cols[COL.sls] || "").trim(),
+          petugas:         (cols[COL.petugas] || "").trim(),
+          totalAssignment: (cols[COL.totalAssignment] || "0").trim(),
+          totalKeluargaAktif: (cols[COL.totalKeluargaAktif] || "0").trim(),
+          dtsenDitemukan:  (cols[COL.dtsenDitemukan] || "0").trim(),
+          keluargaBaru:    (cols[COL.keluargaBaru] || "0").trim(),
+          keterangan:      (cols[COL.keterangan] || "").trim(),
+          namaPPL:         idxNamaPPL !== -1 ? (cols[idxNamaPPL] || "").trim() : "",
+          namaPML:         idxNamaPML !== -1 ? (cols[idxNamaPML] || "").trim() : "",
+        })).filter(r => r.kecamatan);
 
-      const data = parsed.slice(1).map((cols, i) => ({
-        rowNumber:       i + 2,
-        kecamatan:       (cols[COL.kecamatan] || "").trim(),
-        kelurahan:       (cols[COL.kelurahan] || "").trim(),
-        sls:             (cols[COL.sls] || "").trim(),
-        petugas:         (cols[COL.petugas] || "").trim(),
-        totalAssignment: (cols[COL.totalAssignment] || "0").trim(),
-        totalKeluargaAktif: (cols[COL.totalKeluargaAktif] || "0").trim(),
-        dtsenDitemukan:  (cols[COL.dtsenDitemukan] || "0").trim(),
-        keluargaBaru:    (cols[COL.keluargaBaru] || "0").trim(),
-        keterangan:      (cols[COL.keterangan] || "").trim(),
-        namaPPL:         idxNamaPPL !== -1 ? (cols[idxNamaPPL] || "").trim() : "",
-        namaPML:         idxNamaPML !== -1 ? (cols[idxNamaPML] || "").trim() : "",
-      })).filter(r => r.kecamatan);
-
-      setRows(data);
-      setLastUpdated(new Date());
-      setLoading(false);
-    })
-    .catch(e => { setError(e.message); setLoading(false); });
-};
+        setRows(data);
+        setLastUpdated(new Date());
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  };
 
   useEffect(() => { loadData(); }, []);
   useEffect(() => {
     return () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); };
   }, []);
 
-  useEffect(() => { setSelectedRowKey(null); setSearchEntry(""); if (tableRef.current) tableRef.current.scrollTop = 0; }, [selectedKec]);
+  useEffect(() => {
+    setSelectedRowKey(null);
+    setSearchEntry("");
+    setFilterKeterangan(null); // reset filter setiap ganti kecamatan
+    if (tableRef.current) tableRef.current.scrollTop = 0;
+  }, [selectedKec]);
+
   useEffect(() => {
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     setPhase("idle");
@@ -235,19 +255,31 @@ const loadData = () => {
   const kecamatanList = useMemo(() =>
     kecamatanAgg.filter(k => search === "" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
   , [kecamatanAgg, search]);
-const entryList = useMemo(() => {
-  if (!selectedKec) return [];
-  return rows
-    .filter(r => r.kecamatan === selectedKec)
-    .filter(r =>
-      searchEntry === "" ||
-      (r.kelurahan || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
-      (r.sls || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
-      (r.namaPPL || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
-      (r.namaPML || "").toLowerCase().includes(searchEntry.toLowerCase())
-    )
-    .sort((a, b) => a.kelurahan.localeCompare(b.kelurahan) || a.sls.localeCompare(b.sls));
-}, [rows, selectedKec, searchEntry]);
+
+  const keteranganCounts = useMemo(() => {
+    if (!selectedKec) return { sesuai: 0, belumDidata: 0 };
+    const list = rows.filter(r => r.kecamatan === selectedKec);
+    return {
+      sesuai: list.filter(r => r.keterangan === "01 Sudah Sesuai").length,
+      belumDidata: list.filter(r => r.keterangan === "02 Masih ada penduduk belum didata").length,
+    };
+  }, [rows, selectedKec]);
+
+  const entryList = useMemo(() => {
+    if (!selectedKec) return [];
+    return rows
+      .filter(r => r.kecamatan === selectedKec)
+      .filter(r => filterKeterangan === null || r.keterangan === filterKeterangan)
+      .filter(r =>
+        searchEntry === "" ||
+        (r.kelurahan || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
+        (r.sls || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
+        (r.namaPPL || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
+        (r.namaPML || "").toLowerCase().includes(searchEntry.toLowerCase())
+      )
+      .sort((a, b) => a.kelurahan.localeCompare(b.kelurahan) || a.sls.localeCompare(b.sls));
+  }, [rows, selectedKec, searchEntry, filterKeterangan]);
+
   const selectedRow = useMemo(() =>
     rows.find(r => r.rowNumber === selectedRowKey) || null
   , [rows, selectedRowKey]);
@@ -263,42 +295,43 @@ const entryList = useMemo(() => {
     if (panelLevel === 3) setSelectedRowKey(null);
     else setSelectedKec(null);
   };
-const handleSaveKeterangan = async () => {
-  if (!selectedRow) return;
-  setPhase("saving");
-  setSaveError(null);
-  const rowNumberToUpdate = selectedRow.rowNumber; // simpan dulu sebelum async
-  try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({
-        action: "updateKeterangan",
-        rowNumber: rowNumberToUpdate,
-        kecamatan: selectedRow.kecamatan,
-        kelurahan: selectedRow.kelurahan,
-        sls: selectedRow.sls,
-        keterangan: keteranganDraft,
-      }),
-    });
-    const result = await res.json();
-    if (!res.ok || !result.ok) throw new Error(result.message || "Gagal menyimpan.");
 
-    // Gunakan rowNumberToUpdate, bukan result.rowNumber, supaya update pasti kena
-    setRows(prev => prev.map(r =>
-      r.rowNumber === rowNumberToUpdate ? { ...r, keterangan: keteranganDraft } : r
-    ));
+  const handleSaveKeterangan = async () => {
+    if (!selectedRow) return;
+    setPhase("saving");
+    setSaveError(null);
+    const rowNumberToUpdate = selectedRow.rowNumber; // simpan dulu sebelum async
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "updateKeterangan",
+          rowNumber: rowNumberToUpdate,
+          kecamatan: selectedRow.kecamatan,
+          kelurahan: selectedRow.kelurahan,
+          sls: selectedRow.sls,
+          keterangan: keteranganDraft,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok || !result.ok) throw new Error(result.message || "Gagal menyimpan.");
 
-    setPhase("success");
-    closeTimeoutRef.current = setTimeout(() => {
+      // Gunakan rowNumberToUpdate, bukan result.rowNumber, supaya update pasti kena
+      setRows(prev => prev.map(r =>
+        r.rowNumber === rowNumberToUpdate ? { ...r, keterangan: keteranganDraft } : r
+      ));
+
+      setPhase("success");
+      closeTimeoutRef.current = setTimeout(() => {
+        setPhase("idle");
+        setSelectedRowKey(null); // tutup panel detail, kembali ke daftar SLS
+      }, 2000);
+    } catch (e) {
+      setSaveError(e.message || "Gagal menyimpan keterangan.");
       setPhase("idle");
-      setSelectedRowKey(null);
-    }, 2000);
-  } catch (e) {
-    setSaveError(e.message || "Gagal menyimpan keterangan.");
-    setPhase("idle");
-  }
-};
+    }
+  };
 
   const totalBelum = kecamatanAgg.reduce((s, k) => s + k.belum, 0);
 
@@ -455,18 +488,18 @@ const handleSaveKeterangan = async () => {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
-                   {panelLevel === 3 && (
-  <div className="mt-3 flex flex-col gap-1.5 text-white text-sm">
-    <div className="flex items-center justify-between">
-      <span className="opacity-80">Nama PPL</span>
-      <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.namaPPL || "-"}</span>
-    </div>
-    <div className="flex items-center justify-between">
-      <span className="opacity-80">Nama PML</span>
-      <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.namaPML || "-"}</span>
-    </div>
-  </div>
-)}
+                      {panelLevel === 3 && (
+                        <div className="mt-3 flex flex-col gap-1.5 text-white text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="opacity-80">Nama PPL</span>
+                            <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.namaPPL || "-"}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="opacity-80">Nama PML</span>
+                            <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.namaPML || "-"}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div ref={tableRef} className="px-6 py-2 max-h-[500px] overflow-y-auto">
@@ -481,9 +514,33 @@ const handleSaveKeterangan = async () => {
                                 onChange={e => setSearchEntry(e.target.value)}
                                 className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs focus:outline-none focus:ring-2 focus:ring-orange-300" />
                             </div>
+
+                            {/* ── Filter Card Keterangan ── */}
+                            <div className="flex gap-2 mb-2">
+                              <FilterCard
+                                label="Sudah Sesuai"
+                                count={keteranganCounts.sesuai}
+                                color="emerald"
+                                isActive={filterKeterangan === "01 Sudah Sesuai"}
+                                onClick={() => setFilterKeterangan(prev => prev === "01 Sudah Sesuai" ? null : "01 Sudah Sesuai")}
+                              />
+                              <FilterCard
+                                label="Belum Didata"
+                                count={keteranganCounts.belumDidata}
+                                color="amber"
+                                isActive={filterKeterangan === "02 Masih ada penduduk belum didata"}
+                                onClick={() => setFilterKeterangan(prev => prev === "02 Masih ada penduduk belum didata" ? null : "02 Masih ada penduduk belum didata")}
+                              />
+                            </div>
+
                             <div className="flex items-center gap-3 py-2 border-b border-gray-100">
                               <span className="text-xs text-gray-400 w-6 text-center">#</span>
                               <span className="text-xs text-gray-400 flex-1">Kelurahan · SLS · Petugas</span>
+                              {filterKeterangan && (
+                                <button onClick={() => setFilterKeterangan(null)} className="text-[11px] font-semibold text-orange-500 hover:text-orange-600">
+                                  Hapus filter ✕
+                                </button>
+                              )}
                             </div>
                           </div>
                           {entryList.length === 0 ? (
@@ -518,24 +575,25 @@ const handleSaveKeterangan = async () => {
                           </div>
 
                           <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-  Keterangan Hasil Verifikasi Lapangan
-</label>
-<select
-  value={keteranganDraft}
-  onChange={e => setKeteranganDraft(e.target.value)}
-  disabled={isBusy}
-  className="w-full mt-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400 appearance-none cursor-pointer"
-  style={{
-    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 0.75rem center",
-    backgroundSize: "1.1em",
-  }}
->
-  <option value="">— Pilih keterangan —</option>
-  <option value="01 Sudah Sesuai">01 Sudah Sesuai</option>
-  <option value="02 Masih ada penduduk belum didata">02 Masih ada penduduk belum didata</option>
-</select>
+                            Keterangan Hasil Verifikasi Lapangan
+                          </label>
+                          <select
+                            value={keteranganDraft}
+                            onChange={e => setKeteranganDraft(e.target.value)}
+                            disabled={isBusy}
+                            className="w-full mt-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400 appearance-none cursor-pointer"
+                            style={{
+                              backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
+                              backgroundRepeat: "no-repeat",
+                              backgroundPosition: "right 0.75rem center",
+                              backgroundSize: "1.1em",
+                            }}
+                          >
+                            <option value="">— Pilih keterangan —</option>
+                            <option value="01 Sudah Sesuai">01 Sudah Sesuai</option>
+                            <option value="02 Masih ada penduduk belum didata">02 Masih ada penduduk belum didata</option>
+                          </select>
+
                           {saveError && (
                             <div className="mt-3 flex items-start gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 text-xs text-rose-600">
                               <span className="text-sm leading-none mt-0.5">⚠️</span>
