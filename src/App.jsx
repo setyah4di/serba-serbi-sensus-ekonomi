@@ -29,6 +29,8 @@ import KeberadaanUM from "./pages/KeberadaanUM";
 import KeberadaanKeluargaKhusus from "./pages/KeberadaanKeluargaKhusus";
 import KeberadaanBumdes from "./pages/KeberadaanBumdes";
 import EksplorasiData from "./pages/EksplorasiData";
+import MuatanSlsKurang20 from "./pages/MuatanSlsKurang20";
+import MuatanSls20Sampai50 from "./pages/MuatanSls20Sampai50";
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -57,19 +59,21 @@ export default function App() {
 function RouteWrapper() {
   const { pathname } = useLocation();
 
-  const sidebarPages = [
-    "/monitoring-petugas",
-    "/monitoring-pml",
-    "/anomali-keluarga",
-    "/anomali-usaha",
-    "/keberadaan-um",
-    "/reportase",
-    "/prelist-tidak-ditemukan",
-    "/hasil-ngibar",
-    "/eksplorasi-data",
-    "/keberadaan-keluarga-khusus",
-    "/keberadaan-bumdes",
-  ];
+const sidebarPages = [
+  "/monitoring-petugas",
+  "/monitoring-pml",
+  "/anomali-keluarga",
+  "/anomali-usaha",
+  "/keberadaan-um",
+  "/reportase",
+  "/prelist-tidak-ditemukan",
+  "/hasil-ngibar",
+  "/eksplorasi-data",
+  "/muatan-sls-kurang-20",
+  "/muatan-sls-20-50",
+  "/keberadaan-keluarga-khusus",
+  "/keberadaan-bumdes",
+];
 
   const showSidebar = sidebarPages.includes(pathname);
 
@@ -96,6 +100,8 @@ function RouteWrapper() {
             <Route path="/keberadaan-keluarga-khusus" element={<KeberadaanKeluargaKhusus />} />
             <Route path="/keberadaan-bumdes" element={<KeberadaanBumdes />} />
             <Route path="/eksplorasi-data" element={<EksplorasiData />} />
+            <Route path="/muatan-sls-kurang-20" element={<MuatanSlsKurang20 />} />
+            <Route path="/muatan-sls-20-50" element={<MuatanSls20Sampai50 />} />
             <Route path="/hasil-ngibar" element={<HasilNgibar />} />
             <Route path="/reportase" element={<ReportaSE />} />
             <Route path="/ngibar" element={<Ngibar />} />

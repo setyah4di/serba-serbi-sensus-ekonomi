@@ -72,26 +72,58 @@ const menuSections = [
       },
     ],
   },
-  {
-    sectionKey: "eksplorasi-data",
-    sectionLabel: "Eksplorasi Data",
-    items: [
-      {
-        key: "Eksplorasi Data",
-        label: "Pengecekan Eksplorasi",
-        icon: (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {/* Magnifying glass (pengecekan) + chart bars (eksplorasi data) */}
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M7.5 10.5v1.5m2-3v3m2-1.5v1.5" />
-          </svg>
-        ),
-        badge: null,
-      },
-    ],
-  },
+{
+  sectionKey: "eksplorasi-data",
+  sectionLabel: "Eksplorasi Data",
+  items: [
+    {
+      key: "Eksplorasi Data",
+      label: "Pengecekan Eksplorasi",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+            d="M7.5 10.5v1.5m2-3v3m2-1.5v1.5" />
+        </svg>
+      ),
+      badge: null,
+    },
+    {
+      key: "Muatan SLS <20 Keluarga",
+      label: "SLS <20 Keluarga",
+      icon: (
+        // Grid kecil (2x2) - merepresentasikan muatan sedikit
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="7" height="7" rx="1" strokeWidth={1.8} />
+          <rect x="13" y="4" width="7" height="7" rx="1" strokeWidth={1.8} />
+          <rect x="4" y="13" width="7" height="7" rx="1" strokeWidth={1.8} />
+          <rect x="13" y="13" width="7" height="7" rx="1" strokeWidth={1.8} opacity="0.3" />
+        </svg>
+      ),
+      badge: null,
+    },
+    {
+      key: "Muatan SLS 20 - 50 Keluarga",
+      label: " SLS 20 - 50 Keluarga",
+      icon: (
+        // Grid penuh (3x3) - merepresentasikan muatan lebih banyak
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="9.25" y="3" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="15.5" y="3" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="3" y="9.25" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="9.25" y="9.25" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="15.5" y="9.25" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="3" y="15.5" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="9.25" y="15.5" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+          <rect x="15.5" y="15.5" width="5.5" height="5.5" rx="1" strokeWidth={1.6} />
+        </svg>
+      ),
+      badge: null,
+    },
+  ],
+},
   {
     sectionKey: "keberadaan-um",
     sectionLabel: "Konfirmasi Keberadaan",
@@ -204,6 +236,8 @@ const pathMap = {
   "hasil ngibar": "/hasil-ngibar",
   "Usaha Menengah": "/keberadaan-um",
   "Eksplorasi Data": "/eksplorasi-data",
+  "Muatan SLS <20 Keluarga": "/muatan-sls-kurang-20",
+  "Muatan SLS 20 - 50 Keluarga": "/muatan-sls-20-50",
   "Keluarga Khusus": "/keberadaan-keluarga-khusus",
   "Bumdes": "/keberadaan-bumdes",
 };
