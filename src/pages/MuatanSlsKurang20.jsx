@@ -19,6 +19,8 @@ const COL = {
   dtsenDitemukan: 10,
   keluargaBaru: 17,
   keterangan: 18,
+  namaPPL: 21,   // kolom V
+  namaPML: 22,   // kolom W
 };
 
 function parseCSV(text) {
@@ -102,7 +104,14 @@ function SlsEntryRow({ item, rank, onDetail }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-gray-800 tracking-tight truncate">{item.kelurahan || "-"}</p>
           <p className="text-[13px] text-gray-400 mt-0.5 truncate font-mono">{item.sls || "-"}</p>
-          <p className="text-[13px] text-gray-400 truncate">{item.petugas || "-"}</p>
+          <p className="text-[13px] text-gray-500 truncate mt-1 flex items-center gap-1.5">
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-600 flex-shrink-0">PML</span>
+            <span className="truncate">{item.namaPML || "-"}</span>
+          </p>
+          <p className="text-[13px] text-gray-500 truncate mt-1 flex items-center gap-1.5">
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 flex-shrink-0">PPL</span>
+            <span className="truncate">{item.namaPPL || "-"}</span>
+          </p>
         </div>
         <span
           className={`text-[10px] font-semibold px-2 py-1 rounded-full flex-shrink-0 ${
@@ -144,30 +153,52 @@ export default function MuatanSlsKurang20() {
   const detailRef = useRef(null);
   const tableRef  = useRef(null);
 
-  const loadData = () => {
-    setLoading(true);
-    fetch(`${CSV_DATA}&t=${Date.now()}`, { cache: "no-store" })
-      .then(r => { if (!r.ok) throw new Error("Gagal mengambil data."); return r.text(); })
-      .then(text => {
-        const parsed = parseCSV(text);
-        const data = parsed.slice(1).map((cols, i) => ({
-          rowNumber:       i + 2,
-          kecamatan:       (cols[COL.kecamatan] || "").trim(),
-          kelurahan:       (cols[COL.kelurahan] || "").trim(),
-          sls:             (cols[COL.sls] || "").trim(),
-          petugas:         (cols[COL.petugas] || "").trim(),
-          totalAssignment: (cols[COL.totalAssignment] || "0").trim(),
-          totalKeluargaAktif: (cols[COL.totalKeluargaAktif] || "0").trim(),
-          dtsenDitemukan:  (cols[COL.dtsenDitemukan] || "0").trim(),
-          keluargaBaru:    (cols[COL.keluargaBaru] || "0").trim(),
-          keterangan:      (cols[COL.keterangan] || "").trim(),
-        })).filter(r => r.kecamatan);
-        setRows(data);
-        setLastUpdated(new Date());
-        setLoading(false);
-      })
-      .catch(e => { setError(e.message); setLoading(false); });
-  };
+  function findColIndex(header, ...possibleNames) {
+  const normalized = header.map(h => h.trim().toLowerCase());
+  for (const name of possibleNames) {
+    const idx = normalized.indexOf(name.trim().toLowerCase());
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+const loadData = () => {
+  setLoading(true);
+  fetch(`${CSV_DATA}&t=${Date.now()}`, { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("Gagal mengambil data."); return r.text(); })
+    .then(text => {
+      const parsed = parseCSV(text);
+      const header = parsed[0];
+
+      // Cari index kolom Nama PPL & Nama PML berdasarkan nama header (bukan posisi tetap)
+      const idxNamaPPL = findColIndex(header, "Nama PPL");
+      const idxNamaPML = findColIndex(header, "Nama PML");
+
+      // Debug: cek di console browser kalau masih '-'
+      console.log("Header row:", header);
+      console.log("idxNamaPPL:", idxNamaPPL, "idxNamaPML:", idxNamaPML);
+
+      const data = parsed.slice(1).map((cols, i) => ({
+        rowNumber:       i + 2,
+        kecamatan:       (cols[COL.kecamatan] || "").trim(),
+        kelurahan:       (cols[COL.kelurahan] || "").trim(),
+        sls:             (cols[COL.sls] || "").trim(),
+        petugas:         (cols[COL.petugas] || "").trim(),
+        totalAssignment: (cols[COL.totalAssignment] || "0").trim(),
+        totalKeluargaAktif: (cols[COL.totalKeluargaAktif] || "0").trim(),
+        dtsenDitemukan:  (cols[COL.dtsenDitemukan] || "0").trim(),
+        keluargaBaru:    (cols[COL.keluargaBaru] || "0").trim(),
+        keterangan:      (cols[COL.keterangan] || "").trim(),
+        namaPPL:         idxNamaPPL !== -1 ? (cols[idxNamaPPL] || "").trim() : "",
+        namaPML:         idxNamaPML !== -1 ? (cols[idxNamaPML] || "").trim() : "",
+      })).filter(r => r.kecamatan);
+
+      setRows(data);
+      setLastUpdated(new Date());
+      setLoading(false);
+    })
+    .catch(e => { setError(e.message); setLoading(false); });
+};
 
   useEffect(() => { loadData(); }, []);
   useEffect(() => {
@@ -204,20 +235,19 @@ export default function MuatanSlsKurang20() {
   const kecamatanList = useMemo(() =>
     kecamatanAgg.filter(k => search === "" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
   , [kecamatanAgg, search]);
-
-  const entryList = useMemo(() => {
-    if (!selectedKec) return [];
-    return rows
-      .filter(r => r.kecamatan === selectedKec)
-      .filter(r =>
-        searchEntry === "" ||
-        (r.kelurahan || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
-        (r.sls || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
-        (r.petugas || "").toLowerCase().includes(searchEntry.toLowerCase())
-      )
-      .sort((a, b) => a.kelurahan.localeCompare(b.kelurahan) || a.sls.localeCompare(b.sls));
-  }, [rows, selectedKec, searchEntry]);
-
+const entryList = useMemo(() => {
+  if (!selectedKec) return [];
+  return rows
+    .filter(r => r.kecamatan === selectedKec)
+    .filter(r =>
+      searchEntry === "" ||
+      (r.kelurahan || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
+      (r.sls || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
+      (r.namaPPL || "").toLowerCase().includes(searchEntry.toLowerCase()) ||
+      (r.namaPML || "").toLowerCase().includes(searchEntry.toLowerCase())
+    )
+    .sort((a, b) => a.kelurahan.localeCompare(b.kelurahan) || a.sls.localeCompare(b.sls));
+}, [rows, selectedKec, searchEntry]);
   const selectedRow = useMemo(() =>
     rows.find(r => r.rowNumber === selectedRowKey) || null
   , [rows, selectedRowKey]);
@@ -233,40 +263,42 @@ export default function MuatanSlsKurang20() {
     if (panelLevel === 3) setSelectedRowKey(null);
     else setSelectedKec(null);
   };
+const handleSaveKeterangan = async () => {
+  if (!selectedRow) return;
+  setPhase("saving");
+  setSaveError(null);
+  const rowNumberToUpdate = selectedRow.rowNumber; // simpan dulu sebelum async
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        action: "updateKeterangan",
+        rowNumber: rowNumberToUpdate,
+        kecamatan: selectedRow.kecamatan,
+        kelurahan: selectedRow.kelurahan,
+        sls: selectedRow.sls,
+        keterangan: keteranganDraft,
+      }),
+    });
+    const result = await res.json();
+    if (!res.ok || !result.ok) throw new Error(result.message || "Gagal menyimpan.");
 
-  const handleSaveKeterangan = async () => {
-    if (!selectedRow) return;
-    setPhase("saving");
-    setSaveError(null);
-    try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "updateKeterangan",
-          rowNumber: selectedRow.rowNumber,
-          kecamatan: selectedRow.kecamatan,
-          kelurahan: selectedRow.kelurahan,
-          sls: selectedRow.sls,
-          keterangan: keteranganDraft,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.ok) throw new Error(result.message || "Gagal menyimpan.");
+    // Gunakan rowNumberToUpdate, bukan result.rowNumber, supaya update pasti kena
+    setRows(prev => prev.map(r =>
+      r.rowNumber === rowNumberToUpdate ? { ...r, keterangan: keteranganDraft } : r
+    ));
 
-      setRows(prev => prev.map(r =>
-        r.rowNumber === result.rowNumber ? { ...r, keterangan: keteranganDraft } : r
-      ));
-     setPhase("success");
-closeTimeoutRef.current = setTimeout(() => {
-  setPhase("idle");
-  setSelectedRowKey(null); // tutup panel detail, kembali ke daftar SLS
-}, 2000);
-    } catch (e) {
-      setSaveError(e.message || "Gagal menyimpan keterangan.");
+    setPhase("success");
+    closeTimeoutRef.current = setTimeout(() => {
       setPhase("idle");
-    }
-  };
+      setSelectedRowKey(null);
+    }, 2000);
+  } catch (e) {
+    setSaveError(e.message || "Gagal menyimpan keterangan.");
+    setPhase("idle");
+  }
+};
 
   const totalBelum = kecamatanAgg.reduce((s, k) => s + k.belum, 0);
 
@@ -423,12 +455,18 @@ closeTimeoutRef.current = setTimeout(() => {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
-                      {panelLevel === 3 && (
-                        <div className="mt-3 flex items-center justify-between text-white text-sm">
-                          <span className="opacity-80">Petugas</span>
-                          <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.petugas || "-"}</span>
-                        </div>
-                      )}
+                   {panelLevel === 3 && (
+  <div className="mt-3 flex flex-col gap-1.5 text-white text-sm">
+    <div className="flex items-center justify-between">
+      <span className="opacity-80">Nama PPL</span>
+      <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.namaPPL || "-"}</span>
+    </div>
+    <div className="flex items-center justify-between">
+      <span className="opacity-80">Nama PML</span>
+      <span className="font-bold truncate max-w-[60%] text-right">{selectedRow.namaPML || "-"}</span>
+    </div>
+  </div>
+)}
                     </div>
 
                     <div ref={tableRef} className="px-6 py-2 max-h-[500px] overflow-y-auto">
