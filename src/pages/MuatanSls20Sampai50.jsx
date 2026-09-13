@@ -515,17 +515,25 @@ closeTimeoutRef.current = setTimeout(() => {
                             </div>
                           </div>
 
-                          <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                            Keterangan Hasil Verifikasi Lapangan
-                          </label>
-                          <textarea
-                            value={keteranganDraft}
-                            onChange={e => setKeteranganDraft(e.target.value)}
-                            rows={4}
-                            disabled={isBusy}
-                            placeholder="Tuliskan hasil verifikasi lapangan…"
-                            className="w-full mt-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none disabled:bg-gray-50 disabled:text-gray-400"
-                          />
+                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+  Keterangan Hasil Verifikasi Lapangan
+</label>
+<select
+  value={keteranganDraft}
+  onChange={e => setKeteranganDraft(e.target.value)}
+  disabled={isBusy}
+  className="w-full mt-2 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 disabled:bg-gray-50 disabled:text-gray-400 appearance-none cursor-pointer"
+  style={{
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\")",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 0.75rem center",
+    backgroundSize: "1.1em",
+  }}
+>
+  <option value="">— Pilih keterangan —</option>
+  <option value="01 Sudah Sesuai">01 Sudah Sesuai</option>
+  <option value="02 Masih ada penduduk belum didata">02 Masih ada penduduk belum didata</option>
+</select>
 
                           {saveError && (
                             <div className="mt-3 flex items-start gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 text-xs text-rose-600">
