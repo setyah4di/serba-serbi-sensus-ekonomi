@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import * as XLSX from "xlsx"; // npm install xlsx
 
 // ── Konfigurasi Spreadsheet ──
 const SPREADSHEET_ID = "1BHma1HmHYKlzMV2GQ7Y_Z9gNMMPA2m8LplG6V4T81zs";
@@ -50,6 +51,31 @@ function countBadgeStyle(v) {
   return { bg: "#ffe4e6", text: "#9f1239", dot: "#f43f5e" };
 }
 function countLabel(v) { if (v === 0) return "Aman"; if (v <= 5) return "Ringan"; if (v <= 15) return "Sedang"; return "Perlu Perhatian"; }
+
+// ── Export data satu kecamatan ke Excel ──
+function exportKecamatanToExcel(kecamatan, data) {
+  const wsData = data.map(r => ({
+    Kecamatan: r.kecamatan,
+    Desa: r.desa,
+    "Nama RT": r.rtNama,
+    "Kode SLS": r.slsFull,
+    "Nama Assignment": r.namaAssignment,
+    Alamat: r.alamat,
+    IDSBR: r.idsbr,
+    "Jenis Prelist": r.jenisPrelist,
+    Keberadaan: r.keberadaan,
+  }));
+  const ws = XLSX.utils.json_to_sheet(wsData);
+  ws["!cols"] = [
+    { wch: 16 }, { wch: 20 }, { wch: 16 }, { wch: 18 }, { wch: 28 },
+    { wch: 28 }, { wch: 16 }, { wch: 14 }, { wch: 14 },
+  ];
+  const wb = XLSX.utils.book_new();
+  const safeSheetName = (kecamatan || "Data").slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+  const safeFileName = (kecamatan || "Data").replace(/[\\/:*?"<>|]/g, "_");
+  XLSX.writeFile(wb, `Tidak_Ditemukan_${safeFileName}.xlsx`);
+}
 
 // ── Stat Card (dashboard atas) ──
 function StatCard({ label, value, sub, icon, variant }) {
@@ -420,6 +446,13 @@ export default function MonitoringPetugas() {
                         <span className="opacity-80">Total Tidak Ditemukan</span>
                         <span className="font-black text-lg">{panelTotal}</span>
                       </div>
+                      <button
+                        onClick={() => exportKecamatanToExcel(selectedKec, rows.filter(r => r.kecamatan === selectedKec))}
+                        className="mt-3 w-full flex items-center justify-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+                        Export Excel — {selectedKec}
+                      </button>
                     </div>
 
                     <div ref={tableRef} className="px-6 py-2 max-h-[500px] overflow-y-auto">
