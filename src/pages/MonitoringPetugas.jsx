@@ -493,7 +493,7 @@ const findPclDailySeries = (pcl) => {
   label="Hari Pelaksanaan"
   value={
     <>
-      <span className="text-3xl font-bold">{TOTAL_HARI}</span>
+      <span className="text-3xl font-bold">0</span>
       <span className="ml-1 text-sm font-semibold text-sky-600">
         hari tersisa
       </span>
