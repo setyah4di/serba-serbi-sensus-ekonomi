@@ -1000,7 +1000,7 @@ export default function MonitoringPetugas() {
         <div className="relative z-10 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="text-white text-2xl sm:text-3xl font-black leading-tight">Prelist Penyisiran</h1>
+              <h1 className="text-white text-2xl sm:text-3xl font-black leading-tight">Prelist Perlu Dikonfirmasi</h1>
               <p className="text-orange-100 mt-1">Sensus Ekonomi 2026</p>
             </div>
           </div>
@@ -1061,7 +1061,7 @@ export default function MonitoringPetugas() {
                 onClick={() => handleToggleGlobalFilter("prelist")}
               />
               <StatCard
-                label="Ada & Sudah di FASIH"
+                label="Ada & Sudah Diperbaiki di FASIH"
                 value={globalKonf1Count}
                 sub="klik untuk lihat daftar"
                 icon="✅"
@@ -1146,7 +1146,7 @@ export default function MonitoringPetugas() {
                             </button>
                           </div>
                           <div className="mt-3 flex items-center justify-between text-white text-sm">
-                            <span className="opacity-80">Total Tidak Ditemukan</span>
+                            <span className="opacity-80">Total </span>
                             <span className="font-black text-lg">{panelTotal}</span>
                           </div>
                           <button

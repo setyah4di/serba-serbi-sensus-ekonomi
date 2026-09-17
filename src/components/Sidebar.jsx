@@ -174,7 +174,7 @@ const menuSections = [
     items: [
       {
         key: "prelist tidak ditemukan",
-        label: "Prelist Penyisiran",
+        label: "Prelist Perlu Dikonfirmasi",
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
@@ -232,7 +232,7 @@ const pathMap = {
   "Anomali Keluarga": "/anomali-keluarga",
   "Anomali Usaha": "/anomali-usaha",
   "Reporta SE": "/reportase",
-  "prelist tidak ditemukan": "/prelist-tidak-ditemukan",
+  "prelist tidak ditemukan": "/prelist-perlu-dikonfirmasi",
   "hasil ngibar": "/hasil-ngibar",
   "Usaha Menengah": "/keberadaan-um",
   "Eksplorasi Data": "/eksplorasi-data",

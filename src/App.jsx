@@ -66,7 +66,7 @@ const sidebarPages = [
   "/anomali-usaha",
   "/keberadaan-um",
   "/reportase",
-  "/prelist-tidak-ditemukan",
+  "/prelist-perlu-dikonfirmasi",
   "/hasil-ngibar",
   "/eksplorasi-data",
   "/muatan-sls-kurang-20",
@@ -95,7 +95,7 @@ const sidebarPages = [
             <Route path="/monitoring-pml" element={<MonitoringPml />} />
             <Route path="/anomali-keluarga" element={<MonitoringAnomaliKeluarga />} />
             <Route path="/anomali-usaha" element={<MonitoringAnomaliUsaha />} />
-            <Route path="/prelist-tidak-ditemukan" element={<PrelistTidakDitemukan />} />
+            <Route path="/prelist-perlu-dikonfirmasi" element={<PrelistTidakDitemukan />} />
             <Route path="/keberadaan-um" element={<KeberadaanUM />} />
             <Route path="/keberadaan-keluarga-khusus" element={<KeberadaanKeluargaKhusus />} />
             <Route path="/keberadaan-bumdes" element={<KeberadaanBumdes />} />
