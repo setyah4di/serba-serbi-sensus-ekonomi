@@ -170,7 +170,7 @@ const menuSections = [
   },
   {
     sectionKey: "tidak ditemukan",
-    sectionLabel: "Tidak Ditemukan",
+    sectionLabel: "Penyisiran",
     items: [
       {
         key: "prelist tidak ditemukan",

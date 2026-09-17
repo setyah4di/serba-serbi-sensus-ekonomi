@@ -44,7 +44,7 @@ const COL = {
 
 // ── Opsi konfirmasi yang ditulis ke kolom AC ──
 const KONFIRMASI_OPTIONS = [
-  { value: "Ada dan sudah didata di FASIH", label: "1. Ada dan sudah didata di FASIH" },
+  { value: "Ada dan sudah diperbaiki di FASIH", label: "1. Ada dan sudah diperbaiki di FASIH" },
   { value: "Data sudah sesuai", label: "2. Data sudah sesuai" },
 ];
 
@@ -528,8 +528,8 @@ function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
     { label: "Jenis Prelist", value: item.jenisPrelist },
     { label: "Keberadaan", value: item.keberadaan },
     { label: "Catatan", value: item.catatan },
-    { label: "Prelist Usaha", value: item.prelistUsaha },
-    { label: "Nomor Bangunan", value: item.nomorBangunan },
+    { label: "Prelist Keluarga Tujuan", value: item.prelistUsaha },
+    { label: "Nomor Bangunan Keluarga", value: item.nomorBangunan },
   ];
   return (
     <div
@@ -551,7 +551,7 @@ function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
         </div>
         {highlighted && (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0 mt-0.5">
-            Prelist Usaha
+            Prelist Usaha Terindikasi Usaha Keluarga 
           </span>
         )}
       </div>
@@ -837,7 +837,7 @@ export default function MonitoringPetugas() {
 
   // ── Agregat 3 kondisi untuk kartu dashboard ──
   const globalPrelistCount = useMemo(() => rows.filter(hasPrelistUsaha).length, [rows]);
-  const globalKonf1Count   = useMemo(() => rows.filter(r => r.konfirmasi === "Ada dan sudah didata di FASIH").length, [rows]);
+  const globalKonf1Count   = useMemo(() => rows.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH").length, [rows]);
   const globalKonf2Count   = useMemo(() => rows.filter(r => r.konfirmasi === "Data sudah sesuai").length, [rows]);
 
   // ── Daftar hasil filter global ──
@@ -845,7 +845,7 @@ export default function MonitoringPetugas() {
     if (!globalFilter) return [];
     let list = rows;
     if (globalFilter === "prelist") list = list.filter(hasPrelistUsaha);
-    if (globalFilter === "konf1")   list = list.filter(r => r.konfirmasi === "Ada dan sudah didata di FASIH");
+    if (globalFilter === "konf1")   list = list.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH");
     if (globalFilter === "konf2")   list = list.filter(r => r.konfirmasi === "Data sudah sesuai");
     if (globalSearch) {
       const q = globalSearch.toLowerCase();
@@ -861,7 +861,7 @@ export default function MonitoringPetugas() {
   }, [rows, globalFilter, globalSearch]);
 
   const globalFilterTitle = globalFilter === "prelist" ? "Data dengan Prelist Usaha"
-    : globalFilter === "konf1" ? "Konfirmasi: Ada dan Sudah Didata di FASIH"
+    : globalFilter === "konf1" ? "Konfirmasi: Ada dan Sudah Diperbaiki di FASIH"
     : globalFilter === "konf2" ? "Konfirmasi: Data Sudah Sesuai"
     : "";
 
@@ -938,7 +938,7 @@ export default function MonitoringPetugas() {
     const items = selectedSlsGroup.items;
     return {
       prelist: items.filter(hasPrelistUsaha).length,
-      konf1: items.filter(it => it.konfirmasi === "Ada dan sudah didata di FASIH").length,
+      konf1: items.filter(it => it.konfirmasi === "Ada dan sudah diperbaiki di FASIH").length,
       konf2: items.filter(it => it.konfirmasi === "Data sudah sesuai").length,
       belum: items.filter(it => !(it.konfirmasi || "").trim()).length,
     };
@@ -949,7 +949,7 @@ export default function MonitoringPetugas() {
     let items = selectedSlsGroup.items;
     if (keberadaanFilter) items = items.filter(it => (it.keberadaan || "-") === keberadaanFilter);
     if (detailCategoryFilter === "prelist") items = items.filter(hasPrelistUsaha);
-    if (detailCategoryFilter === "konf1")   items = items.filter(it => it.konfirmasi === "Ada dan sudah didata di FASIH");
+    if (detailCategoryFilter === "konf1")   items = items.filter(it => it.konfirmasi === "Ada dan sudah diperbaiki di FASIH");
     if (detailCategoryFilter === "konf2")   items = items.filter(it => it.konfirmasi === "Data sudah sesuai");
     if (detailCategoryFilter === "belum")   items = items.filter(it => !(it.konfirmasi || "").trim());
     return items;
@@ -1045,14 +1045,14 @@ export default function MonitoringPetugas() {
                 variant="orange"
               />
               <StatCard
-                label="Total Tidak Ditemukan"
+                label="Total Belum Dikonfirmasi"
                 value={totalAll}
                 sub="seluruh baris data"
                 icon="⚠️"
                 variant="rose"
               />
               <StatCard
-                label="Prelist Usaha"
+                label=" Prelist Usaha Terindikasi Usaha Keluarga "
                 value={globalPrelistCount}
                 sub="klik untuk lihat daftar"
                 icon="🏪"
@@ -1218,8 +1218,8 @@ export default function MonitoringPetugas() {
                               <div className="sticky top-0 bg-white pt-2 pb-3 z-10">
                                 {/* Filter kategori kondisi */}
                                 <div className="flex gap-2 mb-2">
-                                  <MiniFilterCard label="Prelist Usaha" count={categoryCounts.prelist} color="emerald" isActive={detailCategoryFilter === "prelist"} onClick={() => setDetailCategoryFilter(prev => (prev === "prelist" ? null : "prelist"))} />
-                                  <MiniFilterCard label="Ada & di FASIH" count={categoryCounts.konf1} color="blue" isActive={detailCategoryFilter === "konf1"} onClick={() => setDetailCategoryFilter(prev => (prev === "konf1" ? null : "konf1"))} />
+                                  <MiniFilterCard label="Prelist Usaha Terindikasi Usaha Keluarga" count={categoryCounts.prelist} color="emerald" isActive={detailCategoryFilter === "prelist"} onClick={() => setDetailCategoryFilter(prev => (prev === "prelist" ? null : "prelist"))} />
+                                  <MiniFilterCard label="Ada & Sudah Diperbaiki di FASIH" count={categoryCounts.konf1} color="blue" isActive={detailCategoryFilter === "konf1"} onClick={() => setDetailCategoryFilter(prev => (prev === "konf1" ? null : "konf1"))} />
                                   <MiniFilterCard label="Data Sesuai" count={categoryCounts.konf2} color="indigo" isActive={detailCategoryFilter === "konf2"} onClick={() => setDetailCategoryFilter(prev => (prev === "konf2" ? null : "konf2"))} />
                                   <MiniFilterCard label="Belum Konfirmasi" count={categoryCounts.belum} color="rose" isActive={detailCategoryFilter === "belum"} onClick={() => setDetailCategoryFilter(prev => (prev === "belum" ? null : "belum"))} />
                                 </div>
