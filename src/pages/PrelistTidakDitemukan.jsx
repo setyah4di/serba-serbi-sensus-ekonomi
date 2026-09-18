@@ -520,6 +520,8 @@ function SlsRow({ group, rank, onClick }) {
 
 // ── Kartu Assignment (level 3) ──
 // isSaving: true saat item ini sedang dalam proses submit konfirmasi
+// ── Kartu Assignment (level 3) ──
+// isSaving: true saat item ini sedang dalam proses submit konfirmasi
 function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
   const highlighted = hasPrelistUsaha(item);
   const fields = [
@@ -531,6 +533,10 @@ function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
     { label: "Prelist Keluarga Tujuan", value: item.prelistUsaha },
     { label: "Nomor Bangunan Keluarga", value: item.nomorBangunan },
   ];
+
+  // Penjelasan (kolom AD) HANYA tampil jika konfirmasi = "Data sudah sesuai"
+  const showPenjelasan = item.konfirmasi === "Data sudah sesuai" && item.penjelasan;
+
   return (
     <div
       className={`relative py-4 border-b border-gray-50 last:border-0 transition-colors duration-300 ${
@@ -581,9 +587,27 @@ function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
             Konfirmasi
           </button>
         ) : (
-          <span className="text-[11px] text-gray-500">
-            Status: <span className="font-semibold text-gray-700">{item.konfirmasi}</span>
-          </span>
+          <div className="w-full">
+            {/* ── Baris status konfirmasi ── */}
+            <span className="text-[11px] text-gray-500">
+              Status: <span className="font-semibold text-gray-700">{item.konfirmasi}</span>
+            </span>
+
+            {/* ── Baris Penjelasan (kolom AD) — hanya jika konfirmasi "Data sudah sesuai" ── */}
+            {showPenjelasan && (
+              <div
+                className="mt-2 rounded-xl bg-indigo-50 border border-indigo-100 px-3 py-2.5"
+                style={{ animation: "pop-in .25s ease-out both" }}
+              >
+                <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-widest mb-0.5">
+                  Penjelasan
+                </p>
+                <p className="text-xs font-medium text-gray-700 break-words leading-relaxed">
+                  {item.penjelasan}
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -833,8 +857,11 @@ export default function MonitoringPetugas() {
   const savingRowNumber = submitting ? confirmItem?.rowNumber : null;
 
   // ── Total keseluruhan ──
-  const totalAll = rows.length;
-
+// ── Total belum dikonfirmasi: hanya baris dengan kolom konfirmasi MASIH KOSONG ──
+const totalAll = useMemo(
+  () => rows.filter(r => !(r.konfirmasi || "").trim()).length,
+  [rows]
+);
   // ── Agregat 3 kondisi untuk kartu dashboard ──
   const globalPrelistCount = useMemo(() => rows.filter(hasPrelistUsaha).length, [rows]);
   const globalKonf1Count   = useMemo(() => rows.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH").length, [rows]);
