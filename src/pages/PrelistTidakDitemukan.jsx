@@ -61,26 +61,40 @@ function parseCSV(text) {
     if (ch === '"') {
       if (inQuotes && nextCh === '"') {
         currentVal += '"';
-        i++; // lewati kutip ganda lolos (escaped quote)
+        i++; // lewati quote ganda yang lolos (escaped quote)
       } else {
         inQuotes = !inQuotes;
       }
     } else if (ch === ',' && !inQuotes) {
       currentRow.push(currentVal.trim());
       currentVal = "";
-    } else if ((ch === '\r' || ch === '\n') && !inQuotes) {
-      if (ch === '\r' && nextCh === '\n') i++; // tangani CRLF
-      currentRow.push(currentVal.trim());
-      if (currentRow.length > 1 || currentRow[0] !== "") {
-        rows.push(currentRow);
+    } else if (ch === '\r' || ch === '\n') {
+      if (inQuotes) {
+        // JIKA ENTER ADA DI DALAM KUTIP (DALAM SATU SEL):
+        // Ganti Enter dengan titik dan spasi ". "
+        // Tangani CRLF (\r\n) agar tidak terhitung 2 kali
+        if (ch === '\r' && nextCh === '\n') {
+          i++;
+        }
+        currentVal += ". ";
+      } else {
+        // JIKA ENTER ASLI PEMISAH BARIS DATA (DI LUAR KUTIP):
+        if (ch === '\r' && nextCh === '\n') {
+          i++; // lewati \n pada CRLF
+        }
+        currentRow.push(currentVal.trim());
+        if (currentRow.length > 1 || currentRow[0] !== "") {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentVal = "";
       }
-      currentRow = [];
-      currentVal = "";
     } else {
       currentVal += ch;
     }
   }
 
+  // Masukkan baris terakhir jika ada
   if (currentVal || currentRow.length > 0) {
     currentRow.push(currentVal.trim());
     rows.push(currentRow);
