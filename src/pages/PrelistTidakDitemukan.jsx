@@ -3,7 +3,7 @@ import * as XLSX from "xlsx"; // npm install xlsx
 
 // ── Konfigurasi Spreadsheet ──
 const SPREADSHEET_ID = "1BHma1HmHYKlzMV2GQ7Y_Z9gNMMPA2m8LplG6V4T81zs";
-const GID_DATA        = "471865770";
+const GID_DATA = "471865770";
 
 const CSV_DATA = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID_DATA}`;
 
@@ -49,38 +49,65 @@ const KONFIRMASI_OPTIONS = [
 ];
 
 function parseCSV(text) {
-  const lines = text.replace(/\r/g, "").trim().split("\n");
-  return lines.map(line => {
-    const cols = []; let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ""; continue; }
-      cur += ch;
+  const rows = [];
+  let currentRow = [];
+  let currentVal = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const nextCh = text[i + 1];
+
+    if (ch === '"') {
+      if (inQuotes && nextCh === '"') {
+        currentVal += '"';
+        i++; // lewati kutip ganda lolos (escaped quote)
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      currentRow.push(currentVal.trim());
+      currentVal = "";
+    } else if ((ch === '\r' || ch === '\n') && !inQuotes) {
+      if (ch === '\r' && nextCh === '\n') i++; // tangani CRLF
+      currentRow.push(currentVal.trim());
+      if (currentRow.length > 1 || currentRow[0] !== "") {
+        rows.push(currentRow);
+      }
+      currentRow = [];
+      currentVal = "";
+    } else {
+      currentVal += ch;
     }
-    cols.push(cur.trim()); return cols;
-  });
+  }
+
+  if (currentVal || currentRow.length > 0) {
+    currentRow.push(currentVal.trim());
+    rows.push(currentRow);
+  }
+
+  return rows;
 }
 
 // ── Ubah baris CSV mentah menjadi objek data yang dipakai aplikasi ──
 function rowsFromCsvText(text) {
   const parsed = parseCSV(text);
   return parsed.slice(1).map((cols, i) => ({
-    rowNumber:      i + 2, // baris asli di spreadsheet (baris 1 = header)
-    kecamatan:      (cols[COL.kecamatan] || "").trim(),
-    desa:           (cols[COL.desa] || "").trim(),
-    rtNama:         (cols[COL.rtNama] || "").trim(),
-    slsFull:        (cols[COL.slsFull] || "").trim(),
+    rowNumber: i + 2, // baris asli di spreadsheet (baris 1 = header)
+    kecamatan: (cols[COL.kecamatan] || "").trim(),
+    desa: (cols[COL.desa] || "").trim(),
+    rtNama: (cols[COL.rtNama] || "").trim(),
+    slsFull: (cols[COL.slsFull] || "").trim(),
     namaAssignment: (cols[COL.namaAssignment] || "").trim(),
-    alamat:         (cols[COL.alamat] || "").trim(),
-    idsbr:          (cols[COL.idsbr] || "").trim(),
-    jenisPrelist:   (cols[COL.jenisPrelist] || "").trim(),
-    keberadaan:     (cols[COL.keberadaan] || "").trim(),
-    catatan:        (cols[COL.catatan] || "").trim(),
-    prelistUsaha:   (cols[COL.prelistUsaha] || "").trim(),
-    nomorBangunan:  (cols[COL.nomorBangunan] || "").trim(),
-    konfirmasi:     (cols[COL.konfirmasi] || "").trim(),
-    penjelasan:     (cols[COL.penjelasan] || "").trim(),
+    alamat: (cols[COL.alamat] || "").trim(),
+    idsbr: (cols[COL.idsbr] || "").trim(),
+    jenisPrelist: (cols[COL.jenisPrelist] || "").trim(),
+    keberadaan: (cols[COL.keberadaan] || "").trim(),
+    catatan: (cols[COL.catatan] || "").trim(),
+    prelistUsaha: (cols[COL.prelistUsaha] || "").trim(),
+    nomorBangunan: (cols[COL.nomorBangunan] || "").trim(),
+    konfirmasi: (cols[COL.konfirmasi] || "").trim(),
+    penjelasan: (cols[COL.penjelasan] || "").trim(),
   })).filter(r => r.kecamatan && r.desa);
 }
 
@@ -317,7 +344,7 @@ function SavingOverlay() {
 function SuccessToast({ show, duration = 2500 }) {
   const [mounted, setMounted] = useState(show);
   const [leaving, setLeaving] = useState(false);
-  const [runId, setRunId]     = useState(0);
+  const [runId, setRunId] = useState(0);
 
   useEffect(() => {
     if (show) {
@@ -396,11 +423,11 @@ function SuccessToast({ show, duration = 2500 }) {
 // ── Stat Card (dashboard atas) — responsif untuk HP ──
 function StatCard({ label, value, sub, icon, variant, onClick, isActive, className = "" }) {
   const styles = {
-    orange:  { card: "bg-[#f5820a] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
-    rose:    { card: "bg-[#e11d48] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
+    orange: { card: "bg-[#f5820a] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
+    rose: { card: "bg-[#e11d48] text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/65" },
     emerald: { card: "bg-emerald-500 text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/70" },
-    blue:    { card: "bg-blue-500 text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/70" },
-    indigo:  { card: "bg-indigo-500 text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/70" },
+    blue: { card: "bg-blue-500 text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/70" },
+    indigo: { card: "bg-indigo-500 text-white", icon: "bg-white/20", label: "text-white/85", sub: "text-white/70" },
   };
   const s = styles[variant];
   const Comp = onClick ? "button" : "div";
@@ -427,9 +454,9 @@ function StatCard({ label, value, sub, icon, variant, onClick, isActive, classNa
 function MiniFilterCard({ label, count, color, isActive, onClick }) {
   const palette = {
     emerald: { bg: isActive ? "bg-emerald-500" : "bg-emerald-50", text: isActive ? "text-white" : "text-emerald-700", sub: isActive ? "text-emerald-100" : "text-emerald-500" },
-    blue:    { bg: isActive ? "bg-blue-500" : "bg-blue-50", text: isActive ? "text-white" : "text-blue-700", sub: isActive ? "text-blue-100" : "text-blue-500" },
-    indigo:  { bg: isActive ? "bg-indigo-500" : "bg-indigo-50", text: isActive ? "text-white" : "text-indigo-700", sub: isActive ? "text-indigo-100" : "text-indigo-500" },
-    rose:    { bg: isActive ? "bg-rose-500" : "bg-rose-50", text: isActive ? "text-white" : "text-rose-700", sub: isActive ? "text-rose-100" : "text-rose-500" },
+    blue: { bg: isActive ? "bg-blue-500" : "bg-blue-50", text: isActive ? "text-white" : "text-blue-700", sub: isActive ? "text-blue-100" : "text-blue-500" },
+    indigo: { bg: isActive ? "bg-indigo-500" : "bg-indigo-50", text: isActive ? "text-white" : "text-indigo-700", sub: isActive ? "text-indigo-100" : "text-indigo-500" },
+    rose: { bg: isActive ? "bg-rose-500" : "bg-rose-50", text: isActive ? "text-white" : "text-rose-700", sub: isActive ? "text-rose-100" : "text-rose-500" },
   };
   const s = palette[color];
   return (
@@ -539,9 +566,8 @@ function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
 
   return (
     <div
-      className={`relative py-4 border-b border-gray-50 last:border-0 transition-colors duration-300 ${
-        highlighted ? "bg-emerald-50 -mx-6 px-6 rounded-lg border-b-0" : ""
-      }`}
+      className={`relative py-4 border-b border-gray-50 last:border-0 transition-colors duration-300 ${highlighted ? "bg-emerald-50 -mx-6 px-6 rounded-lg border-b-0" : ""
+        }`}
     >
       <div className="flex items-start gap-3 mb-2">
         <span className="w-6 h-6 rounded-full bg-gray-50 text-gray-400 text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -557,7 +583,7 @@ function AssignmentCard({ item, rank, onOpenConfirm, showLocation, isSaving }) {
         </div>
         {highlighted && (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0 mt-0.5">
-            Prelist Usaha Terindikasi Usaha Keluarga 
+            Prelist Usaha Terindikasi Usaha Keluarga
           </span>
         )}
       </div>
@@ -687,9 +713,8 @@ function ConfirmModal({ item, onClose, onSubmit, submitting, errorMsg }) {
           {KONFIRMASI_OPTIONS.map(opt => (
             <label
               key={opt.value}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors ${
-                submitting ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-              } ${pilihan === opt.value ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:border-orange-200"}`}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-colors ${submitting ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                } ${pilihan === opt.value ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:border-orange-200"}`}
             >
               <input
                 type="radio"
@@ -752,18 +777,18 @@ function ConfirmModal({ item, onClose, onSubmit, submitting, errorMsg }) {
 
 // ── Komponen Utama ──
 export default function MonitoringPetugas() {
-  const [rows, setRows]               = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState(null);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const [search, setSearch]           = useState("");       // cari kecamatan
+  const [search, setSearch] = useState("");       // cari kecamatan
   const [selectedKec, setSelectedKec] = useState(null);
 
-  const [searchDesa, setSearchDesa]   = useState("");        // cari desa
+  const [searchDesa, setSearchDesa] = useState("");        // cari desa
   const [selectedDesa, setSelectedDesa] = useState(null);
 
-  const [searchSls, setSearchSls]     = useState("");        // cari RT/SLS
+  const [searchSls, setSearchSls] = useState("");        // cari RT/SLS
   const [selectedSlsKey, setSelectedSlsKey] = useState(null); // level 3: grup RT/SLS terpilih
   const [keberadaanFilter, setKeberadaanFilter] = useState(""); // filter keberadaan pada level assignment
   const [detailCategoryFilter, setDetailCategoryFilter] = useState(null); // "prelist" | "konf1" | "konf2" | "belum" | null
@@ -774,12 +799,12 @@ export default function MonitoringPetugas() {
 
   // ── State modal konfirmasi ──
   const [confirmItem, setConfirmItem] = useState(null);
-  const [submitting, setSubmitting]   = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [confirmError, setConfirmError] = useState("");
-  const [savedToast, setSavedToast]   = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
 
   const detailRef = useRef(null);
-  const tableRef  = useRef(null);
+  const tableRef = useRef(null);
   const toastTimerRef = useRef(null);
 
   // ── Ambil data dari spreadsheet. silent=true -> tidak menampilkan loading layar penuh ──
@@ -857,23 +882,23 @@ export default function MonitoringPetugas() {
   const savingRowNumber = submitting ? confirmItem?.rowNumber : null;
 
   // ── Total keseluruhan ──
-// ── Total belum dikonfirmasi: hanya baris dengan kolom konfirmasi MASIH KOSONG ──
-const totalAll = useMemo(
-  () => rows.filter(r => !(r.konfirmasi || "").trim()).length,
-  [rows]
-);
+  // ── Total belum dikonfirmasi: hanya baris dengan kolom konfirmasi MASIH KOSONG ──
+  const totalAll = useMemo(
+    () => rows.filter(r => !(r.konfirmasi || "").trim()).length,
+    [rows]
+  );
   // ── Agregat 3 kondisi untuk kartu dashboard ──
   const globalPrelistCount = useMemo(() => rows.filter(hasPrelistUsaha).length, [rows]);
-  const globalKonf1Count   = useMemo(() => rows.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH").length, [rows]);
-  const globalKonf2Count   = useMemo(() => rows.filter(r => r.konfirmasi === "Data sudah sesuai").length, [rows]);
+  const globalKonf1Count = useMemo(() => rows.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH").length, [rows]);
+  const globalKonf2Count = useMemo(() => rows.filter(r => r.konfirmasi === "Data sudah sesuai").length, [rows]);
 
   // ── Daftar hasil filter global ──
   const globalFilteredList = useMemo(() => {
     if (!globalFilter) return [];
     let list = rows;
     if (globalFilter === "prelist") list = list.filter(hasPrelistUsaha);
-    if (globalFilter === "konf1")   list = list.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH");
-    if (globalFilter === "konf2")   list = list.filter(r => r.konfirmasi === "Data sudah sesuai");
+    if (globalFilter === "konf1") list = list.filter(r => r.konfirmasi === "Ada dan sudah diperbaiki di FASIH");
+    if (globalFilter === "konf2") list = list.filter(r => r.konfirmasi === "Data sudah sesuai");
     if (globalSearch) {
       const q = globalSearch.toLowerCase();
       list = list.filter(r =>
@@ -889,8 +914,8 @@ const totalAll = useMemo(
 
   const globalFilterTitle = globalFilter === "prelist" ? "Data dengan Prelist Usaha"
     : globalFilter === "konf1" ? "Konfirmasi: Ada dan Sudah Diperbaiki di FASIH"
-    : globalFilter === "konf2" ? "Konfirmasi: Data Sudah Sesuai"
-    : "";
+      : globalFilter === "konf2" ? "Konfirmasi: Data Sudah Sesuai"
+        : "";
 
   // ── Agregasi per Kecamatan ──
   const kecamatanAgg = useMemo(() => {
@@ -903,7 +928,7 @@ const totalAll = useMemo(
 
   const kecamatanList = useMemo(() =>
     kecamatanAgg.filter(k => search === "" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
-  , [kecamatanAgg, search]);
+    , [kecamatanAgg, search]);
 
   // ── Agregasi Desa dalam Kecamatan terpilih ──
   const desaAgg = useMemo(() => {
@@ -917,7 +942,7 @@ const totalAll = useMemo(
 
   const desaList = useMemo(() =>
     desaAgg.filter(d => searchDesa === "" || d.desa.toLowerCase().includes(searchDesa.toLowerCase()))
-  , [desaAgg, searchDesa]);
+    , [desaAgg, searchDesa]);
 
   // ── Grup RT/SLS unik dalam Desa terpilih ──
   const slsGroupAgg = useMemo(() => {
@@ -940,11 +965,11 @@ const totalAll = useMemo(
       (g.rtNama || "").toLowerCase().includes(searchSls.toLowerCase()) ||
       (g.slsFull || "").toLowerCase().includes(searchSls.toLowerCase())
     )
-  , [slsGroupAgg, searchSls]);
+    , [slsGroupAgg, searchSls]);
 
   const selectedSlsGroup = useMemo(() =>
     slsGroupAgg.find(g => g.key === selectedSlsKey) || null
-  , [slsGroupAgg, selectedSlsKey]);
+    , [slsGroupAgg, selectedSlsKey]);
 
   // ── Opsi filter Keberadaan (kolom Y) untuk grup assignment terpilih ──
   const keberadaanOptions = useMemo(() => {
@@ -976,9 +1001,9 @@ const totalAll = useMemo(
     let items = selectedSlsGroup.items;
     if (keberadaanFilter) items = items.filter(it => (it.keberadaan || "-") === keberadaanFilter);
     if (detailCategoryFilter === "prelist") items = items.filter(hasPrelistUsaha);
-    if (detailCategoryFilter === "konf1")   items = items.filter(it => it.konfirmasi === "Ada dan sudah diperbaiki di FASIH");
-    if (detailCategoryFilter === "konf2")   items = items.filter(it => it.konfirmasi === "Data sudah sesuai");
-    if (detailCategoryFilter === "belum")   items = items.filter(it => !(it.konfirmasi || "").trim());
+    if (detailCategoryFilter === "konf1") items = items.filter(it => it.konfirmasi === "Ada dan sudah diperbaiki di FASIH");
+    if (detailCategoryFilter === "konf2") items = items.filter(it => it.konfirmasi === "Data sudah sesuai");
+    if (detailCategoryFilter === "belum") items = items.filter(it => !(it.konfirmasi || "").trim());
     return items;
   }, [selectedSlsGroup, keberadaanFilter, detailCategoryFilter]);
 
@@ -987,7 +1012,7 @@ const totalAll = useMemo(
   const panelTitle = panelLevel === 3 ? selectedSlsGroup.rtNama : panelLevel === 2 ? selectedDesa : selectedKec;
   const panelTotal = panelLevel === 3 ? selectedSlsGroup.total
     : panelLevel === 2 ? slsGroupAgg.reduce((s, g) => s + g.total, 0)
-    : (kecamatanAgg.find(k => k.kecamatan === selectedKec)?.total || 0);
+      : (kecamatanAgg.find(k => k.kecamatan === selectedKec)?.total || 0);
 
   // ── Target export sesuai level panel yang sedang dibuka ──
   const exportTarget = useMemo(() => {
