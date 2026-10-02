@@ -133,7 +133,7 @@ function countBadgeStyle(v) {
   if (v <= 15) return { bg: "#fef3c7", text: "#92400e", dot: "#f59e0b" };
   return { bg: "#ffe4e6", text: "#9f1239", dot: "#f43f5e" };
 }
-function countLabel(v) { if (v === 0) return "Aman"; if (v <= 5) return "Ringan"; if (v <= 15) return "Sedang"; return "Perlu Perhatian"; }
+function countLabel(v) { if (v === 0) return "Aman"; if (v <= 5) return "Belum Dikonfirmasi"; if (v <= 15) return "Belum Dikonfirmasi"; return "Belum Dikonfirmasi"; }
 
 // ── Apakah baris ini punya isian Prelist Usaha? (dipakai untuk highlight hijau) ──
 function hasPrelistUsaha(item) {
@@ -932,13 +932,17 @@ export default function MonitoringPetugas() {
         : "";
 
   // ── Agregasi per Kecamatan ──
-  const kecamatanAgg = useMemo(() => {
-    const map = new Map();
-    rows.forEach(r => { map.set(r.kecamatan, (map.get(r.kecamatan) || 0) + 1); });
-    return Array.from(map.entries())
-      .map(([kecamatan, total]) => ({ kecamatan, total }))
-      .sort((a, b) => a.kecamatan.localeCompare(b.kecamatan));
-  }, [rows]);
+  // ── Agregasi per Kecamatan (hanya yang BELUM dikonfirmasi) ──
+const kecamatanAgg = useMemo(() => {
+  const map = new Map();
+  rows.forEach(r => {
+    const belum = (r.konfirmasi || "").trim() ? 0 : 1;
+    map.set(r.kecamatan, (map.get(r.kecamatan) || 0) + belum);
+  });
+  return Array.from(map.entries())
+    .map(([kecamatan, total]) => ({ kecamatan, total }))
+    .sort((a, b) => a.kecamatan.localeCompare(b.kecamatan));
+}, [rows]);
 
   const kecamatanList = useMemo(() =>
     kecamatanAgg.filter(k => search === "" || k.kecamatan.toLowerCase().includes(search.toLowerCase()))
@@ -946,13 +950,17 @@ export default function MonitoringPetugas() {
 
   // ── Agregasi Desa dalam Kecamatan terpilih ──
   const desaAgg = useMemo(() => {
-    if (!selectedKec) return [];
-    const map = new Map();
-    rows.forEach(r => { if (r.kecamatan === selectedKec) map.set(r.desa, (map.get(r.desa) || 0) + 1); });
-    return Array.from(map.entries())
-      .map(([desa, total]) => ({ desa, total }))
-      .sort((a, b) => a.desa.localeCompare(b.desa));
-  }, [rows, selectedKec]);
+  if (!selectedKec) return [];
+  const map = new Map();
+  rows.forEach(r => {
+    if (r.kecamatan !== selectedKec) return;
+    const belum = (r.konfirmasi || "").trim() ? 0 : 1;
+    map.set(r.desa, (map.get(r.desa) || 0) + belum);
+  });
+  return Array.from(map.entries())
+    .map(([desa, total]) => ({ desa, total }))
+    .sort((a, b) => a.desa.localeCompare(b.desa));
+}, [rows, selectedKec]);
 
   const desaList = useMemo(() =>
     desaAgg.filter(d => searchDesa === "" || d.desa.toLowerCase().includes(searchDesa.toLowerCase()))
@@ -966,9 +974,9 @@ export default function MonitoringPetugas() {
       if (r.kecamatan !== selectedKec || r.desa !== selectedDesa) return;
       const key = `${r.rtNama}||${r.slsFull}`;
       if (!map.has(key)) map.set(key, { key, rtNama: r.rtNama, slsFull: r.slsFull, total: 0, items: [] });
-      const g = map.get(key);
-      g.total += 1;
-      g.items.push(r);
+    const g = map.get(key);
+g.total += (r.konfirmasi || "").trim() ? 0 : 1;   // hanya hitung yang belum dikonfirmasi
+g.items.push(r);                                  // items tetap berisi semua baris
     });
     return Array.from(map.values()).sort((a, b) => a.rtNama.localeCompare(b.rtNama) || a.slsFull.localeCompare(b.slsFull));
   }, [rows, selectedKec, selectedDesa]);
